@@ -1,0 +1,9 @@
+config BR2_PACKAGE_LIBVMI
+	bool "libvmi"
+	depends on BR2_PACKAGE_LIBGLIB2 # libglib2
+	depends on BR2_PACKAGE_JSON_C # libglib2
+	depends on BR2_PACKAGE_ZLIB # fork()
+	# depends on BR2_PACKAGE_LIBVIRT
+	help
+      libvmi
+

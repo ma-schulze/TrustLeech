@@ -1,0 +1,4 @@
+
+config BR2_TARGET_TRUSTLEECH
+	bool "TrustLeech"
+	depends on BR2_ARM_CPU_ARMV8A

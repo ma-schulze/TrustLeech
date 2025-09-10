@@ -1,0 +1,1 @@
+qemu 110 kvm 110 - /home/qemu /bin/sh

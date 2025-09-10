@@ -1,0 +1,158 @@
+[
+{
+  "directory": "/home/matti/uni/projects/trustleech/src/trustleech/build/src",
+  "command": "/home/matti/uni/projects/trustleech/src/buildroot/output/host/bin/aarch64-buildroot-linux-gnu-g++ --sysroot=/home/matti/uni/projects/trustleech/src/buildroot/output/host/aarch64-buildroot-linux-gnu/sysroot  -I/home/matti/uni/projects/trustleech/src/trustleech/src -I/home/matti/uni/projects/trustleech/src/trustleech/arm-trusted-firmware/include -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -Os -g0  -DNDEBUG -std=gnu++23 -Wall -Wextra -ffreestanding -fno-exceptions -fno-rtti -fno-pic -fno-pie -nodefaultlibs -nostdlib -nostdinc -g -march=armv8.7-a+nofp -mgeneral-regs-only -mabi=lp64 -o CMakeFiles/trustleech.dir/assert.cpp.o -c /home/matti/uni/projects/trustleech/src/trustleech/src/assert.cpp",
+  "file": "/home/matti/uni/projects/trustleech/src/trustleech/src/assert.cpp",
+  "output": "src/CMakeFiles/trustleech.dir/assert.cpp.o"
+},
+{
+  "directory": "/home/matti/uni/projects/trustleech/src/trustleech/build/src",
+  "command": "/home/matti/uni/projects/trustleech/src/buildroot/output/host/bin/aarch64-buildroot-linux-gnu-g++ --sysroot=/home/matti/uni/projects/trustleech/src/buildroot/output/host/aarch64-buildroot-linux-gnu/sysroot  -I/home/matti/uni/projects/trustleech/src/trustleech/src -I/home/matti/uni/projects/trustleech/src/trustleech/arm-trusted-firmware/include -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -Os -g0  -DNDEBUG -std=gnu++23 -Wall -Wextra -ffreestanding -fno-exceptions -fno-rtti -fno-pic -fno-pie -nodefaultlibs -nostdlib -nostdinc -g -march=armv8.7-a+nofp -mgeneral-regs-only -mabi=lp64 -o CMakeFiles/trustleech.dir/context_stash.cpp.o -c /home/matti/uni/projects/trustleech/src/trustleech/src/context_stash.cpp",
+  "file": "/home/matti/uni/projects/trustleech/src/trustleech/src/context_stash.cpp",
+  "output": "src/CMakeFiles/trustleech.dir/context_stash.cpp.o"
+},
+{
+  "directory": "/home/matti/uni/projects/trustleech/src/trustleech/build/src",
+  "command": "/home/matti/uni/projects/trustleech/src/buildroot/output/host/bin/aarch64-buildroot-linux-gnu-g++ --sysroot=/home/matti/uni/projects/trustleech/src/buildroot/output/host/aarch64-buildroot-linux-gnu/sysroot  -I/home/matti/uni/projects/trustleech/src/trustleech/src -I/home/matti/uni/projects/trustleech/src/trustleech/arm-trusted-firmware/include -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -Os -g0  -DNDEBUG -std=gnu++23 -Wall -Wextra -ffreestanding -fno-exceptions -fno-rtti -fno-pic -fno-pie -nodefaultlibs -nostdlib -nostdinc -g -march=armv8.7-a+nofp -mgeneral-regs-only -mabi=lp64 -o CMakeFiles/trustleech.dir/exception/eret.cpp.o -c /home/matti/uni/projects/trustleech/src/trustleech/src/exception/eret.cpp",
+  "file": "/home/matti/uni/projects/trustleech/src/trustleech/src/exception/eret.cpp",
+  "output": "src/CMakeFiles/trustleech.dir/exception/eret.cpp.o"
+},
+{
+  "directory": "/home/matti/uni/projects/trustleech/src/trustleech/build/src",
+  "command": "/home/matti/uni/projects/trustleech/src/buildroot/output/host/bin/aarch64-buildroot-linux-gnu-gcc --sysroot=/home/matti/uni/projects/trustleech/src/buildroot/output/host/aarch64-buildroot-linux-gnu/sysroot  -I/home/matti/uni/projects/trustleech/src/trustleech/src -I/home/matti/uni/projects/trustleech/src/trustleech/arm-trusted-firmware/include -O3 -DNDEBUG -Wall -Wextra -ffreestanding -fno-exceptions -fno-rtti -fno-pic -fno-pie -nodefaultlibs -nostdlib -nostdinc -g -march=armv8.7-a+nofp -mgeneral-regs-only -mabi=lp64 -o CMakeFiles/trustleech.dir/exception/head.S.o -c /home/matti/uni/projects/trustleech/src/trustleech/src/exception/head.S",
+  "file": "/home/matti/uni/projects/trustleech/src/trustleech/src/exception/head.S",
+  "output": "src/CMakeFiles/trustleech.dir/exception/head.S.o"
+},
+{
+  "directory": "/home/matti/uni/projects/trustleech/src/trustleech/build/src",
+  "command": "/home/matti/uni/projects/trustleech/src/buildroot/output/host/bin/aarch64-buildroot-linux-gnu-g++ --sysroot=/home/matti/uni/projects/trustleech/src/buildroot/output/host/aarch64-buildroot-linux-gnu/sysroot  -I/home/matti/uni/projects/trustleech/src/trustleech/src -I/home/matti/uni/projects/trustleech/src/trustleech/arm-trusted-firmware/include -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -Os -g0  -DNDEBUG -std=gnu++23 -Wall -Wextra -ffreestanding -fno-exceptions -fno-rtti -fno-pic -fno-pie -nodefaultlibs -nostdlib -nostdinc -g -march=armv8.7-a+nofp -mgeneral-regs-only -mabi=lp64 -o CMakeFiles/trustleech.dir/exception/head.cpp.o -c /home/matti/uni/projects/trustleech/src/trustleech/src/exception/head.cpp",
+  "file": "/home/matti/uni/projects/trustleech/src/trustleech/src/exception/head.cpp",
+  "output": "src/CMakeFiles/trustleech.dir/exception/head.cpp.o"
+},
+{
+  "directory": "/home/matti/uni/projects/trustleech/src/trustleech/build/src",
+  "command": "/home/matti/uni/projects/trustleech/src/buildroot/output/host/bin/aarch64-buildroot-linux-gnu-g++ --sysroot=/home/matti/uni/projects/trustleech/src/buildroot/output/host/aarch64-buildroot-linux-gnu/sysroot  -I/home/matti/uni/projects/trustleech/src/trustleech/src -I/home/matti/uni/projects/trustleech/src/trustleech/arm-trusted-firmware/include -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -Os -g0  -DNDEBUG -std=gnu++23 -Wall -Wextra -ffreestanding -fno-exceptions -fno-rtti -fno-pic -fno-pie -nodefaultlibs -nostdlib -nostdinc -g -march=armv8.7-a+nofp -mgeneral-regs-only -mabi=lp64 -o CMakeFiles/trustleech.dir/exception/inject.cpp.o -c /home/matti/uni/projects/trustleech/src/trustleech/src/exception/inject.cpp",
+  "file": "/home/matti/uni/projects/trustleech/src/trustleech/src/exception/inject.cpp",
+  "output": "src/CMakeFiles/trustleech.dir/exception/inject.cpp.o"
+},
+{
+  "directory": "/home/matti/uni/projects/trustleech/src/trustleech/build/src",
+  "command": "/home/matti/uni/projects/trustleech/src/buildroot/output/host/bin/aarch64-buildroot-linux-gnu-g++ --sysroot=/home/matti/uni/projects/trustleech/src/buildroot/output/host/aarch64-buildroot-linux-gnu/sysroot  -I/home/matti/uni/projects/trustleech/src/trustleech/src -I/home/matti/uni/projects/trustleech/src/trustleech/arm-trusted-firmware/include -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -Os -g0  -DNDEBUG -std=gnu++23 -Wall -Wextra -ffreestanding -fno-exceptions -fno-rtti -fno-pic -fno-pie -nodefaultlibs -nostdlib -nostdinc -g -march=armv8.7-a+nofp -mgeneral-regs-only -mabi=lp64 -o CMakeFiles/trustleech.dir/exception/mmu.cpp.o -c /home/matti/uni/projects/trustleech/src/trustleech/src/exception/mmu.cpp",
+  "file": "/home/matti/uni/projects/trustleech/src/trustleech/src/exception/mmu.cpp",
+  "output": "src/CMakeFiles/trustleech.dir/exception/mmu.cpp.o"
+},
+{
+  "directory": "/home/matti/uni/projects/trustleech/src/trustleech/build/src",
+  "command": "/home/matti/uni/projects/trustleech/src/buildroot/output/host/bin/aarch64-buildroot-linux-gnu-g++ --sysroot=/home/matti/uni/projects/trustleech/src/buildroot/output/host/aarch64-buildroot-linux-gnu/sysroot  -I/home/matti/uni/projects/trustleech/src/trustleech/src -I/home/matti/uni/projects/trustleech/src/trustleech/arm-trusted-firmware/include -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -Os -g0  -DNDEBUG -std=gnu++23 -Wall -Wextra -ffreestanding -fno-exceptions -fno-rtti -fno-pic -fno-pie -nodefaultlibs -nostdlib -nostdinc -g -march=armv8.7-a+nofp -mgeneral-regs-only -mabi=lp64 -o CMakeFiles/trustleech.dir/exception/system.cpp.o -c /home/matti/uni/projects/trustleech/src/trustleech/src/exception/system.cpp",
+  "file": "/home/matti/uni/projects/trustleech/src/trustleech/src/exception/system.cpp",
+  "output": "src/CMakeFiles/trustleech.dir/exception/system.cpp.o"
+},
+{
+  "directory": "/home/matti/uni/projects/trustleech/src/trustleech/build/src",
+  "command": "/home/matti/uni/projects/trustleech/src/buildroot/output/host/bin/aarch64-buildroot-linux-gnu-g++ --sysroot=/home/matti/uni/projects/trustleech/src/buildroot/output/host/aarch64-buildroot-linux-gnu/sysroot  -I/home/matti/uni/projects/trustleech/src/trustleech/src -I/home/matti/uni/projects/trustleech/src/trustleech/arm-trusted-firmware/include -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -Os -g0  -DNDEBUG -std=gnu++23 -Wall -Wextra -ffreestanding -fno-exceptions -fno-rtti -fno-pic -fno-pie -nodefaultlibs -nostdlib -nostdinc -g -march=armv8.7-a+nofp -mgeneral-regs-only -mabi=lp64 -o CMakeFiles/trustleech.dir/exec_vel2.cpp.o -c /home/matti/uni/projects/trustleech/src/trustleech/src/exec_vel2.cpp",
+  "file": "/home/matti/uni/projects/trustleech/src/trustleech/src/exec_vel2.cpp",
+  "output": "src/CMakeFiles/trustleech.dir/exec_vel2.cpp.o"
+},
+{
+  "directory": "/home/matti/uni/projects/trustleech/src/trustleech/build/src",
+  "command": "/home/matti/uni/projects/trustleech/src/buildroot/output/host/bin/aarch64-buildroot-linux-gnu-g++ --sysroot=/home/matti/uni/projects/trustleech/src/buildroot/output/host/aarch64-buildroot-linux-gnu/sysroot  -I/home/matti/uni/projects/trustleech/src/trustleech/src -I/home/matti/uni/projects/trustleech/src/trustleech/arm-trusted-firmware/include -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -Os -g0  -DNDEBUG -std=gnu++23 -Wall -Wextra -ffreestanding -fno-exceptions -fno-rtti -fno-pic -fno-pie -nodefaultlibs -nostdlib -nostdinc -g -march=armv8.7-a+nofp -mgeneral-regs-only -mabi=lp64 -o CMakeFiles/trustleech.dir/exec_vm.cpp.o -c /home/matti/uni/projects/trustleech/src/trustleech/src/exec_vm.cpp",
+  "file": "/home/matti/uni/projects/trustleech/src/trustleech/src/exec_vm.cpp",
+  "output": "src/CMakeFiles/trustleech.dir/exec_vm.cpp.o"
+},
+{
+  "directory": "/home/matti/uni/projects/trustleech/src/trustleech/build/src",
+  "command": "/home/matti/uni/projects/trustleech/src/buildroot/output/host/bin/aarch64-buildroot-linux-gnu-gcc --sysroot=/home/matti/uni/projects/trustleech/src/buildroot/output/host/aarch64-buildroot-linux-gnu/sysroot  -I/home/matti/uni/projects/trustleech/src/trustleech/src -I/home/matti/uni/projects/trustleech/src/trustleech/arm-trusted-firmware/include -O3 -DNDEBUG -Wall -Wextra -ffreestanding -fno-exceptions -fno-rtti -fno-pic -fno-pie -nodefaultlibs -nostdlib -nostdinc -g -march=armv8.7-a+nofp -mgeneral-regs-only -mabi=lp64 -o CMakeFiles/trustleech.dir/head.S.o -c /home/matti/uni/projects/trustleech/src/trustleech/src/head.S",
+  "file": "/home/matti/uni/projects/trustleech/src/trustleech/src/head.S",
+  "output": "src/CMakeFiles/trustleech.dir/head.S.o"
+},
+{
+  "directory": "/home/matti/uni/projects/trustleech/src/trustleech/build/src",
+  "command": "/home/matti/uni/projects/trustleech/src/buildroot/output/host/bin/aarch64-buildroot-linux-gnu-g++ --sysroot=/home/matti/uni/projects/trustleech/src/buildroot/output/host/aarch64-buildroot-linux-gnu/sysroot  -I/home/matti/uni/projects/trustleech/src/trustleech/src -I/home/matti/uni/projects/trustleech/src/trustleech/arm-trusted-firmware/include -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -Os -g0  -DNDEBUG -std=gnu++23 -Wall -Wextra -ffreestanding -fno-exceptions -fno-rtti -fno-pic -fno-pie -nodefaultlibs -nostdlib -nostdinc -g -march=armv8.7-a+nofp -mgeneral-regs-only -mabi=lp64 -o CMakeFiles/trustleech.dir/head.cpp.o -c /home/matti/uni/projects/trustleech/src/trustleech/src/head.cpp",
+  "file": "/home/matti/uni/projects/trustleech/src/trustleech/src/head.cpp",
+  "output": "src/CMakeFiles/trustleech.dir/head.cpp.o"
+},
+{
+  "directory": "/home/matti/uni/projects/trustleech/src/trustleech/build/src",
+  "command": "/home/matti/uni/projects/trustleech/src/buildroot/output/host/bin/aarch64-buildroot-linux-gnu-gcc --sysroot=/home/matti/uni/projects/trustleech/src/buildroot/output/host/aarch64-buildroot-linux-gnu/sysroot  -I/home/matti/uni/projects/trustleech/src/trustleech/src -I/home/matti/uni/projects/trustleech/src/trustleech/arm-trusted-firmware/include -O3 -DNDEBUG -Wall -Wextra -ffreestanding -fno-exceptions -fno-rtti -fno-pic -fno-pie -nodefaultlibs -nostdlib -nostdinc -g -march=armv8.7-a+nofp -mgeneral-regs-only -mabi=lp64 -o CMakeFiles/trustleech.dir/macros.S.o -c /home/matti/uni/projects/trustleech/src/trustleech/src/macros.S",
+  "file": "/home/matti/uni/projects/trustleech/src/trustleech/src/macros.S",
+  "output": "src/CMakeFiles/trustleech.dir/macros.S.o"
+},
+{
+  "directory": "/home/matti/uni/projects/trustleech/src/trustleech/build/src",
+  "command": "/home/matti/uni/projects/trustleech/src/buildroot/output/host/bin/aarch64-buildroot-linux-gnu-g++ --sysroot=/home/matti/uni/projects/trustleech/src/buildroot/output/host/aarch64-buildroot-linux-gnu/sysroot  -I/home/matti/uni/projects/trustleech/src/trustleech/src -I/home/matti/uni/projects/trustleech/src/trustleech/arm-trusted-firmware/include -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -Os -g0  -DNDEBUG -std=gnu++23 -Wall -Wextra -ffreestanding -fno-exceptions -fno-rtti -fno-pic -fno-pie -nodefaultlibs -nostdlib -nostdinc -g -march=armv8.7-a+nofp -mgeneral-regs-only -mabi=lp64 -o CMakeFiles/trustleech.dir/memcpy.cpp.o -c /home/matti/uni/projects/trustleech/src/trustleech/src/memcpy.cpp",
+  "file": "/home/matti/uni/projects/trustleech/src/trustleech/src/memcpy.cpp",
+  "output": "src/CMakeFiles/trustleech.dir/memcpy.cpp.o"
+},
+{
+  "directory": "/home/matti/uni/projects/trustleech/src/trustleech/build/src",
+  "command": "/home/matti/uni/projects/trustleech/src/buildroot/output/host/bin/aarch64-buildroot-linux-gnu-g++ --sysroot=/home/matti/uni/projects/trustleech/src/buildroot/output/host/aarch64-buildroot-linux-gnu/sysroot  -I/home/matti/uni/projects/trustleech/src/trustleech/src -I/home/matti/uni/projects/trustleech/src/trustleech/arm-trusted-firmware/include -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -Os -g0  -DNDEBUG -std=gnu++23 -Wall -Wextra -ffreestanding -fno-exceptions -fno-rtti -fno-pic -fno-pie -nodefaultlibs -nostdlib -nostdinc -g -march=armv8.7-a+nofp -mgeneral-regs-only -mabi=lp64 -o CMakeFiles/trustleech.dir/memory_backed_regs.cpp.o -c /home/matti/uni/projects/trustleech/src/trustleech/src/memory_backed_regs.cpp",
+  "file": "/home/matti/uni/projects/trustleech/src/trustleech/src/memory_backed_regs.cpp",
+  "output": "src/CMakeFiles/trustleech.dir/memory_backed_regs.cpp.o"
+},
+{
+  "directory": "/home/matti/uni/projects/trustleech/src/trustleech/build/src",
+  "command": "/home/matti/uni/projects/trustleech/src/buildroot/output/host/bin/aarch64-buildroot-linux-gnu-g++ --sysroot=/home/matti/uni/projects/trustleech/src/buildroot/output/host/aarch64-buildroot-linux-gnu/sysroot  -I/home/matti/uni/projects/trustleech/src/trustleech/src -I/home/matti/uni/projects/trustleech/src/trustleech/arm-trusted-firmware/include -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -Os -g0  -DNDEBUG -std=gnu++23 -Wall -Wextra -ffreestanding -fno-exceptions -fno-rtti -fno-pic -fno-pie -nodefaultlibs -nostdlib -nostdinc -g -march=armv8.7-a+nofp -mgeneral-regs-only -mabi=lp64 -o CMakeFiles/trustleech.dir/paging/frame_allocator.cpp.o -c /home/matti/uni/projects/trustleech/src/trustleech/src/paging/frame_allocator.cpp",
+  "file": "/home/matti/uni/projects/trustleech/src/trustleech/src/paging/frame_allocator.cpp",
+  "output": "src/CMakeFiles/trustleech.dir/paging/frame_allocator.cpp.o"
+},
+{
+  "directory": "/home/matti/uni/projects/trustleech/src/trustleech/build/src",
+  "command": "/home/matti/uni/projects/trustleech/src/buildroot/output/host/bin/aarch64-buildroot-linux-gnu-g++ --sysroot=/home/matti/uni/projects/trustleech/src/buildroot/output/host/aarch64-buildroot-linux-gnu/sysroot  -I/home/matti/uni/projects/trustleech/src/trustleech/src -I/home/matti/uni/projects/trustleech/src/trustleech/arm-trusted-firmware/include -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -Os -g0  -DNDEBUG -std=gnu++23 -Wall -Wextra -ffreestanding -fno-exceptions -fno-rtti -fno-pic -fno-pie -nodefaultlibs -nostdlib -nostdinc -g -march=armv8.7-a+nofp -mgeneral-regs-only -mabi=lp64 -o CMakeFiles/trustleech.dir/paging/shadow/shadow.cpp.o -c /home/matti/uni/projects/trustleech/src/trustleech/src/paging/shadow/shadow.cpp",
+  "file": "/home/matti/uni/projects/trustleech/src/trustleech/src/paging/shadow/shadow.cpp",
+  "output": "src/CMakeFiles/trustleech.dir/paging/shadow/shadow.cpp.o"
+},
+{
+  "directory": "/home/matti/uni/projects/trustleech/src/trustleech/build/src",
+  "command": "/home/matti/uni/projects/trustleech/src/buildroot/output/host/bin/aarch64-buildroot-linux-gnu-g++ --sysroot=/home/matti/uni/projects/trustleech/src/buildroot/output/host/aarch64-buildroot-linux-gnu/sysroot  -I/home/matti/uni/projects/trustleech/src/trustleech/src -I/home/matti/uni/projects/trustleech/src/trustleech/arm-trusted-firmware/include -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -Os -g0  -DNDEBUG -std=gnu++23 -Wall -Wextra -ffreestanding -fno-exceptions -fno-rtti -fno-pic -fno-pie -nodefaultlibs -nostdlib -nostdinc -g -march=armv8.7-a+nofp -mgeneral-regs-only -mabi=lp64 -o CMakeFiles/trustleech.dir/paging/shadow/table_walk.cpp.o -c /home/matti/uni/projects/trustleech/src/trustleech/src/paging/shadow/table_walk.cpp",
+  "file": "/home/matti/uni/projects/trustleech/src/trustleech/src/paging/shadow/table_walk.cpp",
+  "output": "src/CMakeFiles/trustleech.dir/paging/shadow/table_walk.cpp.o"
+},
+{
+  "directory": "/home/matti/uni/projects/trustleech/src/trustleech/build/src",
+  "command": "/home/matti/uni/projects/trustleech/src/buildroot/output/host/bin/aarch64-buildroot-linux-gnu-g++ --sysroot=/home/matti/uni/projects/trustleech/src/buildroot/output/host/aarch64-buildroot-linux-gnu/sysroot  -I/home/matti/uni/projects/trustleech/src/trustleech/src -I/home/matti/uni/projects/trustleech/src/trustleech/arm-trusted-firmware/include -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -Os -g0  -DNDEBUG -std=gnu++23 -Wall -Wextra -ffreestanding -fno-exceptions -fno-rtti -fno-pic -fno-pie -nodefaultlibs -nostdlib -nostdinc -g -march=armv8.7-a+nofp -mgeneral-regs-only -mabi=lp64 -o CMakeFiles/trustleech.dir/paging/stage_1.cpp.o -c /home/matti/uni/projects/trustleech/src/trustleech/src/paging/stage_1.cpp",
+  "file": "/home/matti/uni/projects/trustleech/src/trustleech/src/paging/stage_1.cpp",
+  "output": "src/CMakeFiles/trustleech.dir/paging/stage_1.cpp.o"
+},
+{
+  "directory": "/home/matti/uni/projects/trustleech/src/trustleech/build/src",
+  "command": "/home/matti/uni/projects/trustleech/src/buildroot/output/host/bin/aarch64-buildroot-linux-gnu-g++ --sysroot=/home/matti/uni/projects/trustleech/src/buildroot/output/host/aarch64-buildroot-linux-gnu/sysroot  -I/home/matti/uni/projects/trustleech/src/trustleech/src -I/home/matti/uni/projects/trustleech/src/trustleech/arm-trusted-firmware/include -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -Os -g0  -DNDEBUG -std=gnu++23 -Wall -Wextra -ffreestanding -fno-exceptions -fno-rtti -fno-pic -fno-pie -nodefaultlibs -nostdlib -nostdinc -g -march=armv8.7-a+nofp -mgeneral-regs-only -mabi=lp64 -o CMakeFiles/trustleech.dir/paging/vpas.cpp.o -c /home/matti/uni/projects/trustleech/src/trustleech/src/paging/vpas.cpp",
+  "file": "/home/matti/uni/projects/trustleech/src/trustleech/src/paging/vpas.cpp",
+  "output": "src/CMakeFiles/trustleech.dir/paging/vpas.cpp.o"
+},
+{
+  "directory": "/home/matti/uni/projects/trustleech/src/trustleech/build/src",
+  "command": "/home/matti/uni/projects/trustleech/src/buildroot/output/host/bin/aarch64-buildroot-linux-gnu-gcc --sysroot=/home/matti/uni/projects/trustleech/src/buildroot/output/host/aarch64-buildroot-linux-gnu/sysroot  -I/home/matti/uni/projects/trustleech/src/trustleech/src -I/home/matti/uni/projects/trustleech/src/trustleech/arm-trusted-firmware/include -O3 -DNDEBUG -Wall -Wextra -ffreestanding -fno-exceptions -fno-rtti -fno-pic -fno-pie -nodefaultlibs -nostdlib -nostdinc -g -march=armv8.7-a+nofp -mgeneral-regs-only -mabi=lp64 -o CMakeFiles/trustleech.dir/tail.S.o -c /home/matti/uni/projects/trustleech/src/trustleech/src/tail.S",
+  "file": "/home/matti/uni/projects/trustleech/src/trustleech/src/tail.S",
+  "output": "src/CMakeFiles/trustleech.dir/tail.S.o"
+},
+{
+  "directory": "/home/matti/uni/projects/trustleech/src/trustleech/build/src",
+  "command": "/home/matti/uni/projects/trustleech/src/buildroot/output/host/bin/aarch64-buildroot-linux-gnu-g++ --sysroot=/home/matti/uni/projects/trustleech/src/buildroot/output/host/aarch64-buildroot-linux-gnu/sysroot  -I/home/matti/uni/projects/trustleech/src/trustleech/src -I/home/matti/uni/projects/trustleech/src/trustleech/arm-trusted-firmware/include -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -Os -g0  -DNDEBUG -std=gnu++23 -Wall -Wextra -ffreestanding -fno-exceptions -fno-rtti -fno-pic -fno-pie -nodefaultlibs -nostdlib -nostdinc -g -march=armv8.7-a+nofp -mgeneral-regs-only -mabi=lp64 -o CMakeFiles/trustleech.dir/tail.cpp.o -c /home/matti/uni/projects/trustleech/src/trustleech/src/tail.cpp",
+  "file": "/home/matti/uni/projects/trustleech/src/trustleech/src/tail.cpp",
+  "output": "src/CMakeFiles/trustleech.dir/tail.cpp.o"
+},
+{
+  "directory": "/home/matti/uni/projects/trustleech/src/trustleech/build/src",
+  "command": "/home/matti/uni/projects/trustleech/src/buildroot/output/host/bin/aarch64-buildroot-linux-gnu-g++ --sysroot=/home/matti/uni/projects/trustleech/src/buildroot/output/host/aarch64-buildroot-linux-gnu/sysroot  -I/home/matti/uni/projects/trustleech/src/trustleech/src -I/home/matti/uni/projects/trustleech/src/trustleech/arm-trusted-firmware/include -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -Os -g0  -DNDEBUG -std=gnu++23 -Wall -Wextra -ffreestanding -fno-exceptions -fno-rtti -fno-pic -fno-pie -nodefaultlibs -nostdlib -nostdinc -g -march=armv8.7-a+nofp -mgeneral-regs-only -mabi=lp64 -o CMakeFiles/trustleech.dir/vcpu_ctx.cpp.o -c /home/matti/uni/projects/trustleech/src/trustleech/src/vcpu_ctx.cpp",
+  "file": "/home/matti/uni/projects/trustleech/src/trustleech/src/vcpu_ctx.cpp",
+  "output": "src/CMakeFiles/trustleech.dir/vcpu_ctx.cpp.o"
+},
+{
+  "directory": "/home/matti/uni/projects/trustleech/src/trustleech/build/src",
+  "command": "/home/matti/uni/projects/trustleech/src/buildroot/output/host/bin/aarch64-buildroot-linux-gnu-g++ --sysroot=/home/matti/uni/projects/trustleech/src/buildroot/output/host/aarch64-buildroot-linux-gnu/sysroot  -I/home/matti/uni/projects/trustleech/src/trustleech/src -I/home/matti/uni/projects/trustleech/src/trustleech/arm-trusted-firmware/include -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -Os -g0  -DNDEBUG -std=gnu++23 -Wall -Wextra -ffreestanding -fno-exceptions -fno-rtti -fno-pic -fno-pie -nodefaultlibs -nostdlib -nostdinc -g -march=armv8.7-a+nofp -mgeneral-regs-only -mabi=lp64 -o CMakeFiles/trustleech.dir/lib/console/console.cpp.o -c /home/matti/uni/projects/trustleech/src/trustleech/src/lib/console/console.cpp",
+  "file": "/home/matti/uni/projects/trustleech/src/trustleech/src/lib/console/console.cpp",
+  "output": "src/CMakeFiles/trustleech.dir/lib/console/console.cpp.o"
+},
+{
+  "directory": "/home/matti/uni/projects/trustleech/src/trustleech/build/src",
+  "command": "/home/matti/uni/projects/trustleech/src/buildroot/output/host/bin/aarch64-buildroot-linux-gnu-g++ --sysroot=/home/matti/uni/projects/trustleech/src/buildroot/output/host/aarch64-buildroot-linux-gnu/sysroot  -I/home/matti/uni/projects/trustleech/src/trustleech/src -I/home/matti/uni/projects/trustleech/src/trustleech/arm-trusted-firmware/include -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -Os -g0  -DNDEBUG -std=gnu++23 -Wall -Wextra -ffreestanding -fno-exceptions -fno-rtti -fno-pic -fno-pie -nodefaultlibs -nostdlib -nostdinc -g -march=armv8.7-a+nofp -mgeneral-regs-only -mabi=lp64 -o CMakeFiles/trustleech.dir/lib/console/printf.cpp.o -c /home/matti/uni/projects/trustleech/src/trustleech/src/lib/console/printf.cpp",
+  "file": "/home/matti/uni/projects/trustleech/src/trustleech/src/lib/console/printf.cpp",
+  "output": "src/CMakeFiles/trustleech.dir/lib/console/printf.cpp.o"
+},
+{
+  "directory": "/home/matti/uni/projects/trustleech/src/trustleech/build/src",
+  "command": "/home/matti/uni/projects/trustleech/src/buildroot/output/host/bin/aarch64-buildroot-linux-gnu-g++ --sysroot=/home/matti/uni/projects/trustleech/src/buildroot/output/host/aarch64-buildroot-linux-gnu/sysroot  -I/home/matti/uni/projects/trustleech/src/trustleech/src -I/home/matti/uni/projects/trustleech/src/trustleech/arm-trusted-firmware/include -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -Os -g0  -DNDEBUG -std=gnu++23 -Wall -Wextra -ffreestanding -fno-exceptions -fno-rtti -fno-pic -fno-pie -nodefaultlibs -nostdlib -nostdinc -g -march=armv8.7-a+nofp -mgeneral-regs-only -mabi=lp64 -o CMakeFiles/trustleech.dir/drivers/pl011/pl011.cpp.o -c /home/matti/uni/projects/trustleech/src/trustleech/src/drivers/pl011/pl011.cpp",
+  "file": "/home/matti/uni/projects/trustleech/src/trustleech/src/drivers/pl011/pl011.cpp",
+  "output": "src/CMakeFiles/trustleech.dir/drivers/pl011/pl011.cpp.o"
+}
+]

@@ -1,0 +1,17 @@
+config BR2_TARGET_REALM_MANAGEMENT_MONITOR
+	bool "ARM REALM MANAGEMENT MONITOR (RMM)"
+	help 
+	  Enable this option if you want to build the RMM
+
+
+config BR2_TARGET_REALM_MANAGEMENT_MONITOR_RMM_CONFIG
+	string "RMM config"
+	help
+	  Target config to build for.
+
+
+config BR2_TARGET_REALM_MANAGEMENT_MONITOR_ADDITIONAL_VARIABLES
+	string "Additional RMM build variables"
+	help
+	  Additional parameters for the RMM build
+	  E.G. 'DEBUG=1 LOG_LEVEL=20'
