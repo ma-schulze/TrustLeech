@@ -592,10 +592,10 @@ void time_vmi_func(vmi_instance_t &vmi, vmi_func_t vmi_func,
   vmi_func(vmi);
 
   auto end_time = std::chrono::steady_clock::now();
-  auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
+  auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
 
 
-  std::cout << test_name << ": " << duration.count() << " µs" << std::endl;
+  std::cout << test_name << ": " << duration.count() << " ms" << std::endl;
 }
 
 int main() {
@@ -605,7 +605,7 @@ int main() {
   time_vmi_func(vmi, init_vmi, "Init VMI");
 
 #if 1
-  for (int i = 0; i < 5; i++) {
+  for (int i = 0; i < 1; i++) {
     printf("LibVMI init succeeded, waiting for CMD!\n");
     time_vmi_func(vmi, walk_module_list, std::string{"Module List"});
 
