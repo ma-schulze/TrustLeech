@@ -22,7 +22,6 @@
 #include "hw/pci/pci_bridge.h"
 #include "hw/pci/pci_host.h"
 #include "hw/cxl/cxl.h"
-#include "hw/cxl/cxl_host.h"
 #include "hw/mem/memory-device.h"
 #include "hw/acpi/acpi.h"
 #include "hw/acpi/aml-build.h"
@@ -136,52 +135,55 @@ static void cedt_build_chbs(GArray *table_data, PXBCXLDev *cxl)
  * Interleave ways encoding in CXL 2.0 ECN: 3, 6, 12 and 16-way memory
  * interleaving.
  */
-static void cedt_build_cfmws(CXLFixedWindow *fw, Aml *cedt)
+static void cedt_build_cfmws(GArray *table_data, CXLState *cxls)
 {
-    GArray *table_data = cedt->buf;
-    int i;
+    GList *it;
 
-    /* Type */
-    build_append_int_noprefix(table_data, 1, 1);
+    for (it = cxls->fixed_windows; it; it = it->next) {
+        CXLFixedWindow *fw = it->data;
+        int i;
 
-    /* Reserved */
-    build_append_int_noprefix(table_data, 0, 1);
+        /* Type */
+        build_append_int_noprefix(table_data, 1, 1);
 
-    /* Record Length */
-    build_append_int_noprefix(table_data, 36 + 4 * fw->num_targets, 2);
+        /* Reserved */
+        build_append_int_noprefix(table_data, 0, 1);
 
-    /* Reserved */
-    build_append_int_noprefix(table_data, 0, 4);
+        /* Record Length */
+        build_append_int_noprefix(table_data, 36 + 4 * fw->num_targets, 2);
 
-    /* Base HPA */
-    build_append_int_noprefix(table_data, fw->mr.addr, 8);
+        /* Reserved */
+        build_append_int_noprefix(table_data, 0, 4);
 
-    /* Window Size */
-    build_append_int_noprefix(table_data, fw->size, 8);
+        /* Base HPA */
+        build_append_int_noprefix(table_data, fw->mr.addr, 8);
 
-    /* Host Bridge Interleave Ways */
-    build_append_int_noprefix(table_data, fw->enc_int_ways, 1);
+        /* Window Size */
+        build_append_int_noprefix(table_data, fw->size, 8);
 
-    /* Host Bridge Interleave Arithmetic */
-    build_append_int_noprefix(table_data, 0, 1);
+        /* Host Bridge Interleave Ways */
+        build_append_int_noprefix(table_data, fw->enc_int_ways, 1);
 
-    /* Reserved */
-    build_append_int_noprefix(table_data, 0, 2);
+        /* Host Bridge Interleave Arithmetic */
+        build_append_int_noprefix(table_data, 0, 1);
 
-    /* Host Bridge Interleave Granularity */
-    build_append_int_noprefix(table_data, fw->enc_int_gran, 4);
+        /* Reserved */
+        build_append_int_noprefix(table_data, 0, 2);
 
-    /* Window Restrictions */
-    build_append_int_noprefix(table_data, 0x0f, 2);
+        /* Host Bridge Interleave Granularity */
+        build_append_int_noprefix(table_data, fw->enc_int_gran, 4);
 
-    /* QTG ID */
-    build_append_int_noprefix(table_data, 0, 2);
+        /* Window Restrictions */
+        build_append_int_noprefix(table_data, 0x0f, 2); /* No restrictions */
 
-    /* Host Bridge List (list of UIDs - currently bus_nr) */
-    for (i = 0; i < fw->num_targets; i++) {
-        g_assert(fw->target_hbs[i]);
-        build_append_int_noprefix(table_data,
-                                  PXB_DEV(fw->target_hbs[i])->bus_nr, 4);
+        /* QTG ID */
+        build_append_int_noprefix(table_data, 0, 2);
+
+        /* Host Bridge List (list of UIDs - currently bus_nr) */
+        for (i = 0; i < fw->num_targets; i++) {
+            g_assert(fw->target_hbs[i]);
+            build_append_int_noprefix(table_data, PXB_DEV(fw->target_hbs[i])->bus_nr, 4);
+        }
     }
 }
 
@@ -200,7 +202,6 @@ void cxl_build_cedt(GArray *table_offsets, GArray *table_data,
                     BIOSLinker *linker, const char *oem_id,
                     const char *oem_table_id, CXLState *cxl_state)
 {
-    GSList *cfmws_list, *iter;
     Aml *cedt;
     AcpiTable table = { .sig = "CEDT", .rev = 1, .oem_id = oem_id,
                         .oem_table_id = oem_table_id };
@@ -212,12 +213,7 @@ void cxl_build_cedt(GArray *table_offsets, GArray *table_data,
     /* reserve space for CEDT header */
 
     object_child_foreach_recursive(object_get_root(), cxl_foreach_pxb_hb, cedt);
-
-    cfmws_list = cxl_fmws_get_all_sorted();
-    for (iter = cfmws_list; iter; iter = iter->next) {
-        cedt_build_cfmws(CXL_FMW(iter->data), cedt);
-    }
-    g_slist_free(cfmws_list);
+    cedt_build_cfmws(cedt->buf, cxl_state);
 
     /* copy AML table into ACPI tables blob and patch header there */
     g_array_append_vals(table_data, cedt->buf->data, cedt->buf->len);

@@ -108,16 +108,15 @@ def gen_def_tcg_func(f, tag, tagregs, tagimms):
 
 
 def main():
-    args = hex_common.parse_common_args(
-        "Emit functions calling generated code implementing instruction semantics (helpers, idef-parser)"
-    )
+    is_idef_parser_enabled = hex_common.read_common_files()
     tagregs = hex_common.get_tagregs()
     tagimms = hex_common.get_tagimms()
 
-    with open(args.out, "w") as f:
+    output_file = sys.argv[-1]
+    with open(output_file, "w") as f:
         f.write("#ifndef HEXAGON_TCG_FUNCS_H\n")
         f.write("#define HEXAGON_TCG_FUNCS_H\n\n")
-        if args.idef_parser:
+        if is_idef_parser_enabled:
             f.write('#include "idef-generated-emitter.h.inc"\n\n')
 
         for tag in hex_common.tags:

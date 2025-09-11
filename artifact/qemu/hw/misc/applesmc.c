@@ -350,10 +350,11 @@ static void applesmc_unrealize(DeviceState *dev)
     }
 }
 
-static const Property applesmc_isa_properties[] = {
+static Property applesmc_isa_properties[] = {
     DEFINE_PROP_UINT32(APPLESMC_PROP_IO_BASE, AppleSMCState, iobase,
                        APPLESMC_DEFAULT_IOBASE),
     DEFINE_PROP_STRING("osk", AppleSMCState, osk),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
 static void build_applesmc_aml(AcpiDevAmlIf *adev, Aml *scope)
@@ -375,7 +376,7 @@ static void build_applesmc_aml(AcpiDevAmlIf *adev, Aml *scope)
     aml_append(scope, dev);
 }
 
-static void qdev_applesmc_class_init(ObjectClass *klass, const void *data)
+static void qdev_applesmc_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
     AcpiDevAmlIfClass *adevc = ACPI_DEV_AML_IF_CLASS(klass);
@@ -393,7 +394,7 @@ static const TypeInfo applesmc_isa_info = {
     .parent        = TYPE_ISA_DEVICE,
     .instance_size = sizeof(AppleSMCState),
     .class_init    = qdev_applesmc_class_init,
-    .interfaces = (const InterfaceInfo[]) {
+    .interfaces = (InterfaceInfo[]) {
         { TYPE_ACPI_DEV_AML_IF },
         { },
     },

@@ -421,7 +421,7 @@ static void aw_emac_set_link(NetClientState *nc)
 static const MemoryRegionOps aw_emac_mem_ops = {
     .read = aw_emac_read,
     .write = aw_emac_write,
-    .endianness = DEVICE_LITTLE_ENDIAN,
+    .endianness = DEVICE_NATIVE_ENDIAN,
     .valid = {
         .min_access_size = 4,
         .max_access_size = 4,
@@ -462,9 +462,10 @@ static void aw_emac_realize(DeviceState *dev, Error **errp)
     fifo8_create(&s->tx_fifo[1], TX_FIFO_SIZE);
 }
 
-static const Property aw_emac_properties[] = {
+static Property aw_emac_properties[] = {
     DEFINE_NIC_PROPERTIES(AwEmacState, conf),
     DEFINE_PROP_UINT8("phy-addr", AwEmacState, phy_addr, 0),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
 static const VMStateDescription vmstate_mii = {
@@ -514,7 +515,7 @@ static const VMStateDescription vmstate_aw_emac = {
     }
 };
 
-static void aw_emac_class_init(ObjectClass *klass, const void *data)
+static void aw_emac_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
 

@@ -1,5 +1,3 @@
-.. _qemu-ga:
-
 QEMU Guest Agent
 ================
 

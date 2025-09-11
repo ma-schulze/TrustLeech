@@ -14,8 +14,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, see
- * <https://www.gnu.org/licenses/>.
+ * along with this program; if not, write to the Free Software
+ * Foundation, 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * split out pci bus specific stuff from pci.[hc] to pci_bridge.[hc]
  * Copyright (c) 2009 Isaku Yamahata <yamahata at valinux co jp>

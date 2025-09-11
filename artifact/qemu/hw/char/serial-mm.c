@@ -125,16 +125,17 @@ static void serial_mm_instance_init(Object *o)
     qdev_alias_all_properties(DEVICE(&smm->serial), o);
 }
 
-static const Property serial_mm_properties[] = {
+static Property serial_mm_properties[] = {
     /*
      * Set the spacing between adjacent memory-mapped UART registers.
      * Each register will be at (1 << regshift) bytes after the previous one.
      */
     DEFINE_PROP_UINT8("regshift", SerialMM, regshift, 0),
     DEFINE_PROP_UINT8("endianness", SerialMM, endianness, DEVICE_NATIVE_ENDIAN),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
-static void serial_mm_class_init(ObjectClass *oc, const void *data)
+static void serial_mm_class_init(ObjectClass *oc, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(oc);
 

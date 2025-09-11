@@ -19,6 +19,7 @@
 
 #include "qemu/osdep.h"
 #include "cpu.h"
+#include "exec/exec-all.h"
 #include "exec/helper-proto.h"
 #include "fpu/softfloat.h"
 
@@ -454,27 +455,26 @@ static uint64_t do_cvttq(CPUAlphaState *env, uint64_t a, int roundmode)
 {
     float64 fa;
     int64_t ret;
-    uint32_t exc = 0;
-    int flags;
+    uint32_t exc;
 
     fa = t_to_float64(a);
     ret = float64_to_int64_modulo(fa, roundmode, &FP_STATUS);
 
-    flags = get_float_exception_flags(&FP_STATUS);
-    if (unlikely(flags)) {
+    exc = get_float_exception_flags(&FP_STATUS);
+    if (unlikely(exc)) {
         set_float_exception_flags(0, &FP_STATUS);
 
         /* We need to massage the resulting exceptions. */
-        if (flags & float_flag_invalid_cvti) {
+        if (exc & float_flag_invalid_cvti) {
             /* Overflow, either normal or infinity. */
             if (float64_is_infinity(fa)) {
                 exc = FPCR_INV;
             } else {
                 exc = FPCR_IOV | FPCR_INE;
             }
-        } else if (flags & float_flag_invalid) {
+        } else if (exc & float_flag_invalid) {
             exc = FPCR_INV;
-        } else if (flags & float_flag_inexact) {
+        } else if (exc & float_flag_inexact) {
             exc = FPCR_INE;
         }
     }

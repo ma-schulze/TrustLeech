@@ -40,7 +40,6 @@ typedef struct XHCIPciState {
     XHCIState xhci;
     OnOffAuto msi;
     OnOffAuto msix;
-    bool conditional_intr_mapping;
 } XHCIPciState;
 
 #endif

@@ -22,8 +22,8 @@
 #include "qemu/module.h"
 #include "qemu/units.h"
 #include "qapi/error.h"
-#include "system/blockdev.h"
-#include "system/dma.h"
+#include "sysemu/blockdev.h"
+#include "sysemu/dma.h"
 #include "hw/qdev-properties.h"
 #include "hw/irq.h"
 #include "hw/sd/allwinner-sdhost.h"
@@ -233,7 +233,7 @@ static void allwinner_sdhost_send_command(AwSdHostState *s)
 {
     SDRequest request;
     uint8_t resp[16];
-    size_t rlen;
+    int rlen;
 
     /* Auto clear load flag */
     s->command &= ~SD_CMDR_LOAD;
@@ -246,7 +246,10 @@ static void allwinner_sdhost_send_command(AwSdHostState *s)
         request.arg = s->command_arg;
 
         /* Send request to SD bus */
-        rlen = sdbus_do_command(&s->sdbus, &request, resp, sizeof(resp));
+        rlen = sdbus_do_command(&s->sdbus, &request, resp);
+        if (rlen < 0) {
+            goto error;
+        }
 
         /* If the command has a response, store it in the response registers */
         if ((s->command & SD_CMDR_RESPONSE)) {
@@ -758,7 +761,7 @@ static void allwinner_sdhost_write(void *opaque, hwaddr offset,
 static const MemoryRegionOps allwinner_sdhost_ops = {
     .read = allwinner_sdhost_read,
     .write = allwinner_sdhost_write,
-    .endianness = DEVICE_LITTLE_ENDIAN,
+    .endianness = DEVICE_NATIVE_ENDIAN,
     .valid = {
         .min_access_size = 4,
         .max_access_size = 4,
@@ -805,9 +808,10 @@ static const VMStateDescription vmstate_allwinner_sdhost = {
     }
 };
 
-static const Property allwinner_sdhost_properties[] = {
+static Property allwinner_sdhost_properties[] = {
     DEFINE_PROP_LINK("dma-memory", AwSdHostState, dma_mr,
                      TYPE_MEMORY_REGION, MemoryRegion *),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
 static void allwinner_sdhost_init(Object *obj)
@@ -885,15 +889,14 @@ static void allwinner_sdhost_reset(DeviceState *dev)
     }
 }
 
-static void allwinner_sdhost_bus_class_init(ObjectClass *klass,
-                                            const void *data)
+static void allwinner_sdhost_bus_class_init(ObjectClass *klass, void *data)
 {
     SDBusClass *sbc = SD_BUS_CLASS(klass);
 
     sbc->set_inserted = allwinner_sdhost_set_inserted;
 }
 
-static void allwinner_sdhost_class_init(ObjectClass *klass, const void *data)
+static void allwinner_sdhost_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
 
@@ -903,8 +906,7 @@ static void allwinner_sdhost_class_init(ObjectClass *klass, const void *data)
     device_class_set_props(dc, allwinner_sdhost_properties);
 }
 
-static void allwinner_sdhost_sun4i_class_init(ObjectClass *klass,
-                                              const void *data)
+static void allwinner_sdhost_sun4i_class_init(ObjectClass *klass, void *data)
 {
     AwSdHostClass *sc = AW_SDHOST_CLASS(klass);
     sc->max_desc_size = 8 * KiB;
@@ -912,8 +914,7 @@ static void allwinner_sdhost_sun4i_class_init(ObjectClass *klass,
     sc->can_calibrate = false;
 }
 
-static void allwinner_sdhost_sun5i_class_init(ObjectClass *klass,
-                                              const void *data)
+static void allwinner_sdhost_sun5i_class_init(ObjectClass *klass, void *data)
 {
     AwSdHostClass *sc = AW_SDHOST_CLASS(klass);
     sc->max_desc_size = 64 * KiB;
@@ -922,7 +923,7 @@ static void allwinner_sdhost_sun5i_class_init(ObjectClass *klass,
 }
 
 static void allwinner_sdhost_sun50i_a64_class_init(ObjectClass *klass,
-                                                   const void *data)
+                                                   void *data)
 {
     AwSdHostClass *sc = AW_SDHOST_CLASS(klass);
     sc->max_desc_size = 64 * KiB;
@@ -931,7 +932,7 @@ static void allwinner_sdhost_sun50i_a64_class_init(ObjectClass *klass,
 }
 
 static void allwinner_sdhost_sun50i_a64_emmc_class_init(ObjectClass *klass,
-                                                        const void *data)
+                                                        void *data)
 {
     AwSdHostClass *sc = AW_SDHOST_CLASS(klass);
     sc->max_desc_size = 8 * KiB;

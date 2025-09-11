@@ -1,5 +1,5 @@
 #include "qemu/osdep.h"
-#include "system/replay.h"
+#include "sysemu/replay.h"
 #include "ui/input.h"
 
 void replay_input_event(QemuConsole *src, InputEvent *evt)

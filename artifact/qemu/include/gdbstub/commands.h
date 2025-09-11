@@ -1,5 +1,5 @@
 #ifndef GDBSTUB_COMMANDS_H
-#define GDBSTUB_COMMANDS_H
+#define GDBSTUB
 
 typedef void (*GdbCmdHandler)(GArray *params, void *user_ctx);
 

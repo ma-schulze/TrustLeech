@@ -828,16 +828,11 @@ int main(int argc, char **argv)
         }
     }
 
-    if (qcrypto_cipher_supports(QCRYPTO_CIPHER_ALGO_AES_256,
-                                QCRYPTO_CIPHER_MODE_CBC)) {
-        g_test_add_func("/crypto/cipher/null-iv",
-                        test_cipher_null_iv);
+    g_test_add_func("/crypto/cipher/null-iv",
+                    test_cipher_null_iv);
 
-        g_test_add_func("/crypto/cipher/short-plaintext",
-                        test_cipher_short_plaintext);
-    } else {
-        g_printerr("# skip unsupported aes-256:cbc\n");
-    }
+    g_test_add_func("/crypto/cipher/short-plaintext",
+                    test_cipher_short_plaintext);
 
     return g_test_run();
 }

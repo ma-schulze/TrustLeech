@@ -27,7 +27,7 @@
 #define HW_SERIAL_H
 
 #include "chardev/char-fe.h"
-#include "system/memory.h"
+#include "exec/memory.h"
 #include "qemu/fifo8.h"
 #include "qom/object.h"
 

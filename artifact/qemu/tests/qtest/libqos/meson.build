@@ -32,6 +32,7 @@ libqos_srcs = files(
         'i2c-omap.c',
         'igb.c',
         'sdhci.c',
+        'tpci200.c',
         'virtio.c',
         'virtio-balloon.c',
         'virtio-blk.c',
@@ -68,9 +69,6 @@ endif
 
 if config_all_devices.has_key('CONFIG_RISCV_IOMMU')
   libqos_srcs += files('riscv-iommu.c')
-endif
-if config_all_devices.has_key('CONFIG_TPCI200')
-  libqos_srcs += files('tpci200.c')
 endif
 
 libqos = static_library('qos', libqos_srcs + genh,

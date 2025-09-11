@@ -29,21 +29,20 @@
 #include "qemu/units.h"
 #include "qapi/error.h"
 #include "cpu.h"
-#include "system/system.h"
+#include "sysemu/sysemu.h"
 #include "hw/boards.h"
 #include "hw/loader.h"
 #include "hw/qdev-properties.h"
 #include "elf.h"
-#include "system/memory.h"
-#include "exec/tswap.h"
+#include "exec/memory.h"
 #include "hw/char/serial-mm.h"
 #include "net/net.h"
 #include "hw/sysbus.h"
 #include "hw/block/flash.h"
 #include "chardev/char.h"
-#include "system/device_tree.h"
-#include "system/reset.h"
-#include "system/runstate.h"
+#include "sysemu/device_tree.h"
+#include "sysemu/reset.h"
+#include "sysemu/runstate.h"
 #include "qemu/error-report.h"
 #include "qemu/option.h"
 #include "bootparam.h"
@@ -398,8 +397,7 @@ static void xtfpga_init(const XtfpgaBoardDesc *board, MachineState *machine)
 
         uint64_t elf_entry;
         int success = load_elf(kernel_filename, NULL, translate_phys_addr, cpu,
-                               &elf_entry, NULL, NULL, NULL,
-                               TARGET_BIG_ENDIAN ? ELFDATA2MSB : ELFDATA2LSB,
+                               &elf_entry, NULL, NULL, NULL, TARGET_BIG_ENDIAN,
                                EM_XTENSA, 0, 0);
         if (success > 0) {
             entry_point = elf_entry;
@@ -585,7 +583,7 @@ static void xtfpga_kc705_nommu_init(MachineState *machine)
     xtfpga_init(&kc705_board, machine);
 }
 
-static void xtfpga_lx60_class_init(ObjectClass *oc, const void *data)
+static void xtfpga_lx60_class_init(ObjectClass *oc, void *data)
 {
     MachineClass *mc = MACHINE_CLASS(oc);
 
@@ -602,7 +600,7 @@ static const TypeInfo xtfpga_lx60_type = {
     .class_init = xtfpga_lx60_class_init,
 };
 
-static void xtfpga_lx60_nommu_class_init(ObjectClass *oc, const void *data)
+static void xtfpga_lx60_nommu_class_init(ObjectClass *oc, void *data)
 {
     MachineClass *mc = MACHINE_CLASS(oc);
 
@@ -619,7 +617,7 @@ static const TypeInfo xtfpga_lx60_nommu_type = {
     .class_init = xtfpga_lx60_nommu_class_init,
 };
 
-static void xtfpga_lx200_class_init(ObjectClass *oc, const void *data)
+static void xtfpga_lx200_class_init(ObjectClass *oc, void *data)
 {
     MachineClass *mc = MACHINE_CLASS(oc);
 
@@ -636,7 +634,7 @@ static const TypeInfo xtfpga_lx200_type = {
     .class_init = xtfpga_lx200_class_init,
 };
 
-static void xtfpga_lx200_nommu_class_init(ObjectClass *oc, const void *data)
+static void xtfpga_lx200_nommu_class_init(ObjectClass *oc, void *data)
 {
     MachineClass *mc = MACHINE_CLASS(oc);
 
@@ -653,7 +651,7 @@ static const TypeInfo xtfpga_lx200_nommu_type = {
     .class_init = xtfpga_lx200_nommu_class_init,
 };
 
-static void xtfpga_ml605_class_init(ObjectClass *oc, const void *data)
+static void xtfpga_ml605_class_init(ObjectClass *oc, void *data)
 {
     MachineClass *mc = MACHINE_CLASS(oc);
 
@@ -670,7 +668,7 @@ static const TypeInfo xtfpga_ml605_type = {
     .class_init = xtfpga_ml605_class_init,
 };
 
-static void xtfpga_ml605_nommu_class_init(ObjectClass *oc, const void *data)
+static void xtfpga_ml605_nommu_class_init(ObjectClass *oc, void *data)
 {
     MachineClass *mc = MACHINE_CLASS(oc);
 
@@ -687,7 +685,7 @@ static const TypeInfo xtfpga_ml605_nommu_type = {
     .class_init = xtfpga_ml605_nommu_class_init,
 };
 
-static void xtfpga_kc705_class_init(ObjectClass *oc, const void *data)
+static void xtfpga_kc705_class_init(ObjectClass *oc, void *data)
 {
     MachineClass *mc = MACHINE_CLASS(oc);
 
@@ -704,7 +702,7 @@ static const TypeInfo xtfpga_kc705_type = {
     .class_init = xtfpga_kc705_class_init,
 };
 
-static void xtfpga_kc705_nommu_class_init(ObjectClass *oc, const void *data)
+static void xtfpga_kc705_nommu_class_init(ObjectClass *oc, void *data)
 {
     MachineClass *mc = MACHINE_CLASS(oc);
 

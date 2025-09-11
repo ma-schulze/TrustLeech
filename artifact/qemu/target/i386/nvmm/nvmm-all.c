@@ -9,19 +9,16 @@
 
 #include "qemu/osdep.h"
 #include "cpu.h"
-#include "system/address-spaces.h"
-#include "system/ioport.h"
+#include "exec/address-spaces.h"
+#include "exec/ioport.h"
 #include "qemu/accel.h"
-#include "accel/accel-ops.h"
-#include "system/nvmm.h"
-#include "system/cpus.h"
-#include "system/runstate.h"
+#include "sysemu/nvmm.h"
+#include "sysemu/cpus.h"
+#include "sysemu/runstate.h"
 #include "qemu/main-loop.h"
 #include "qemu/error-report.h"
 #include "qapi/error.h"
 #include "qemu/queue.h"
-#include "accel/accel-cpu-target.h"
-#include "host-cpu.h"
 #include "migration/blocker.h"
 #include "strings.h"
 
@@ -33,6 +30,7 @@ struct AccelCPUState {
     struct nvmm_vcpu vcpu;
     uint8_t tpr;
     bool stop;
+    bool dirty;
 
     /* Window-exiting for INTs/NMIs. */
     bool int_window_exit;
@@ -49,7 +47,7 @@ struct qemu_machine {
 
 /* -------------------------------------------------------------------------- */
 
-bool nvmm_allowed;
+static bool nvmm_allowed;
 static struct qemu_machine qemu_mach;
 
 static struct nvmm_machine *
@@ -510,7 +508,7 @@ nvmm_io_callback(struct nvmm_io *io)
     }
 
     /* Needed, otherwise infinite loop. */
-    current_cpu->vcpu_dirty = false;
+    current_cpu->accel->dirty = false;
 }
 
 static void
@@ -519,7 +517,7 @@ nvmm_mem_callback(struct nvmm_mem *mem)
     cpu_physical_memory_rw(mem->gpa, mem->data, mem->size, mem->write);
 
     /* Needed, otherwise infinite loop. */
-    current_cpu->vcpu_dirty = false;
+    current_cpu->accel->dirty = false;
 }
 
 static struct nvmm_assist_callbacks nvmm_callbacks = {
@@ -729,9 +727,9 @@ nvmm_vcpu_loop(CPUState *cpu)
      * Inner VCPU loop.
      */
     do {
-        if (cpu->vcpu_dirty) {
+        if (cpu->accel->dirty) {
             nvmm_set_registers(cpu);
-            cpu->vcpu_dirty = false;
+            cpu->accel->dirty = false;
         }
 
         if (qcpu->stop) {
@@ -829,32 +827,32 @@ static void
 do_nvmm_cpu_synchronize_state(CPUState *cpu, run_on_cpu_data arg)
 {
     nvmm_get_registers(cpu);
-    cpu->vcpu_dirty = true;
+    cpu->accel->dirty = true;
 }
 
 static void
 do_nvmm_cpu_synchronize_post_reset(CPUState *cpu, run_on_cpu_data arg)
 {
     nvmm_set_registers(cpu);
-    cpu->vcpu_dirty = false;
+    cpu->accel->dirty = false;
 }
 
 static void
 do_nvmm_cpu_synchronize_post_init(CPUState *cpu, run_on_cpu_data arg)
 {
     nvmm_set_registers(cpu);
-    cpu->vcpu_dirty = false;
+    cpu->accel->dirty = false;
 }
 
 static void
 do_nvmm_cpu_synchronize_pre_loadvm(CPUState *cpu, run_on_cpu_data arg)
 {
-    cpu->vcpu_dirty = true;
+    cpu->accel->dirty = true;
 }
 
 void nvmm_cpu_synchronize_state(CPUState *cpu)
 {
-    if (!cpu->vcpu_dirty) {
+    if (!cpu->accel->dirty) {
         run_on_cpu(cpu, do_nvmm_cpu_synchronize_state, RUN_ON_CPU_NULL);
     }
 }
@@ -984,7 +982,7 @@ nvmm_init_vcpu(CPUState *cpu)
         }
     }
 
-    qcpu->vcpu_dirty = true;
+    qcpu->dirty = true;
     cpu->accel = qcpu;
 
     return 0;
@@ -1155,7 +1153,7 @@ static struct RAMBlockNotifier nvmm_ram_notifier = {
 /* -------------------------------------------------------------------------- */
 
 static int
-nvmm_accel_init(AccelState *as, MachineState *ms)
+nvmm_accel_init(MachineState *ms)
 {
     int ret, err;
 
@@ -1195,8 +1193,14 @@ nvmm_accel_init(AccelState *as, MachineState *ms)
     return 0;
 }
 
+int
+nvmm_enabled(void)
+{
+    return nvmm_allowed;
+}
+
 static void
-nvmm_accel_class_init(ObjectClass *oc, const void *data)
+nvmm_accel_class_init(ObjectClass *oc, void *data)
 {
     AccelClass *ac = ACCEL_CLASS(oc);
     ac->name = "NVMM";
@@ -1210,33 +1214,10 @@ static const TypeInfo nvmm_accel_type = {
     .class_init = nvmm_accel_class_init,
 };
 
-static void nvmm_cpu_instance_init(CPUState *cs)
-{
-    X86CPU *cpu = X86_CPU(cs);
-
-    host_cpu_instance_init(cpu);
-}
-
-static void nvmm_cpu_accel_class_init(ObjectClass *oc, const void *data)
-{
-    AccelCPUClass *acc = ACCEL_CPU_CLASS(oc);
-
-    acc->cpu_instance_init = nvmm_cpu_instance_init;
-}
-
-static const TypeInfo nvmm_cpu_accel_type = {
-    .name = ACCEL_CPU_NAME("nvmm"),
-
-    .parent = TYPE_ACCEL_CPU,
-    .class_init = nvmm_cpu_accel_class_init,
-    .abstract = true,
-};
-
 static void
 nvmm_type_init(void)
 {
     type_register_static(&nvmm_accel_type);
-    type_register_static(&nvmm_cpu_accel_type);
 }
 
 type_init(nvmm_type_init);

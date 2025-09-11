@@ -11,7 +11,7 @@
 #ifndef PCI_HOST_REMOTE_H
 #define PCI_HOST_REMOTE_H
 
-#include "system/memory.h"
+#include "exec/memory.h"
 #include "hw/pci/pcie_host.h"
 
 #define TYPE_REMOTE_PCIHOST "remote-pcihost"

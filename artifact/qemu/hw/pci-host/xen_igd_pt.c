@@ -95,8 +95,7 @@ static void igd_pt_i440fx_realize(PCIDevice *pci_dev, Error **errp)
     }
 }
 
-static void igd_passthrough_i440fx_class_init(ObjectClass *klass,
-                                              const void *data)
+static void igd_passthrough_i440fx_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
     PCIDeviceClass *k = PCI_DEVICE_CLASS(klass);

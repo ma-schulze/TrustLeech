@@ -17,7 +17,7 @@
 #include "qemu/coroutine.h"
 #include "qemu/defer-call.h"
 #include "qapi/error.h"
-#include "system/block-backend.h"
+#include "sysemu/block-backend.h"
 #include "trace.h"
 
 /* Only used for assertions.  */
@@ -335,24 +335,15 @@ static void luring_deferred_fn(void *opaque)
  *
  */
 static int luring_do_submit(int fd, LuringAIOCB *luringcb, LuringState *s,
-                            uint64_t offset, int type, BdrvRequestFlags flags)
+                            uint64_t offset, int type)
 {
     int ret;
     struct io_uring_sqe *sqes = &luringcb->sqeq;
 
     switch (type) {
     case QEMU_AIO_WRITE:
-#ifdef HAVE_IO_URING_PREP_WRITEV2
-    {
-        int luring_flags = (flags & BDRV_REQ_FUA) ? RWF_DSYNC : 0;
-        io_uring_prep_writev2(sqes, fd, luringcb->qiov->iov,
-                              luringcb->qiov->niov, offset, luring_flags);
-    }
-#else
-        assert(flags == 0);
         io_uring_prep_writev(sqes, fd, luringcb->qiov->iov,
                              luringcb->qiov->niov, offset);
-#endif
         break;
     case QEMU_AIO_ZONE_APPEND:
         io_uring_prep_writev(sqes, fd, luringcb->qiov->iov,
@@ -389,8 +380,7 @@ static int luring_do_submit(int fd, LuringAIOCB *luringcb, LuringState *s,
 }
 
 int coroutine_fn luring_co_submit(BlockDriverState *bs, int fd, uint64_t offset,
-                                  QEMUIOVector *qiov, int type,
-                                  BdrvRequestFlags flags)
+                                  QEMUIOVector *qiov, int type)
 {
     int ret;
     AioContext *ctx = qemu_get_current_aio_context();
@@ -403,7 +393,7 @@ int coroutine_fn luring_co_submit(BlockDriverState *bs, int fd, uint64_t offset,
     };
     trace_luring_co_submit(bs, s, &luringcb, fd, offset, qiov ? qiov->size : 0,
                            type);
-    ret = luring_do_submit(fd, &luringcb, s, offset, type, flags);
+    ret = luring_do_submit(fd, &luringcb, s, offset, type);
 
     if (ret < 0) {
         return ret;
@@ -457,13 +447,4 @@ void luring_cleanup(LuringState *s)
     io_uring_queue_exit(&s->ring);
     trace_luring_cleanup_state(s);
     g_free(s);
-}
-
-bool luring_has_fua(void)
-{
-#ifdef HAVE_IO_URING_PREP_WRITEV2
-    return true;
-#else
-    return false;
-#endif
 }

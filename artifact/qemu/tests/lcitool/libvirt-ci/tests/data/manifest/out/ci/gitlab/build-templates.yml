@@ -28,7 +28,7 @@
       fi
     - cat /packages.txt
   variables:
-    IMAGE: $CI_REGISTRY/$CONTAINER_UPSTREAM_NAMESPACE/libvirt-go-xml-module/ci-$NAME:latest
+    IMAGE: $CI_REGISTRY/$RUN_UPSTREAM_NAMESPACE/libvirt-go-xml-module/ci-$NAME:latest
   rules:
     ### PUSH events
 
@@ -40,27 +40,19 @@
       when: on_success
 
     # forks: pushes to a branch when a pipeline run in upstream env is explicitly requested
-    - if: '$CI_PROJECT_NAMESPACE != $RUN_UPSTREAM_NAMESPACE && $CI_PIPELINE_SOURCE == "push" && $RUN_PIPELINE_UPSTREAM_ENV == "0"'
+    - if: '$CI_PROJECT_NAMESPACE != $RUN_UPSTREAM_NAMESPACE && $CI_PIPELINE_SOURCE == "push" && $RUN_PIPELINE_UPSTREAM_ENV && $JOB_OPTIONAL'
       when: manual
       allow_failure: true
-    - if: '$CI_PROJECT_NAMESPACE != $RUN_UPSTREAM_NAMESPACE && $CI_PIPELINE_SOURCE == "push" && $RUN_PIPELINE_UPSTREAM_ENV == "1" && $JOB_OPTIONAL'
-      when: manual
-      allow_failure: true
-    - if: '$CI_PROJECT_NAMESPACE != $RUN_UPSTREAM_NAMESPACE && $CI_PIPELINE_SOURCE == "push" && $RUN_PIPELINE_UPSTREAM_ENV == "1"'
+    - if: '$CI_PROJECT_NAMESPACE != $RUN_UPSTREAM_NAMESPACE && $CI_PIPELINE_SOURCE == "push" && $RUN_PIPELINE_UPSTREAM_ENV'
       when: on_success
 
     # forks: pushes to branches with pipeline requested
-    - if: '$CI_PROJECT_NAMESPACE != $RUN_UPSTREAM_NAMESPACE && $CI_PIPELINE_SOURCE == "push" && $RUN_PIPELINE == "0"'
+    - if: '$CI_PROJECT_NAMESPACE != $RUN_UPSTREAM_NAMESPACE && $CI_PIPELINE_SOURCE == "push" && $RUN_PIPELINE && $JOB_OPTIONAL'
       when: manual
       allow_failure: true
       variables:
         IMAGE: $TARGET_BASE_IMAGE
-    - if: '$CI_PROJECT_NAMESPACE != $RUN_UPSTREAM_NAMESPACE && $CI_PIPELINE_SOURCE == "push" && $RUN_PIPELINE == "1" && $JOB_OPTIONAL'
-      when: manual
-      allow_failure: true
-      variables:
-        IMAGE: $TARGET_BASE_IMAGE
-    - if: '$CI_PROJECT_NAMESPACE != $RUN_UPSTREAM_NAMESPACE && $CI_PIPELINE_SOURCE == "push" && $RUN_PIPELINE == "1"'
+    - if: '$CI_PROJECT_NAMESPACE != $RUN_UPSTREAM_NAMESPACE && $CI_PIPELINE_SOURCE == "push" && $RUN_PIPELINE'
       when: on_success
       variables:
         IMAGE: $TARGET_BASE_IMAGE
@@ -172,7 +164,7 @@
       fi
     - cat /packages.txt
   variables:
-    IMAGE: $CI_REGISTRY/$CONTAINER_UPSTREAM_NAMESPACE/libvirt-go-xml-module/ci-$NAME-cross-$CROSS:latest
+    IMAGE: $CI_REGISTRY/$RUN_UPSTREAM_NAMESPACE/libvirt-go-xml-module/ci-$NAME-cross-$CROSS:latest
   rules:
     ### PUSH events
 
@@ -184,27 +176,19 @@
       when: on_success
 
     # forks: pushes to a branch when a pipeline run in upstream env is explicitly requested
-    - if: '$CI_PROJECT_NAMESPACE != $RUN_UPSTREAM_NAMESPACE && $CI_PIPELINE_SOURCE == "push" && $RUN_PIPELINE_UPSTREAM_ENV == "0"'
+    - if: '$CI_PROJECT_NAMESPACE != $RUN_UPSTREAM_NAMESPACE && $CI_PIPELINE_SOURCE == "push" && $RUN_PIPELINE_UPSTREAM_ENV && $JOB_OPTIONAL'
       when: manual
       allow_failure: true
-    - if: '$CI_PROJECT_NAMESPACE != $RUN_UPSTREAM_NAMESPACE && $CI_PIPELINE_SOURCE == "push" && $RUN_PIPELINE_UPSTREAM_ENV == "1" && $JOB_OPTIONAL'
-      when: manual
-      allow_failure: true
-    - if: '$CI_PROJECT_NAMESPACE != $RUN_UPSTREAM_NAMESPACE && $CI_PIPELINE_SOURCE == "push" && $RUN_PIPELINE_UPSTREAM_ENV == "1"'
+    - if: '$CI_PROJECT_NAMESPACE != $RUN_UPSTREAM_NAMESPACE && $CI_PIPELINE_SOURCE == "push" && $RUN_PIPELINE_UPSTREAM_ENV'
       when: on_success
 
     # forks: pushes to branches with pipeline requested
-    - if: '$CI_PROJECT_NAMESPACE != $RUN_UPSTREAM_NAMESPACE && $CI_PIPELINE_SOURCE == "push" && $RUN_PIPELINE == "0"'
+    - if: '$CI_PROJECT_NAMESPACE != $RUN_UPSTREAM_NAMESPACE && $CI_PIPELINE_SOURCE == "push" && $RUN_PIPELINE && $JOB_OPTIONAL'
       when: manual
       allow_failure: true
       variables:
         IMAGE: $TARGET_BASE_IMAGE
-    - if: '$CI_PROJECT_NAMESPACE != $RUN_UPSTREAM_NAMESPACE && $CI_PIPELINE_SOURCE == "push" && $RUN_PIPELINE == "1" && $JOB_OPTIONAL'
-      when: manual
-      allow_failure: true
-      variables:
-        IMAGE: $TARGET_BASE_IMAGE
-    - if: '$CI_PROJECT_NAMESPACE != $RUN_UPSTREAM_NAMESPACE && $CI_PIPELINE_SOURCE == "push" && $RUN_PIPELINE == "1"'
+    - if: '$CI_PROJECT_NAMESPACE != $RUN_UPSTREAM_NAMESPACE && $CI_PIPELINE_SOURCE == "push" && $RUN_PIPELINE'
       when: on_success
       variables:
         IMAGE: $TARGET_BASE_IMAGE
@@ -311,21 +295,15 @@
       when: on_success
 
     # forks: pushes to branches with pipeline requested (including pipeline in upstream environment)
-    - if: '$CI_PROJECT_NAMESPACE != $RUN_UPSTREAM_NAMESPACE && $CI_PIPELINE_SOURCE == "push" && $RUN_PIPELINE == "0"'
+    - if: '$CI_PROJECT_NAMESPACE != $RUN_UPSTREAM_NAMESPACE && $CI_PIPELINE_SOURCE == "push" && $RUN_PIPELINE && $JOB_OPTIONAL'
       when: manual
       allow_failure: true
-    - if: '$CI_PROJECT_NAMESPACE != $RUN_UPSTREAM_NAMESPACE && $CI_PIPELINE_SOURCE == "push" && $RUN_PIPELINE == "1" && $JOB_OPTIONAL'
-      when: manual
-      allow_failure: true
-    - if: '$CI_PROJECT_NAMESPACE != $RUN_UPSTREAM_NAMESPACE && $CI_PIPELINE_SOURCE == "push" && $RUN_PIPELINE == "1"'
+    - if: '$CI_PROJECT_NAMESPACE != $RUN_UPSTREAM_NAMESPACE && $CI_PIPELINE_SOURCE == "push" && $RUN_PIPELINE'
       when: on_success
-    - if: '$CI_PROJECT_NAMESPACE != $RUN_UPSTREAM_NAMESPACE && $CI_PIPELINE_SOURCE == "push" && $RUN_PIPELINE_UPSTREAM_ENV == "0"'
+    - if: '$CI_PROJECT_NAMESPACE != $RUN_UPSTREAM_NAMESPACE && $CI_PIPELINE_SOURCE == "push" && $RUN_PIPELINE_UPSTREAM_ENV && $JOB_OPTIONAL'
       when: manual
       allow_failure: true
-    - if: '$CI_PROJECT_NAMESPACE != $RUN_UPSTREAM_NAMESPACE && $CI_PIPELINE_SOURCE == "push" && $RUN_PIPELINE_UPSTREAM_ENV == "1" && $JOB_OPTIONAL'
-      when: manual
-      allow_failure: true
-    - if: '$CI_PROJECT_NAMESPACE != $RUN_UPSTREAM_NAMESPACE && $CI_PIPELINE_SOURCE == "push" && $RUN_PIPELINE_UPSTREAM_ENV == "1"'
+    - if: '$CI_PROJECT_NAMESPACE != $RUN_UPSTREAM_NAMESPACE && $CI_PIPELINE_SOURCE == "push" && $RUN_PIPELINE_UPSTREAM_ENV'
       when: on_success
 
     # upstream+forks: Run pipelines on MR, web, api & scheduled

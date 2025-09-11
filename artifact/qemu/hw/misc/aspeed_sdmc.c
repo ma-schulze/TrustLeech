@@ -294,12 +294,13 @@ static const VMStateDescription vmstate_aspeed_sdmc = {
     }
 };
 
-static const Property aspeed_sdmc_properties[] = {
+static Property aspeed_sdmc_properties[] = {
     DEFINE_PROP_UINT64("max-ram-size", AspeedSDMCState, max_ram_size, 0),
     DEFINE_PROP_BOOL("unlocked", AspeedSDMCState, unlocked, false),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
-static void aspeed_sdmc_class_init(ObjectClass *klass, const void *data)
+static void aspeed_sdmc_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
     dc->realize = aspeed_sdmc_realize;
@@ -380,7 +381,7 @@ static void aspeed_2400_sdmc_write(AspeedSDMCState *s, uint32_t reg,
 static const uint64_t
 aspeed_2400_ram_sizes[] = { 64 * MiB, 128 * MiB, 256 * MiB, 512 * MiB, 0};
 
-static void aspeed_2400_sdmc_class_init(ObjectClass *klass, const void *data)
+static void aspeed_2400_sdmc_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
     AspeedSDMCClass *asc = ASPEED_SDMC_CLASS(klass);
@@ -448,7 +449,7 @@ static void aspeed_2500_sdmc_write(AspeedSDMCState *s, uint32_t reg,
 static const uint64_t
 aspeed_2500_ram_sizes[] = { 128 * MiB, 256 * MiB, 512 * MiB, 1024 * MiB, 0};
 
-static void aspeed_2500_sdmc_class_init(ObjectClass *klass, const void *data)
+static void aspeed_2500_sdmc_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
     AspeedSDMCClass *asc = ASPEED_SDMC_CLASS(klass);
@@ -542,7 +543,7 @@ static void aspeed_2600_sdmc_write(AspeedSDMCState *s, uint32_t reg,
 static const uint64_t
 aspeed_2600_ram_sizes[] = { 256 * MiB, 512 * MiB, 1024 * MiB, 2048 * MiB, 0};
 
-static void aspeed_2600_sdmc_class_init(ObjectClass *klass, const void *data)
+static void aspeed_2600_sdmc_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
     AspeedSDMCClass *asc = ASPEED_SDMC_CLASS(klass);
@@ -569,9 +570,6 @@ static void aspeed_2700_sdmc_reset(DeviceState *dev)
 
     /* Set ram size bit and defaults values */
     s->regs[R_MAIN_CONF] = asc->compute_conf(s, 0);
-
-    /* Skipping dram init */
-    s->regs[R_MAIN_CONTROL] = BIT(16);
 
     if (s->unlocked) {
         s->regs[R_2700_PROT] = PROT_UNLOCKED;
@@ -673,7 +671,7 @@ static const uint64_t
     aspeed_2700_ram_sizes[] = { 256 * MiB, 512 * MiB, 1024 * MiB,
                                 2048 * MiB, 4096 * MiB, 8192 * MiB, 0};
 
-static void aspeed_2700_sdmc_class_init(ObjectClass *klass, const void *data)
+static void aspeed_2700_sdmc_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
     AspeedSDMCClass *asc = ASPEED_SDMC_CLASS(klass);

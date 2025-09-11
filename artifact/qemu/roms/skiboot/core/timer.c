@@ -15,12 +15,12 @@
 #include <fsp.h>
 #include <device.h>
 #include <opal.h>
-#include <sbe.h>
+#include <sbe-p8.h>
+#include <sbe-p9.h>
 
 #ifdef __TEST__
 #define this_cpu()	((void *)-1)
 #define cpu_relax()
-static bool running_timer;
 #else
 #include <cpu.h>
 #endif
@@ -34,28 +34,12 @@ static LIST_HEAD(timer_poll_list);
 static bool timer_in_poll;
 static uint64_t timer_poll_gen;
 
-static inline bool this_cpu_is_running_timer(void)
-{
-#ifdef __TEST__
-	return running_timer;
-#else
-	return this_cpu()->running_timer;
-#endif
-}
-
-static inline void this_cpu_set_running_timer(bool running)
-{
-#ifdef __TEST__
-	running_timer = running;
-#else
-	this_cpu()->running_timer = running;
-#endif
-}
-
 static inline void update_timer_expiry(uint64_t target)
 {
-	if (sbe_timer_present())
-		sbe_update_timer_expiry(target);
+	if (proc_gen < proc_gen_p9)
+		p8_sbe_update_timer_expiry(target);
+	else
+		p9_sbe_update_timer_expiry(target);
 }
 
 void init_timer(struct timer *t, timer_func_t expiry, void *data)
@@ -137,18 +121,16 @@ static void __schedule_timer_at(struct timer *t, uint64_t when)
 		list_for_each(&timer_list, lt, link) {
 			if (when >= lt->target)
 				continue;
-			list_add_before(&timer_list, &lt->link, &t->link);
-			goto added;
+			list_add_before(&timer_list, &t->link, &lt->link);
+			goto bail;
 		}
 		list_add_tail(&timer_list, &t->link);
- added:
-		/* Timer running code will update expiry at the end */
-		if (!this_cpu_is_running_timer()) {
-			/* Pick the next timer and upddate the SBE HW timer */
-			lt = list_top(&timer_list, struct timer, link);
-			if (lt && (lt == t || when < lt->target))
-				update_timer_expiry(lt->target);
-		}
+	}
+ bail:
+	/* Pick up the next timer and upddate the SBE HW timer */
+	lt = list_top(&timer_list, struct timer, link);
+	if (lt) {
+		update_timer_expiry(lt->target);
 	}
 }
 
@@ -213,7 +195,6 @@ static void __check_poll_timers(uint64_t now)
 		/* Allright, first remove it and mark it running */
 		__remove_timer(t);
 		t->running = this_cpu();
-		this_cpu_set_running_timer(true);
 
 		/* Now we can unlock and call it's expiry */
 		unlock(&timer_lock);
@@ -221,7 +202,6 @@ static void __check_poll_timers(uint64_t now)
 
 		/* Re-lock and mark not running */
 		lock(&timer_lock);
-		this_cpu_set_running_timer(false);
 		t->running = NULL;
 	}
 	timer_in_poll = false;
@@ -235,12 +215,8 @@ static void __check_timers(uint64_t now)
 		t = list_top(&timer_list, struct timer, link);
 
 		/* Top of list not expired ? that's it ... */
-		if (!t)
+		if (!t || t->target > now)
 			break;
-		if (t->target > now) {
-			update_timer_expiry(t->target);
-			break;
-		}
 
 		/* Top of list still running, we have to delay handling
 		 * it. For now just skip until the next poll, when we have
@@ -253,7 +229,6 @@ static void __check_timers(uint64_t now)
 		/* Allright, first remove it and mark it running */
 		__remove_timer(t);
 		t->running = this_cpu();
-		this_cpu_set_running_timer(true);
 
 		/* Now we can unlock and call it's expiry */
 		unlock(&timer_lock);
@@ -261,7 +236,6 @@ static void __check_timers(uint64_t now)
 
 		/* Re-lock and mark not running */
 		lock(&timer_lock);
-		this_cpu_set_running_timer(false);
 		t->running = NULL;
 
 		/* Update time stamp */
@@ -313,7 +287,9 @@ void late_init_timers(void)
 	 */
 	if (platform.heartbeat_time) {
 		heartbeat = platform.heartbeat_time();
-	} else if (sbe_timer_present()) {
+	} else if (p9_sbe_timer_ok()) {
+		heartbeat = HEARTBEAT_DEFAULT_MS * 10;
+	} else if (p8_sbe_timer_ok()) {
 		heartbeat = HEARTBEAT_DEFAULT_MS * 10;
 	}
 

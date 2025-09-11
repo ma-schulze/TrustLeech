@@ -23,7 +23,6 @@
 #include "tcg/tcg-op-common.h"
 #include "tcg/tcg-mo.h"
 #include "tcg-internal.h"
-#include "tcg-has.h"
 
 /*
  * Vector optional opcode tracking.
@@ -144,7 +143,7 @@ bool tcg_can_emit_vecop_list(const TCGOpcode *list,
 void vec_gen_2(TCGOpcode opc, TCGType type, unsigned vece, TCGArg r, TCGArg a)
 {
     TCGOp *op = tcg_emit_op(opc, 2);
-    TCGOP_TYPE(op) = type;
+    TCGOP_VECL(op) = type - TCG_TYPE_V64;
     TCGOP_VECE(op) = vece;
     op->args[0] = r;
     op->args[1] = a;
@@ -154,7 +153,7 @@ void vec_gen_3(TCGOpcode opc, TCGType type, unsigned vece,
                TCGArg r, TCGArg a, TCGArg b)
 {
     TCGOp *op = tcg_emit_op(opc, 3);
-    TCGOP_TYPE(op) = type;
+    TCGOP_VECL(op) = type - TCG_TYPE_V64;
     TCGOP_VECE(op) = vece;
     op->args[0] = r;
     op->args[1] = a;
@@ -165,7 +164,7 @@ void vec_gen_4(TCGOpcode opc, TCGType type, unsigned vece,
                TCGArg r, TCGArg a, TCGArg b, TCGArg c)
 {
     TCGOp *op = tcg_emit_op(opc, 4);
-    TCGOP_TYPE(op) = type;
+    TCGOP_VECL(op) = type - TCG_TYPE_V64;
     TCGOP_VECE(op) = vece;
     op->args[0] = r;
     op->args[1] = a;
@@ -177,7 +176,7 @@ void vec_gen_6(TCGOpcode opc, TCGType type, unsigned vece, TCGArg r,
                TCGArg a, TCGArg b, TCGArg c, TCGArg d, TCGArg e)
 {
     TCGOp *op = tcg_emit_op(opc, 6);
-    TCGOP_TYPE(op) = type;
+    TCGOP_VECL(op) = type - TCG_TYPE_V64;
     TCGOP_VECE(op) = vece;
     op->args[0] = r;
     op->args[1] = a;

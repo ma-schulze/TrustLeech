@@ -50,8 +50,6 @@ struct VHostUserBlk {
     bool connected;
     /* vhost_user_blk_start/vhost_user_blk_stop */
     bool started_vu;
-
-    bool skip_get_vring_base_on_force_shutdown;
 };
 
 #endif

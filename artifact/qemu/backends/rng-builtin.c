@@ -6,11 +6,11 @@
  */
 
 #include "qemu/osdep.h"
-#include "system/rng.h"
+#include "sysemu/rng.h"
 #include "qemu/main-loop.h"
 #include "qemu/guest-random.h"
 #include "qom/object.h"
-#include "system/replay.h"
+#include "sysemu/replay.h"
 
 OBJECT_DECLARE_SIMPLE_TYPE(RngBuiltin, RNG_BUILTIN)
 
@@ -55,7 +55,7 @@ static void rng_builtin_finalize(Object *obj)
     qemu_bh_delete(s->bh);
 }
 
-static void rng_builtin_class_init(ObjectClass *klass, const void *data)
+static void rng_builtin_class_init(ObjectClass *klass, void *data)
 {
     RngBackendClass *rbc = RNG_BACKEND_CLASS(klass);
 

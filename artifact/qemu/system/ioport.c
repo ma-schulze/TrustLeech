@@ -26,9 +26,10 @@
  */
 
 #include "qemu/osdep.h"
-#include "system/ioport.h"
-#include "system/memory.h"
-#include "system/address-spaces.h"
+#include "cpu.h"
+#include "exec/ioport.h"
+#include "exec/memory.h"
+#include "exec/address-spaces.h"
 #include "trace.h"
 
 struct MemoryRegionPortioList {
@@ -257,7 +258,7 @@ static void portio_list_add_1(PortioList *piolist,
     object_ref(&mrpio->mr);
     object_unparent(OBJECT(&mrpio->mr));
     if (!piolist->owner) {
-        owner = machine_get_container("unattached");
+        owner = container_get(qdev_get_machine(), "/unattached");
     } else {
         owner = piolist->owner;
     }

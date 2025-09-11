@@ -90,8 +90,7 @@ void sdbus_set_voltage(SDBus *sdbus, uint16_t millivolts)
     }
 }
 
-size_t sdbus_do_command(SDBus *sdbus, SDRequest *req,
-                        uint8_t *resp, size_t respsz)
+int sdbus_do_command(SDBus *sdbus, SDRequest *req, uint8_t *response)
 {
     SDState *card = get_card(sdbus);
 
@@ -99,7 +98,7 @@ size_t sdbus_do_command(SDBus *sdbus, SDRequest *req,
     if (card) {
         SDCardClass *sc = SDMMC_COMMON_GET_CLASS(card);
 
-        return sc->do_command(card, req, resp, respsz);
+        return sc->do_command(card, req, response);
     }
 
     return 0;

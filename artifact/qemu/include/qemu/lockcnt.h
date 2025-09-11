@@ -17,7 +17,7 @@
 typedef struct QemuLockCnt QemuLockCnt;
 
 struct QemuLockCnt {
-#ifndef HAVE_FUTEX
+#ifndef CONFIG_LINUX
     QemuMutex mutex;
 #endif
     unsigned count;

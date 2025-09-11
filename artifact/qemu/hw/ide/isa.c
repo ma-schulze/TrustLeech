@@ -29,7 +29,7 @@
 #include "migration/vmstate.h"
 #include "qapi/error.h"
 #include "qemu/module.h"
-#include "system/dma.h"
+#include "sysemu/dma.h"
 
 #include "hw/ide/isa.h"
 #include "qom/object.h"
@@ -101,13 +101,14 @@ ISADevice *isa_ide_init(ISABus *bus, int iobase, int iobase2, int irqnum,
     return isadev;
 }
 
-static const Property isa_ide_properties[] = {
+static Property isa_ide_properties[] = {
     DEFINE_PROP_UINT32("iobase",  ISAIDEState, iobase,  0x1f0),
     DEFINE_PROP_UINT32("iobase2", ISAIDEState, iobase2, 0x3f6),
     DEFINE_PROP_UINT32("irq",     ISAIDEState, irqnum,  14),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
-static void isa_ide_class_initfn(ObjectClass *klass, const void *data)
+static void isa_ide_class_initfn(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
 

@@ -14,7 +14,7 @@
 
 #include "qemu/cutils.h"
 #include "libqtest.h"
-#include "qobject/qdict.h"
+#include "qapi/qmp/qdict.h"
 
 
 struct arch2cpu {

@@ -21,13 +21,13 @@
 #include <sys/ioctl.h>
 
 #include "qapi/error.h"
-#include "hw/vfio/vfio-device.h"
-#include "system/iommufd.h"
+#include "hw/vfio/vfio-common.h"
+#include "sysemu/iommufd.h"
 #include "hw/s390x/s390-ccw.h"
 #include "hw/s390x/vfio-ccw.h"
 #include "hw/qdev-properties.h"
 #include "hw/s390x/ccw-device.h"
-#include "system/address-spaces.h"
+#include "exec/address-spaces.h"
 #include "qemu/error-report.h"
 #include "qemu/main-loop.h"
 #include "qemu/module.h"
@@ -51,7 +51,16 @@ struct VFIOCCWDevice {
     EventNotifier crw_notifier;
     EventNotifier req_notifier;
     bool force_orb_pfch;
+    bool warned_orb_pfch;
 };
+
+static inline void warn_once_pfch(VFIOCCWDevice *vcdev, SubchDev *sch,
+                                  const char *msg)
+{
+    warn_report_once_cond(&vcdev->warned_orb_pfch,
+                          "vfio-ccw (devno %x.%x.%04x): %s",
+                          sch->cssid, sch->ssid, sch->devno, msg);
+}
 
 static void vfio_ccw_compute_needs_reset(VFIODevice *vdev)
 {
@@ -74,8 +83,7 @@ static IOInstEnding vfio_ccw_handle_request(SubchDev *sch)
 
     if (!(sch->orb.ctrl0 & ORB_CTRL0_MASK_PFCH) && vcdev->force_orb_pfch) {
         sch->orb.ctrl0 |= ORB_CTRL0_MASK_PFCH;
-        warn_report_once("vfio-ccw (devno %x.%x.%04x): PFCH flag forced",
-                         sch->cssid, sch->ssid, sch->devno);
+        warn_once_pfch(vcdev, sch, "PFCH flag forced");
     }
 
     QEMU_BUILD_BUG_ON(sizeof(region->orb_area) != sizeof(ORB));
@@ -376,8 +384,8 @@ static bool vfio_ccw_register_irq_notifier(VFIOCCWDevice *vcdev,
                                            Error **errp)
 {
     VFIODevice *vdev = &vcdev->vdev;
-    struct vfio_irq_info irq_info;
-    int ret;
+    g_autofree struct vfio_irq_info *irq_info = NULL;
+    size_t argsz;
     int fd;
     EventNotifier *notifier;
     IOHandler *fd_read;
@@ -406,15 +414,13 @@ static bool vfio_ccw_register_irq_notifier(VFIOCCWDevice *vcdev,
         return false;
     }
 
-    ret = vfio_device_get_irq_info(vdev, irq, &irq_info);
-
-    if (ret < 0) {
-        error_setg_errno(errp, -ret, "vfio: Error getting irq info");
-        return false;
-    }
-
-    if (irq_info.count < 1) {
-        error_setg(errp, "vfio: Error getting irq info, count=0");
+    argsz = sizeof(*irq_info);
+    irq_info = g_malloc0(argsz);
+    irq_info->index = irq;
+    irq_info->argsz = argsz;
+    if (ioctl(vdev->fd, VFIO_DEVICE_GET_IRQ_INFO,
+              irq_info) < 0 || irq_info->count < 1) {
+        error_setg_errno(errp, errno, "vfio: Error getting irq info");
         return false;
     }
 
@@ -428,8 +434,8 @@ static bool vfio_ccw_register_irq_notifier(VFIOCCWDevice *vcdev,
     fd = event_notifier_get_fd(notifier);
     qemu_set_fd_handler(fd, fd_read, NULL, vcdev);
 
-    if (!vfio_device_irq_set_signaling(vdev, irq, 0,
-                                       VFIO_IRQ_SET_ACTION_TRIGGER, fd, errp)) {
+    if (!vfio_set_irq_signaling(vdev, irq, 0,
+                                VFIO_IRQ_SET_ACTION_TRIGGER, fd, errp)) {
         qemu_set_fd_handler(fd, NULL, NULL, vcdev);
         event_notifier_cleanup(notifier);
     }
@@ -458,8 +464,8 @@ static void vfio_ccw_unregister_irq_notifier(VFIOCCWDevice *vcdev,
         return;
     }
 
-    if (!vfio_device_irq_set_signaling(&vcdev->vdev, irq, 0,
-                                       VFIO_IRQ_SET_ACTION_TRIGGER, -1, &err)) {
+    if (!vfio_set_irq_signaling(&vcdev->vdev, irq, 0,
+                                VFIO_IRQ_SET_ACTION_TRIGGER, -1, &err)) {
         warn_reportf_err(err, VFIO_MSG_PREFIX, vcdev->vdev.name);
     }
 
@@ -490,7 +496,7 @@ static bool vfio_ccw_get_region(VFIOCCWDevice *vcdev, Error **errp)
         return false;
     }
 
-    ret = vfio_device_get_region_info(vdev, VFIO_CCW_CONFIG_REGION_INDEX, &info);
+    ret = vfio_get_region_info(vdev, VFIO_CCW_CONFIG_REGION_INDEX, &info);
     if (ret) {
         error_setg_errno(errp, -ret, "vfio: Error getting config info");
         return false;
@@ -504,10 +510,11 @@ static bool vfio_ccw_get_region(VFIOCCWDevice *vcdev, Error **errp)
 
     vcdev->io_region_offset = info->offset;
     vcdev->io_region = g_malloc0(info->size);
+    g_free(info);
 
     /* check for the optional async command region */
-    ret = vfio_device_get_region_info_type(vdev, VFIO_REGION_TYPE_CCW,
-                                           VFIO_REGION_SUBTYPE_CCW_ASYNC_CMD, &info);
+    ret = vfio_get_dev_region_info(vdev, VFIO_REGION_TYPE_CCW,
+                                   VFIO_REGION_SUBTYPE_CCW_ASYNC_CMD, &info);
     if (!ret) {
         vcdev->async_cmd_region_size = info->size;
         if (sizeof(*vcdev->async_cmd_region) != vcdev->async_cmd_region_size) {
@@ -516,10 +523,11 @@ static bool vfio_ccw_get_region(VFIOCCWDevice *vcdev, Error **errp)
         }
         vcdev->async_cmd_region_offset = info->offset;
         vcdev->async_cmd_region = g_malloc0(info->size);
+        g_free(info);
     }
 
-    ret = vfio_device_get_region_info_type(vdev, VFIO_REGION_TYPE_CCW,
-                                           VFIO_REGION_SUBTYPE_CCW_SCHIB, &info);
+    ret = vfio_get_dev_region_info(vdev, VFIO_REGION_TYPE_CCW,
+                                   VFIO_REGION_SUBTYPE_CCW_SCHIB, &info);
     if (!ret) {
         vcdev->schib_region_size = info->size;
         if (sizeof(*vcdev->schib_region) != vcdev->schib_region_size) {
@@ -528,10 +536,11 @@ static bool vfio_ccw_get_region(VFIOCCWDevice *vcdev, Error **errp)
         }
         vcdev->schib_region_offset = info->offset;
         vcdev->schib_region = g_malloc(info->size);
+        g_free(info);
     }
 
-    ret = vfio_device_get_region_info_type(vdev, VFIO_REGION_TYPE_CCW,
-                                           VFIO_REGION_SUBTYPE_CCW_CRW, &info);
+    ret = vfio_get_dev_region_info(vdev, VFIO_REGION_TYPE_CCW,
+                                   VFIO_REGION_SUBTYPE_CCW_CRW, &info);
 
     if (!ret) {
         vcdev->crw_region_size = info->size;
@@ -541,6 +550,7 @@ static bool vfio_ccw_get_region(VFIOCCWDevice *vcdev, Error **errp)
         }
         vcdev->crw_region_offset = info->offset;
         vcdev->crw_region = g_malloc(info->size);
+        g_free(info);
     }
 
     return true;
@@ -550,6 +560,7 @@ out_err:
     g_free(vcdev->schib_region);
     g_free(vcdev->async_cmd_region);
     g_free(vcdev->io_region);
+    g_free(info);
     return false;
 }
 
@@ -580,7 +591,7 @@ static void vfio_ccw_realize(DeviceState *dev, Error **errp)
         goto out_unrealize;
     }
 
-    if (!vfio_device_attach(cdev->mdevid, vbasedev,
+    if (!vfio_attach_device(cdev->mdevid, vbasedev,
                             &address_space_memory, errp)) {
         goto out_attach_dev_err;
     }
@@ -617,9 +628,9 @@ out_irq_notifier_err:
 out_io_notifier_err:
     vfio_ccw_put_region(vcdev);
 out_region_err:
-    vfio_device_detach(vbasedev);
+    vfio_detach_device(vbasedev);
 out_attach_dev_err:
-    vfio_device_free_name(vbasedev);
+    g_free(vbasedev->name);
 out_unrealize:
     if (cdc->unrealize) {
         cdc->unrealize(cdev);
@@ -636,15 +647,15 @@ static void vfio_ccw_unrealize(DeviceState *dev)
     vfio_ccw_unregister_irq_notifier(vcdev, VFIO_CCW_CRW_IRQ_INDEX);
     vfio_ccw_unregister_irq_notifier(vcdev, VFIO_CCW_IO_IRQ_INDEX);
     vfio_ccw_put_region(vcdev);
-    vfio_device_detach(&vcdev->vdev);
-    vfio_device_free_name(&vcdev->vdev);
+    vfio_detach_device(&vcdev->vdev);
+    g_free(vcdev->vdev.name);
 
     if (cdc->unrealize) {
         cdc->unrealize(cdev);
     }
 }
 
-static const Property vfio_ccw_properties[] = {
+static Property vfio_ccw_properties[] = {
     DEFINE_PROP_STRING("sysfsdev", VFIOCCWDevice, vdev.sysfsdev),
     DEFINE_PROP_BOOL("force-orb-pfch", VFIOCCWDevice, force_orb_pfch, false),
 #ifdef CONFIG_IOMMUFD
@@ -652,6 +663,7 @@ static const Property vfio_ccw_properties[] = {
                      TYPE_IOMMUFD_BACKEND, IOMMUFDBackend *),
 #endif
     DEFINE_PROP_CCW_LOADPARM("loadparm", CcwDevice, loadparm),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
 static const VMStateDescription vfio_ccw_vmstate = {
@@ -686,7 +698,7 @@ static void vfio_ccw_set_fd(Object *obj, const char *str, Error **errp)
 }
 #endif
 
-static void vfio_ccw_class_init(ObjectClass *klass, const void *data)
+static void vfio_ccw_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
     S390CCWDeviceClass *cdc = S390_CCW_DEVICE_CLASS(klass);
@@ -706,21 +718,6 @@ static void vfio_ccw_class_init(ObjectClass *klass, const void *data)
     cdc->handle_halt = vfio_ccw_handle_halt;
     cdc->handle_clear = vfio_ccw_handle_clear;
     cdc->handle_store = vfio_ccw_handle_store;
-
-    object_class_property_set_description(klass, /* 2.10 */
-                                          "sysfsdev",
-                                          "Host sysfs path of assigned device");
-    object_class_property_set_description(klass, /* 3.0 */
-                                          "force-orb-pfch",
-                                          "Force unlimited prefetch");
-#ifdef CONFIG_IOMMUFD
-    object_class_property_set_description(klass, /* 9.0 */
-                                          "iommufd",
-                                          "Set host IOMMUFD backend device");
-#endif
-    object_class_property_set_description(klass, /* 9.2 */
-                                          "loadparm",
-                                          "Define which devices that can be used for booting");
 }
 
 static const TypeInfo vfio_ccw_info = {

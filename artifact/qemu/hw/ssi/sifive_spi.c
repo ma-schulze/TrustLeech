@@ -328,11 +328,12 @@ static void sifive_spi_realize(DeviceState *dev, Error **errp)
     fifo8_create(&s->rx_fifo, FIFO_CAPACITY);
 }
 
-static const Property sifive_spi_properties[] = {
+static Property sifive_spi_properties[] = {
     DEFINE_PROP_UINT32("num-cs", SiFiveSPIState, num_cs, 1),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
-static void sifive_spi_class_init(ObjectClass *klass, const void *data)
+static void sifive_spi_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
 

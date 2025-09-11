@@ -9,7 +9,7 @@
  */
 
 #include "qemu/osdep.h"
-#include "system/qtest.h"
+#include "sysemu/qtest.h"
 
 /* Needed for qtest_allowed() */
 bool qtest_allowed;

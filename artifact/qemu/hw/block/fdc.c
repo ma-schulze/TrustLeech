@@ -39,9 +39,9 @@
 #include "hw/qdev-properties-system.h"
 #include "migration/vmstate.h"
 #include "hw/block/block.h"
-#include "system/block-backend.h"
-#include "system/blockdev.h"
-#include "system/system.h"
+#include "sysemu/block-backend.h"
+#include "sysemu/blockdev.h"
+#include "sysemu/sysemu.h"
 #include "qemu/log.h"
 #include "qemu/main-loop.h"
 #include "qemu/module.h"
@@ -454,12 +454,13 @@ struct FloppyDrive {
     FloppyDriveType type;
 };
 
-static const Property floppy_drive_properties[] = {
+static Property floppy_drive_properties[] = {
     DEFINE_PROP_UINT32("unit", FloppyDrive, unit, -1),
     DEFINE_BLOCK_PROPERTIES(FloppyDrive, conf),
     DEFINE_PROP_SIGNED("drive-type", FloppyDrive, type,
                         FLOPPY_DRIVE_TYPE_AUTO, qdev_prop_fdc_drive_type,
                         FloppyDriveType),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
 static void floppy_drive_realize(DeviceState *qdev, Error **errp)
@@ -553,7 +554,7 @@ static void floppy_drive_realize(DeviceState *qdev, Error **errp)
     fd_revalidate(drive);
 }
 
-static void floppy_drive_class_init(ObjectClass *klass, const void *data)
+static void floppy_drive_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *k = DEVICE_CLASS(klass);
     k->realize = floppy_drive_realize;

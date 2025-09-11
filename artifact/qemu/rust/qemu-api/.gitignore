@@ -1,2 +1,2 @@
 # Ignore generated bindings file overrides.
-/src/bindings.inc.rs
+src/bindings.rs

@@ -16,9 +16,8 @@
 #define QEMU_VIRTIO_BALLOON_H
 
 #include "standard-headers/linux/virtio_balloon.h"
-#include "hw/resettable.h"
 #include "hw/virtio/virtio.h"
-#include "system/iothread.h"
+#include "sysemu/iothread.h"
 #include "qom/object.h"
 
 #define TYPE_VIRTIO_BALLOON "virtio-balloon-device"
@@ -72,9 +71,6 @@ struct VirtIOBalloon {
 
     bool qemu_4_0_config_size;
     uint32_t poison_val;
-
-    /* State of the resettable container */
-    ResettableState reset_state;
 };
 
 #endif

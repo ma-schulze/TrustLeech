@@ -259,8 +259,9 @@ static const MemoryRegionOps avr_usart_ops = {
     .impl = {.min_access_size = 1, .max_access_size = 1}
 };
 
-static const Property avr_usart_properties[] = {
+static Property avr_usart_properties[] = {
     DEFINE_PROP_CHR("chardev", AVRUsartState, chr),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
 static void avr_usart_pr(void *opaque, int irq, int level)
@@ -295,7 +296,7 @@ static void avr_usart_realize(DeviceState *dev, Error **errp)
     avr_usart_reset(dev);
 }
 
-static void avr_usart_class_init(ObjectClass *klass, const void *data)
+static void avr_usart_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
 

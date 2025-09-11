@@ -13,7 +13,7 @@
 #define BACKENDS_TPM_INT_H
 
 #include "qemu/option.h"
-#include "system/tpm.h"
+#include "sysemu/tpm.h"
 
 #define TPM_STANDARD_CMDLINE_OPTS \
     { \

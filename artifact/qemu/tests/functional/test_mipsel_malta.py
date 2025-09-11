@@ -9,11 +9,13 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
+import os
+
 from qemu_test import QemuSystemTest, LinuxKernelTest, Asset
 from qemu_test import interrupt_interactive_console_until_pattern
 from qemu_test import wait_for_console_pattern
-
-from test_mips_malta import mips_check_wheezy
+from qemu_test.utils import lzma_uncompress
+from zipfile import ZipFile
 
 
 class MaltaMachineConsole(LinuxKernelTest):
@@ -34,8 +36,9 @@ class MaltaMachineConsole(LinuxKernelTest):
          'generic_nano32r6el_page64k_dbg.xz'),
         'ce21ff4b07a981ecb8a39db2876616f5a2473eb2ab459c6f67465b9914b0c6b6')
 
-    def do_test_mips_malta32el_nanomips(self, kernel):
-        kernel_path = self.uncompress(kernel)
+    def do_test_mips_malta32el_nanomips(self, kernel_path_xz):
+        kernel_path = os.path.join(self.workdir, 'kernel')
+        lzma_uncompress(kernel_path_xz, kernel_path)
 
         self.set_machine('malta')
         self.vm.set_console()
@@ -51,33 +54,16 @@ class MaltaMachineConsole(LinuxKernelTest):
         self.wait_for_console_pattern(console_pattern)
 
     def test_mips_malta32el_nanomips_4k(self):
-        self.do_test_mips_malta32el_nanomips(self.ASSET_KERNEL_4K)
+        kernel_path_xz = self.ASSET_KERNEL_4K.fetch()
+        self.do_test_mips_malta32el_nanomips(kernel_path_xz)
 
     def test_mips_malta32el_nanomips_16k_up(self):
-        self.do_test_mips_malta32el_nanomips(self.ASSET_KERNEL_16K)
+        kernel_path_xz = self.ASSET_KERNEL_16K.fetch()
+        self.do_test_mips_malta32el_nanomips(kernel_path_xz)
 
     def test_mips_malta32el_nanomips_64k_dbg(self):
-        self.do_test_mips_malta32el_nanomips(self.ASSET_KERNEL_64K)
-
-    ASSET_WHEEZY_KERNEL = Asset(
-        ('https://people.debian.org/~aurel32/qemu/mipsel/'
-         'vmlinux-3.2.0-4-4kc-malta'),
-        'dc8a3648305b0201ca7a5cd135fe2890067a65d93c38728022bb0e656ad2bf9a')
-
-    ASSET_WHEEZY_DISK = Asset(
-        ('https://people.debian.org/~aurel32/qemu/mipsel/'
-         'debian_wheezy_mipsel_standard.qcow2'),
-        '454f09ae39f7e6461c84727b927100d2c7813841f2a0a5dce328114887ecf914')
-
-    def test_wheezy(self):
-        kernel_path = self.ASSET_WHEEZY_KERNEL.fetch()
-        image_path = self.ASSET_WHEEZY_DISK.fetch()
-        kernel_command_line = (self.KERNEL_COMMON_COMMAND_LINE
-                               + 'console=ttyS0 root=/dev/sda1')
-        mips_check_wheezy(self,
-            kernel_path, image_path, kernel_command_line,
-            dl_file='/boot/initrd.img-3.2.0-4-4kc-malta',
-            hsum='9fc9f250ed56a74e35e704ddfd5a1c5a5625adefc5c9da91f649288d3ca000f0')
+        kernel_path_xz = self.ASSET_KERNEL_16K.fetch()
+        self.do_test_mips_malta32el_nanomips(kernel_path_xz)
 
 
 class MaltaMachineYAMON(QemuSystemTest):
@@ -89,8 +75,10 @@ class MaltaMachineYAMON(QemuSystemTest):
 
     def test_mipsel_malta_yamon(self):
         yamon_bin = 'yamon-02.22.bin'
-        self.archive_extract(self.ASSET_YAMON_ROM)
-        yamon_path = self.scratch_file(yamon_bin)
+        zip_path = self.ASSET_YAMON_ROM.fetch()
+        with ZipFile(zip_path, 'r') as zf:
+            zf.extract(yamon_bin, path=self.workdir)
+        yamon_path = os.path.join(self.workdir, yamon_bin)
 
         self.set_machine('malta')
         self.vm.set_console()

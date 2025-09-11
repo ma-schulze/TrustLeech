@@ -16,8 +16,8 @@
  */
 
 #include "qemu/osdep.h"
-#include "system/reset.h"
-#include "system/watchdog.h"
+#include "sysemu/reset.h"
+#include "sysemu/watchdog.h"
 #include "hw/qdev-properties.h"
 #include "hw/watchdog/sbsa_gwdt.h"
 #include "qemu/timer.h"
@@ -174,6 +174,7 @@ static void sbsa_gwdt_write(void *opaque, hwaddr offset, uint64_t data,
         qemu_log_mask(LOG_GUEST_ERROR, "bad address in control frame write :"
                 " 0x%x\n", (int)offset);
     }
+    return;
 }
 
 static void wdt_sbsa_gwdt_reset(DeviceState *dev)
@@ -261,7 +262,7 @@ static void wdt_sbsa_gwdt_realize(DeviceState *dev, Error **errp)
                 dev);
 }
 
-static const Property wdt_sbsa_gwdt_props[] = {
+static Property wdt_sbsa_gwdt_props[] = {
     /*
      * Timer frequency in Hz. This must match the frequency used by
      * the CPU's generic timer. Default 62.5Hz matches QEMU's legacy
@@ -269,9 +270,10 @@ static const Property wdt_sbsa_gwdt_props[] = {
      */
     DEFINE_PROP_UINT64("clock-frequency", struct SBSA_GWDTState, freq,
                        62500000),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
-static void wdt_sbsa_gwdt_class_init(ObjectClass *klass, const void *data)
+static void wdt_sbsa_gwdt_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
 

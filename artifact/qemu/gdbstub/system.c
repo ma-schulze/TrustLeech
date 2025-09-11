@@ -19,12 +19,9 @@
 #include "gdbstub/commands.h"
 #include "exec/hwaddr.h"
 #include "exec/tb-flush.h"
-#include "accel/accel-ops.h"
-#include "accel/accel-cpu-ops.h"
-#include "system/cpus.h"
-#include "system/runstate.h"
-#include "system/replay.h"
-#include "system/tcg.h"
+#include "sysemu/cpus.h"
+#include "sysemu/runstate.h"
+#include "sysemu/replay.h"
 #include "hw/core/cpu.h"
 #include "hw/cpu/cluster.h"
 #include "hw/boards.h"
@@ -174,9 +171,7 @@ static void gdb_vm_state_change(void *opaque, bool running, RunState state)
         } else {
             trace_gdbstub_hit_break();
         }
-        if (tcg_enabled()) {
-            tb_flush(cpu);
-        }
+        tb_flush(cpu);
         ret = GDB_SIGNAL_TRAP;
         break;
     case RUN_STATE_PAUSED:
@@ -244,7 +239,7 @@ static void gdb_monitor_open(Chardev *chr, ChardevBackend *backend,
     *be_opened = false;
 }
 
-static void char_gdb_class_init(ObjectClass *oc, const void *data)
+static void char_gdb_class_init(ObjectClass *oc, void *data)
 {
     ChardevClass *cc = CHARDEV_CLASS(oc);
 
@@ -335,27 +330,26 @@ static void create_processes(GDBState *s)
     gdb_create_default_process(s);
 }
 
-bool gdbserver_start(const char *device, Error **errp)
+int gdbserver_start(const char *device)
 {
     Chardev *chr = NULL;
     Chardev *mon_chr;
     g_autoptr(GString) cs = g_string_new(device);
 
     if (!first_cpu) {
-        error_setg(errp, "gdbstub: meaningless to attach gdb to a "
-                   "machine without any CPU.");
-        return false;
+        error_report("gdbstub: meaningless to attach gdb to a "
+                     "machine without any CPU.");
+        return -1;
     }
 
     if (!gdb_supports_guest_debug()) {
-        error_setg(errp, "gdbstub: current accelerator doesn't "
-                   "support guest debugging");
-        return false;
+        error_report("gdbstub: current accelerator doesn't "
+                     "support guest debugging");
+        return -1;
     }
 
     if (cs->len == 0) {
-        error_setg(errp, "gdbstub: missing connection string");
-        return false;
+        return -1;
     }
 
     trace_gdbstub_op_start(cs->str);
@@ -380,8 +374,7 @@ bool gdbserver_start(const char *device, Error **errp)
          */
         chr = qemu_chr_new_noreplay("gdb", cs->str, true, NULL);
         if (!chr) {
-            error_setg(errp, "gdbstub: couldn't create chardev");
-            return false;
+            return -1;
         }
     }
 
@@ -413,7 +406,7 @@ bool gdbserver_start(const char *device, Error **errp)
     gdbserver_system_state.mon_chr = mon_chr;
     gdb_syscall_reset();
 
-    return true;
+    return 0;
 }
 
 static void register_types(void)
@@ -457,6 +450,8 @@ static int phy_memory_mode;
 int gdb_target_memory_rw_debug(CPUState *cpu, hwaddr addr,
                                uint8_t *buf, int len, bool is_write)
 {
+    CPUClass *cc;
+
     if (phy_memory_mode) {
         if (is_write) {
             cpu_physical_memory_write(addr, buf, len);
@@ -466,8 +461,9 @@ int gdb_target_memory_rw_debug(CPUState *cpu, hwaddr addr,
         return 0;
     }
 
-    if (cpu->cc->memory_rw_debug) {
-        return cpu->cc->memory_rw_debug(cpu, addr, buf, len, is_write);
+    cc = CPU_GET_CLASS(cpu);
+    if (cc->memory_rw_debug) {
+        return cc->memory_rw_debug(cpu, addr, buf, len, is_write);
     }
 
     return cpu_memory_rw_debug(cpu, addr, buf, len, is_write);

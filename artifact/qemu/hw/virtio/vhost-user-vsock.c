@@ -54,28 +54,23 @@ const VhostDevConfigOps vsock_ops = {
     .vhost_dev_config_notifier = vuv_handle_config_change,
 };
 
-static int vuv_set_status(VirtIODevice *vdev, uint8_t status)
+static void vuv_set_status(VirtIODevice *vdev, uint8_t status)
 {
     VHostVSockCommon *vvc = VHOST_VSOCK_COMMON(vdev);
     bool should_start = virtio_device_should_start(vdev, status);
-    int ret;
 
     if (vhost_dev_is_started(&vvc->vhost_dev) == should_start) {
-        return 0;
+        return;
     }
 
     if (should_start) {
-        ret = vhost_vsock_common_start(vdev);
+        int ret = vhost_vsock_common_start(vdev);
         if (ret < 0) {
-            return ret;
+            return;
         }
     } else {
-        ret = vhost_vsock_common_stop(vdev);
-        if (ret < 0) {
-            return ret;
-        }
+        vhost_vsock_common_stop(vdev);
     }
-    return 0;
 }
 
 static uint64_t vuv_get_features(VirtIODevice *vdev,
@@ -133,6 +128,7 @@ err_vhost_dev:
 err_virtio:
     vhost_vsock_common_unrealize(vdev);
     vhost_user_cleanup(&vsock->vhost_user);
+    return;
 }
 
 static void vuv_device_unrealize(DeviceState *dev)
@@ -152,11 +148,12 @@ static void vuv_device_unrealize(DeviceState *dev)
 
 }
 
-static const Property vuv_properties[] = {
+static Property vuv_properties[] = {
     DEFINE_PROP_CHR("chardev", VHostUserVSock, conf.chardev),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
-static void vuv_class_init(ObjectClass *klass, const void *data)
+static void vuv_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
     VirtioDeviceClass *vdc = VIRTIO_DEVICE_CLASS(klass);

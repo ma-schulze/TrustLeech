@@ -18,8 +18,9 @@
 
 #define I2C_BROADCAST 0x00
 
-static const Property i2c_props[] = {
+static Property i2c_props[] = {
     DEFINE_PROP_UINT8("address", struct I2CSlave, address, 0),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
 static const TypeInfo i2c_bus_info = {
@@ -401,7 +402,7 @@ static bool i2c_slave_match(I2CSlave *candidate, uint8_t address,
     return false;
 }
 
-static void i2c_slave_class_init(ObjectClass *klass, const void *data)
+static void i2c_slave_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *k = DEVICE_CLASS(klass);
     I2CSlaveClass *sc = I2C_SLAVE_CLASS(klass);

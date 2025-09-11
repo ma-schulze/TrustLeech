@@ -24,7 +24,7 @@
 #include "migration/vmstate.h"
 #include "qemu/log.h"
 #include "qemu/module.h"
-#include "system/address-spaces.h"
+#include "exec/address-spaces.h"
 #include "hw/qdev-properties.h"
 #include "qapi/error.h"
 #include "hw/misc/allwinner-h3-dramc.h"
@@ -219,7 +219,7 @@ static void allwinner_h3_dramphy_write(void *opaque, hwaddr offset,
 static const MemoryRegionOps allwinner_h3_dramcom_ops = {
     .read = allwinner_h3_dramcom_read,
     .write = allwinner_h3_dramcom_write,
-    .endianness = DEVICE_LITTLE_ENDIAN,
+    .endianness = DEVICE_NATIVE_ENDIAN,
     .valid = {
         .min_access_size = 4,
         .max_access_size = 4,
@@ -230,7 +230,7 @@ static const MemoryRegionOps allwinner_h3_dramcom_ops = {
 static const MemoryRegionOps allwinner_h3_dramctl_ops = {
     .read = allwinner_h3_dramctl_read,
     .write = allwinner_h3_dramctl_write,
-    .endianness = DEVICE_LITTLE_ENDIAN,
+    .endianness = DEVICE_NATIVE_ENDIAN,
     .valid = {
         .min_access_size = 4,
         .max_access_size = 4,
@@ -241,7 +241,7 @@ static const MemoryRegionOps allwinner_h3_dramctl_ops = {
 static const MemoryRegionOps allwinner_h3_dramphy_ops = {
     .read = allwinner_h3_dramphy_read,
     .write = allwinner_h3_dramphy_write,
-    .endianness = DEVICE_LITTLE_ENDIAN,
+    .endianness = DEVICE_NATIVE_ENDIAN,
     .valid = {
         .min_access_size = 4,
         .max_access_size = 4,
@@ -314,9 +314,10 @@ static void allwinner_h3_dramc_init(Object *obj)
     sysbus_init_mmio(sbd, &s->dramphy_iomem);
 }
 
-static const Property allwinner_h3_dramc_properties[] = {
+static Property allwinner_h3_dramc_properties[] = {
     DEFINE_PROP_UINT64("ram-addr", AwH3DramCtlState, ram_addr, 0x0),
     DEFINE_PROP_UINT32("ram-size", AwH3DramCtlState, ram_size, 256 * MiB),
+    DEFINE_PROP_END_OF_LIST()
 };
 
 static const VMStateDescription allwinner_h3_dramc_vmstate = {
@@ -331,7 +332,7 @@ static const VMStateDescription allwinner_h3_dramc_vmstate = {
     }
 };
 
-static void allwinner_h3_dramc_class_init(ObjectClass *klass, const void *data)
+static void allwinner_h3_dramc_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
 

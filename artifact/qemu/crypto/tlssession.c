@@ -19,8 +19,6 @@
  */
 
 #include "qemu/osdep.h"
-#include "qemu/error-report.h"
-#include "qemu/thread.h"
 #include "crypto/tlssession.h"
 #include "crypto/tlscredsanon.h"
 #include "crypto/tlscredspsk.h"
@@ -53,14 +51,6 @@ struct QCryptoTLSSession {
      */
     Error *rerr;
     Error *werr;
-
-    /*
-     * Used to protect against broken GNUTLS thread safety
-     * https://gitlab.com/gnutls/gnutls/-/issues/1717
-     */
-    bool requireThreadSafety;
-    bool lockEnabled;
-    QemuMutex lock;
 };
 
 
@@ -79,7 +69,6 @@ qcrypto_tls_session_free(QCryptoTLSSession *session)
     g_free(session->peername);
     g_free(session->authzid);
     object_unref(OBJECT(session->creds));
-    qemu_mutex_destroy(&session->lock);
     g_free(session);
 }
 
@@ -95,19 +84,10 @@ qcrypto_tls_session_push(void *opaque, const void *buf, size_t len)
         return -1;
     };
 
-    if (session->lockEnabled) {
-        qemu_mutex_unlock(&session->lock);
-    }
-
     error_free(session->werr);
     session->werr = NULL;
 
     ret = session->writeFunc(buf, len, session->opaque, &session->werr);
-
-    if (session->lockEnabled) {
-        qemu_mutex_lock(&session->lock);
-    }
-
     if (ret == QCRYPTO_TLS_SESSION_ERR_BLOCK) {
         errno = EAGAIN;
         return -1;
@@ -134,16 +114,7 @@ qcrypto_tls_session_pull(void *opaque, void *buf, size_t len)
     error_free(session->rerr);
     session->rerr = NULL;
 
-    if (session->lockEnabled) {
-        qemu_mutex_unlock(&session->lock);
-    }
-
     ret = session->readFunc(buf, len, session->opaque, &session->rerr);
-
-    if (session->lockEnabled) {
-        qemu_mutex_lock(&session->lock);
-    }
-
     if (ret == QCRYPTO_TLS_SESSION_ERR_BLOCK) {
         errno = EAGAIN;
         return -1;
@@ -181,8 +152,6 @@ qcrypto_tls_session_new(QCryptoTLSCreds *creds,
     }
     session->creds = creds;
     object_ref(OBJECT(creds));
-
-    qemu_mutex_init(&session->lock);
 
     if (creds->endpoint != endpoint) {
         error_setg(errp, "Credentials endpoint doesn't match session");
@@ -318,11 +287,6 @@ qcrypto_tls_session_new(QCryptoTLSCreds *creds,
  error:
     qcrypto_tls_session_free(session);
     return NULL;
-}
-
-void qcrypto_tls_session_require_thread_safety(QCryptoTLSSession *sess)
-{
-    sess->requireThreadSafety = true;
 }
 
 static int
@@ -516,17 +480,7 @@ qcrypto_tls_session_write(QCryptoTLSSession *session,
                           size_t len,
                           Error **errp)
 {
-    ssize_t ret;
-
-    if (session->lockEnabled) {
-        qemu_mutex_lock(&session->lock);
-    }
-
-    ret = gnutls_record_send(session->handle, buf, len);
-
-    if (session->lockEnabled) {
-        qemu_mutex_unlock(&session->lock);
-    }
+    ssize_t ret = gnutls_record_send(session->handle, buf, len);
 
     if (ret < 0) {
         if (ret == GNUTLS_E_AGAIN) {
@@ -555,17 +509,7 @@ qcrypto_tls_session_read(QCryptoTLSSession *session,
                          bool gracefulTermination,
                          Error **errp)
 {
-    ssize_t ret;
-
-    if (session->lockEnabled) {
-        qemu_mutex_lock(&session->lock);
-    }
-
-    ret = gnutls_record_recv(session->handle, buf, len);
-
-    if (session->lockEnabled) {
-        qemu_mutex_unlock(&session->lock);
-    }
+    ssize_t ret = gnutls_record_recv(session->handle, buf, len);
 
     if (ret < 0) {
         if (ret == GNUTLS_E_AGAIN) {
@@ -601,108 +545,46 @@ int
 qcrypto_tls_session_handshake(QCryptoTLSSession *session,
                               Error **errp)
 {
-    int ret;
-    ret = gnutls_handshake(session->handle);
-
-    if (!ret) {
-#ifdef CONFIG_GNUTLS_BUG1717_WORKAROUND
-        gnutls_cipher_algorithm_t cipher =
-            gnutls_cipher_get(session->handle);
-
-        /*
-         * Any use of rekeying in TLS 1.3 is unsafe for
-         * a gnutls with bug 1717, however, we know that
-         * QEMU won't initiate manual rekeying. Thus we
-         * only have to protect against automatic rekeying
-         * which doesn't trigger with CHACHA20
-         */
-        trace_qcrypto_tls_session_parameters(
-            session,
-            session->requireThreadSafety,
-            gnutls_protocol_get_version(session->handle),
-            cipher);
-
-        if (session->requireThreadSafety &&
-            gnutls_protocol_get_version(session->handle) ==
-            GNUTLS_TLS1_3 &&
-            cipher != GNUTLS_CIPHER_CHACHA20_POLY1305) {
-            warn_report("WARNING: activating thread safety countermeasures "
-                        "for potentially broken GNUTLS with TLS1.3 cipher=%d",
-                        cipher);
-            trace_qcrypto_tls_session_bug1717_workaround(session);
-            session->lockEnabled = true;
-        }
-#endif
-
+    int ret = gnutls_handshake(session->handle);
+    if (ret == 0) {
         session->handshakeComplete = true;
-        return QCRYPTO_TLS_HANDSHAKE_COMPLETE;
-    }
-
-    if (ret == GNUTLS_E_INTERRUPTED || ret == GNUTLS_E_AGAIN) {
-        int direction = gnutls_record_get_direction(session->handle);
-        return direction ? QCRYPTO_TLS_HANDSHAKE_SENDING :
-            QCRYPTO_TLS_HANDSHAKE_RECVING;
-    }
-
-    if (session->rerr || session->werr) {
-        error_setg(errp, "TLS handshake failed: %s: %s",
-                   gnutls_strerror(ret),
-                   error_get_pretty(session->rerr ?
-                                    session->rerr : session->werr));
     } else {
-        error_setg(errp, "TLS handshake failed: %s",
-                   gnutls_strerror(ret));
+        if (ret == GNUTLS_E_INTERRUPTED ||
+            ret == GNUTLS_E_AGAIN) {
+            ret = 1;
+        } else {
+            if (session->rerr || session->werr) {
+                error_setg(errp, "TLS handshake failed: %s: %s",
+                           gnutls_strerror(ret),
+                           error_get_pretty(session->rerr ?
+                                            session->rerr : session->werr));
+            } else {
+                error_setg(errp, "TLS handshake failed: %s",
+                           gnutls_strerror(ret));
+            }
+            ret = -1;
+        }
     }
-
     error_free(session->rerr);
     error_free(session->werr);
     session->rerr = session->werr = NULL;
 
-    return -1;
+    return ret;
 }
 
 
-int
-qcrypto_tls_session_bye(QCryptoTLSSession *session, Error **errp)
+QCryptoTLSSessionHandshakeStatus
+qcrypto_tls_session_get_handshake_status(QCryptoTLSSession *session)
 {
-    int ret;
-
-    if (!session->handshakeComplete) {
-        return 0;
-    }
-
-    if (session->lockEnabled) {
-        qemu_mutex_lock(&session->lock);
-    }
-    ret = gnutls_bye(session->handle, GNUTLS_SHUT_WR);
-
-    if (session->lockEnabled) {
-        qemu_mutex_unlock(&session->lock);
-    }
-
-    if (!ret) {
-        return QCRYPTO_TLS_BYE_COMPLETE;
-    }
-
-    if (ret == GNUTLS_E_INTERRUPTED || ret == GNUTLS_E_AGAIN) {
-        int direction = gnutls_record_get_direction(session->handle);
-        return direction ? QCRYPTO_TLS_BYE_SENDING : QCRYPTO_TLS_BYE_RECVING;
-    }
-
-    if (session->rerr || session->werr) {
-        error_setg(errp, "TLS termination failed: %s: %s", gnutls_strerror(ret),
-                   error_get_pretty(session->rerr ?
-                                    session->rerr : session->werr));
+    if (session->handshakeComplete) {
+        return QCRYPTO_TLS_HANDSHAKE_COMPLETE;
+    } else if (gnutls_record_get_direction(session->handle) == 0) {
+        return QCRYPTO_TLS_HANDSHAKE_RECVING;
     } else {
-        error_setg(errp, "TLS termination failed: %s", gnutls_strerror(ret));
+        return QCRYPTO_TLS_HANDSHAKE_SENDING;
     }
-
-    error_free(session->rerr);
-    error_free(session->werr);
-    session->rerr = session->werr = NULL;
-
-    return -1;
 }
+
 
 int
 qcrypto_tls_session_get_key_size(QCryptoTLSSession *session,
@@ -745,9 +627,6 @@ qcrypto_tls_session_new(QCryptoTLSCreds *creds G_GNUC_UNUSED,
     return NULL;
 }
 
-void qcrypto_tls_session_require_thread_safety(QCryptoTLSSession *sess)
-{
-}
 
 void
 qcrypto_tls_session_free(QCryptoTLSSession *sess G_GNUC_UNUSED)
@@ -813,10 +692,10 @@ qcrypto_tls_session_handshake(QCryptoTLSSession *sess,
 }
 
 
-int
-qcrypto_tls_session_bye(QCryptoTLSSession *session, Error **errp)
+QCryptoTLSSessionHandshakeStatus
+qcrypto_tls_session_get_handshake_status(QCryptoTLSSession *sess)
 {
-    return QCRYPTO_TLS_BYE_COMPLETE;
+    return QCRYPTO_TLS_HANDSHAKE_COMPLETE;
 }
 
 

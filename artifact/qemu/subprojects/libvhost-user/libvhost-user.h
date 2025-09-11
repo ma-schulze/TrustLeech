@@ -186,7 +186,11 @@ typedef struct VhostUserShared {
     unsigned char uuid[UUID_LEN];
 } VhostUserShared;
 
-#define VU_PACKED __attribute__((packed))
+#if defined(_WIN32) && (defined(__x86_64__) || defined(__i386__))
+# define VU_PACKED __attribute__((gcc_struct, packed))
+#else
+# define VU_PACKED __attribute__((packed))
+#endif
 
 typedef struct VhostUserMsg {
     int request;

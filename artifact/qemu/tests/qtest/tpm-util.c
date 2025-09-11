@@ -18,7 +18,7 @@
 #include "hw/acpi/tpm.h"
 #include "libqtest.h"
 #include "tpm-util.h"
-#include "qobject/qdict.h"
+#include "qapi/qmp/qdict.h"
 
 void tpm_util_crb_transfer(QTestState *s,
                            const unsigned char *req, size_t req_size,

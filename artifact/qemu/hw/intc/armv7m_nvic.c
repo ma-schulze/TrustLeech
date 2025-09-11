@@ -18,11 +18,11 @@
 #include "hw/intc/armv7m_nvic.h"
 #include "hw/irq.h"
 #include "hw/qdev-properties.h"
-#include "system/tcg.h"
-#include "system/runstate.h"
+#include "sysemu/tcg.h"
+#include "sysemu/runstate.h"
 #include "target/arm/cpu.h"
 #include "target/arm/cpu-features.h"
-#include "exec/cputlb.h"
+#include "exec/exec-all.h"
 #include "exec/memop.h"
 #include "qemu/log.h"
 #include "qemu/module.h"
@@ -988,7 +988,6 @@ static void nvic_nmi_trigger(void *opaque, int n, int level)
 static uint32_t nvic_readl(NVICState *s, uint32_t offset, MemTxAttrs attrs)
 {
     ARMCPU *cpu = s->cpu;
-    ARMISARegisters *isar = &cpu->isar;
     uint32_t val;
 
     switch (offset) {
@@ -1264,74 +1263,74 @@ static uint32_t nvic_readl(NVICState *s, uint32_t offset, MemTxAttrs attrs)
         if (!arm_feature(&cpu->env, ARM_FEATURE_M_MAIN)) {
             goto bad_offset;
         }
-        return GET_IDREG(isar, ID_PFR0);
+        return cpu->isar.id_pfr0;
     case 0xd44: /* PFR1.  */
         if (!arm_feature(&cpu->env, ARM_FEATURE_M_MAIN)) {
             goto bad_offset;
         }
-        return GET_IDREG(isar, ID_PFR1);
+        return cpu->isar.id_pfr1;
     case 0xd48: /* DFR0.  */
         if (!arm_feature(&cpu->env, ARM_FEATURE_M_MAIN)) {
             goto bad_offset;
         }
-        return GET_IDREG(isar, ID_DFR0);
+        return cpu->isar.id_dfr0;
     case 0xd4c: /* AFR0.  */
         if (!arm_feature(&cpu->env, ARM_FEATURE_M_MAIN)) {
             goto bad_offset;
         }
-        return GET_IDREG(isar, ID_AFR0);
+        return cpu->id_afr0;
     case 0xd50: /* MMFR0.  */
         if (!arm_feature(&cpu->env, ARM_FEATURE_M_MAIN)) {
             goto bad_offset;
         }
-        return GET_IDREG(isar, ID_MMFR0);
+        return cpu->isar.id_mmfr0;
     case 0xd54: /* MMFR1.  */
         if (!arm_feature(&cpu->env, ARM_FEATURE_M_MAIN)) {
             goto bad_offset;
         }
-        return GET_IDREG(isar, ID_MMFR1);
+        return cpu->isar.id_mmfr1;
     case 0xd58: /* MMFR2.  */
         if (!arm_feature(&cpu->env, ARM_FEATURE_M_MAIN)) {
             goto bad_offset;
         }
-        return GET_IDREG(isar, ID_MMFR2);
+        return cpu->isar.id_mmfr2;
     case 0xd5c: /* MMFR3.  */
         if (!arm_feature(&cpu->env, ARM_FEATURE_M_MAIN)) {
             goto bad_offset;
         }
-        return GET_IDREG(isar, ID_MMFR3);
+        return cpu->isar.id_mmfr3;
     case 0xd60: /* ISAR0.  */
         if (!arm_feature(&cpu->env, ARM_FEATURE_M_MAIN)) {
             goto bad_offset;
         }
-        return GET_IDREG(&cpu->isar, ID_ISAR0);
+        return cpu->isar.id_isar0;
     case 0xd64: /* ISAR1.  */
         if (!arm_feature(&cpu->env, ARM_FEATURE_M_MAIN)) {
             goto bad_offset;
         }
-        return GET_IDREG(&cpu->isar, ID_ISAR1);
+        return cpu->isar.id_isar1;
     case 0xd68: /* ISAR2.  */
         if (!arm_feature(&cpu->env, ARM_FEATURE_M_MAIN)) {
             goto bad_offset;
         }
-        return GET_IDREG(&cpu->isar, ID_ISAR2);
+        return cpu->isar.id_isar2;
     case 0xd6c: /* ISAR3.  */
         if (!arm_feature(&cpu->env, ARM_FEATURE_M_MAIN)) {
             goto bad_offset;
         }
-        return GET_IDREG(&cpu->isar, ID_ISAR3);
+        return cpu->isar.id_isar3;
     case 0xd70: /* ISAR4.  */
         if (!arm_feature(&cpu->env, ARM_FEATURE_M_MAIN)) {
             goto bad_offset;
         }
-        return GET_IDREG(&cpu->isar, ID_ISAR4);
+        return cpu->isar.id_isar4;
     case 0xd74: /* ISAR5.  */
         if (!arm_feature(&cpu->env, ARM_FEATURE_M_MAIN)) {
             goto bad_offset;
         }
-        return GET_IDREG(&cpu->isar, ID_ISAR5);
+        return cpu->isar.id_isar5;
     case 0xd78: /* CLIDR */
-        return GET_IDREG(&cpu->isar, CLIDR);
+        return cpu->clidr;
     case 0xd7c: /* CTR */
         return cpu->ctr;
     case 0xd80: /* CSSIDR */
@@ -2570,7 +2569,7 @@ static const VMStateDescription vmstate_nvic = {
     }
 };
 
-static const Property props_nvic[] = {
+static Property props_nvic[] = {
     /* Number of external IRQ lines (so excluding the 16 internal exceptions) */
     DEFINE_PROP_UINT32("num-irq", NVICState, num_irq, 64),
     /*
@@ -2578,6 +2577,7 @@ static const Property props_nvic[] = {
      * to use a reasonable default.
      */
     DEFINE_PROP_UINT8("num-prio-bits", NVICState, num_prio_bits, 0),
+    DEFINE_PROP_END_OF_LIST()
 };
 
 static void armv7m_nvic_reset(DeviceState *dev)
@@ -2731,7 +2731,7 @@ static void armv7m_nvic_instance_init(Object *obj)
     qdev_init_gpio_in_named(dev, nvic_nmi_trigger, "NMI", 1);
 }
 
-static void armv7m_nvic_class_init(ObjectClass *klass, const void *data)
+static void armv7m_nvic_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
 

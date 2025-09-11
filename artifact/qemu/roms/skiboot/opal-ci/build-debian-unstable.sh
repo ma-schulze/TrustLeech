@@ -1,1 +1,1 @@
-build-ubuntu-rolling.sh
+build-ubuntu-latest.sh

@@ -24,11 +24,11 @@
  */
 
 #include "qemu/osdep.h"
-#include "system/replay.h"
-#include "exec/icount.h"
+#include "sysemu/replay.h"
+#include "sysemu/cpu-timers.h"
 #include "qemu/main-loop.h"
 #include "qemu/guest-random.h"
-#include "hw/core/cpu.h"
+#include "exec/exec-all.h"
 
 #include "tcg-accel-ops.h"
 #include "tcg-accel-ops-icount.h"

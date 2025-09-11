@@ -19,7 +19,7 @@
 #include "qemu/units.h"
 #include "hw/registerfields.h"
 #include "hw/acpi/aml-build.h"
-#include "system/tpm.h"
+#include "sysemu/tpm.h"
 
 #ifdef CONFIG_TPM
 

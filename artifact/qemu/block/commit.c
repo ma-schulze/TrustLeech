@@ -15,14 +15,12 @@
 #include "qemu/osdep.h"
 #include "qemu/cutils.h"
 #include "trace.h"
-#include "block/block-common.h"
-#include "block/coroutines.h"
 #include "block/block_int.h"
 #include "block/blockjob_int.h"
 #include "qapi/error.h"
 #include "qemu/ratelimit.h"
 #include "qemu/memalign.h"
-#include "system/block-backend.h"
+#include "sysemu/block-backend.h"
 
 enum {
     /*
@@ -68,7 +66,7 @@ static int commit_prepare(Job *job)
                                   s->backing_mask_protocol);
 }
 
-static void GRAPH_UNLOCKED commit_abort(Job *job)
+static void commit_abort(Job *job)
 {
     CommitBlockJob *s = container_of(job, CommitBlockJob, common.job);
     BlockDriverState *top_bs = blk_bs(s->top);
@@ -128,84 +126,6 @@ static void commit_clean(Job *job)
     blk_unref(s->top);
 }
 
-static int commit_iteration(CommitBlockJob *s, int64_t offset,
-                            int64_t *requested_bytes, void *buf)
-{
-    BlockErrorAction action;
-    int64_t bytes = *requested_bytes;
-    int ret = 0;
-    bool error_in_source = true;
-
-    /* Copy if allocated above the base */
-    WITH_GRAPH_RDLOCK_GUARD() {
-        ret = bdrv_co_common_block_status_above(blk_bs(s->top),
-            s->base_overlay, true, true, offset, COMMIT_BUFFER_SIZE,
-            &bytes, NULL, NULL, NULL);
-    }
-
-    trace_commit_one_iteration(s, offset, bytes, ret);
-
-    if (ret < 0) {
-        goto fail;
-    }
-
-    if (ret & BDRV_BLOCK_ALLOCATED) {
-        if (ret & BDRV_BLOCK_ZERO) {
-            /*
-             * If the top (sub)clusters are smaller than the base
-             * (sub)clusters, this will not unmap unless the underlying device
-             * does some tracking of these requests. Ideally, we would find
-             * the maximal extent of the zero clusters.
-             */
-            ret = blk_co_pwrite_zeroes(s->base, offset, bytes,
-                                       BDRV_REQ_MAY_UNMAP);
-            if (ret < 0) {
-                error_in_source = false;
-                goto fail;
-            }
-        } else {
-            assert(bytes < SIZE_MAX);
-
-            ret = blk_co_pread(s->top, offset, bytes, buf, 0);
-            if (ret < 0) {
-                goto fail;
-            }
-
-            ret = blk_co_pwrite(s->base, offset, bytes, buf, 0);
-            if (ret < 0) {
-                error_in_source = false;
-                goto fail;
-            }
-        }
-
-        /*
-         * Whether zeroes actually end up on disk depends on the details of
-         * the underlying driver. Therefore, this might rate limit more than
-         * is necessary.
-         */
-        block_job_ratelimit_processed_bytes(&s->common, bytes);
-    }
-
-    /* Publish progress */
-
-    job_progress_update(&s->common.job, bytes);
-
-    *requested_bytes = bytes;
-
-    return 0;
-
-fail:
-    action = block_job_error_action(&s->common, s->on_error,
-                                    error_in_source, -ret);
-    if (action == BLOCK_ERROR_ACTION_REPORT) {
-        return ret;
-    }
-
-    *requested_bytes = 0;
-
-    return 0;
-}
-
 static int coroutine_fn commit_run(Job *job, Error **errp)
 {
     CommitBlockJob *s = container_of(job, CommitBlockJob, common.job);
@@ -236,6 +156,9 @@ static int coroutine_fn commit_run(Job *job, Error **errp)
     buf = blk_blockalign(s->top, COMMIT_BUFFER_SIZE);
 
     for (offset = 0; offset < len; offset += n) {
+        bool copy;
+        bool error_in_source = true;
+
         /* Note that even when no rate limit is applied we need to yield
          * with no pending I/O here so that bdrv_drain_all() returns.
          */
@@ -243,11 +166,38 @@ static int coroutine_fn commit_run(Job *job, Error **errp)
         if (job_is_cancelled(&s->common.job)) {
             break;
         }
+        /* Copy if allocated above the base */
+        ret = blk_co_is_allocated_above(s->top, s->base_overlay, true,
+                                        offset, COMMIT_BUFFER_SIZE, &n);
+        copy = (ret > 0);
+        trace_commit_one_iteration(s, offset, n, ret);
+        if (copy) {
+            assert(n < SIZE_MAX);
 
-        ret = commit_iteration(s, offset, &n, buf);
-
+            ret = blk_co_pread(s->top, offset, n, buf, 0);
+            if (ret >= 0) {
+                ret = blk_co_pwrite(s->base, offset, n, buf, 0);
+                if (ret < 0) {
+                    error_in_source = false;
+                }
+            }
+        }
         if (ret < 0) {
-            return ret;
+            BlockErrorAction action =
+                block_job_error_action(&s->common, s->on_error,
+                                       error_in_source, -ret);
+            if (action == BLOCK_ERROR_ACTION_REPORT) {
+                return ret;
+            } else {
+                n = 0;
+                continue;
+            }
+        }
+        /* Publish progress */
+        job_progress_update(&s->common.job, n);
+
+        if (copy) {
+            block_job_ratelimit_processed_bytes(&s->common, n);
         }
     }
 
@@ -392,7 +342,7 @@ void commit_start(const char *job_id, BlockDriverState *bs,
      * this is the responsibility of the interface (i.e. whoever calls
      * commit_start()).
      */
-    bdrv_graph_wrlock_drained();
+    bdrv_graph_wrlock();
     s->base_overlay = bdrv_find_overlay(top, base);
     assert(s->base_overlay);
 
@@ -514,32 +464,28 @@ int bdrv_commit(BlockDriverState *bs)
     Error *local_err = NULL;
 
     GLOBAL_STATE_CODE();
+    GRAPH_RDLOCK_GUARD_MAINLOOP();
 
     if (!drv)
         return -ENOMEDIUM;
 
-    bdrv_graph_rdlock_main_loop();
-
     backing_file_bs = bdrv_cow_bs(bs);
 
     if (!backing_file_bs) {
-        ret = -ENOTSUP;
-        goto out;
+        return -ENOTSUP;
     }
 
     if (bdrv_op_is_blocked(bs, BLOCK_OP_TYPE_COMMIT_SOURCE, NULL) ||
         bdrv_op_is_blocked(backing_file_bs, BLOCK_OP_TYPE_COMMIT_TARGET, NULL))
     {
-        ret = -EBUSY;
-        goto out;
+        return -EBUSY;
     }
 
     ro = bdrv_is_read_only(backing_file_bs);
 
     if (ro) {
         if (bdrv_reopen_set_read_only(backing_file_bs, false, NULL)) {
-            ret = -EACCES;
-            goto out;
+            return -EACCES;
         }
     }
 
@@ -563,14 +509,8 @@ int bdrv_commit(BlockDriverState *bs)
         goto ro_cleanup;
     }
 
-    bdrv_graph_rdunlock_main_loop();
-
-    bdrv_graph_wrlock_drained();
     bdrv_set_backing_hd(commit_top_bs, backing_file_bs, &error_abort);
     bdrv_set_backing_hd(bs, commit_top_bs, &error_abort);
-    bdrv_graph_wrunlock();
-
-    bdrv_graph_rdlock_main_loop();
 
     ret = blk_insert_bs(backing, backing_file_bs, &local_err);
     if (ret < 0) {
@@ -645,14 +585,9 @@ int bdrv_commit(BlockDriverState *bs)
     ret = 0;
 ro_cleanup:
     blk_unref(backing);
-
-    bdrv_graph_rdunlock_main_loop();
-    bdrv_graph_wrlock_drained();
     if (bdrv_cow_bs(bs) != backing_file_bs) {
         bdrv_set_backing_hd(bs, backing_file_bs, &error_abort);
     }
-    bdrv_graph_wrunlock();
-    bdrv_graph_rdlock_main_loop();
     bdrv_unref(commit_top_bs);
     blk_unref(src);
 
@@ -660,9 +595,6 @@ ro_cleanup:
         /* ignoring error return here */
         bdrv_reopen_set_read_only(backing_file_bs, true, NULL);
     }
-
-out:
-    bdrv_graph_rdunlock_main_loop();
 
     return ret;
 }

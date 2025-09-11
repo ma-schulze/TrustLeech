@@ -30,7 +30,7 @@
 #include "exec/helper-proto.h"
 #include "exec/page-protection.h"
 #include "qemu/host-utils.h"
-#include "system/memory.h"
+#include "exec/exec-all.h"
 #include "qemu/atomic.h"
 #include "qemu/timer.h"
 

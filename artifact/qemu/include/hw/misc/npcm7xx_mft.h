@@ -16,7 +16,7 @@
 #ifndef NPCM7XX_MFT_H
 #define NPCM7XX_MFT_H
 
-#include "system/memory.h"
+#include "exec/memory.h"
 #include "hw/clock.h"
 #include "hw/irq.h"
 #include "hw/sysbus.h"

@@ -20,8 +20,7 @@
 
 /* migration properties */
 
-extern const Property migration_properties[];
-extern const size_t migration_properties_count;
+extern Property migration_properties[];
 
 /* capabilities */
 
@@ -57,7 +56,6 @@ bool migrate_tls(void);
 
 /* capabilities helpers */
 
-bool migrate_rdma_caps_check(bool *caps, Error **errp);
 bool migrate_caps_check(bool *old_caps, bool *new_caps, Error **errp);
 
 /* parameters */

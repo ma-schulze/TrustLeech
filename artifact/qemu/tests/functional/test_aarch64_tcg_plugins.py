@@ -15,7 +15,6 @@ import tempfile
 import mmap
 import re
 
-from qemu.machine.machine import VMLaunchFailure
 from qemu_test import LinuxKernelTest, Asset
 
 
@@ -44,12 +43,10 @@ class PluginKernelBase(LinuxKernelTest):
 
         try:
             vm.launch()
-        except VMLaunchFailure as excp:
-            if "plugin interface not enabled in this build" in excp.output:
-                self.skipTest("TCG plugins not enabled")
-            else:
-                self.log.info(f"unhandled launch failure: {excp.output}")
-                raise excp
+        except:
+            # TODO: probably fails because plugins not enabled but we
+            # can't currently probe for the feature.
+            self.cancel("TCG Plugins not enabled?")
 
         self.wait_for_console_pattern(console_pattern, vm)
         # ensure logs are flushed
@@ -68,13 +65,13 @@ class PluginKernelNormal(PluginKernelBase):
         kernel_path = self.ASSET_KERNEL.fetch()
         kernel_command_line = (self.KERNEL_COMMON_COMMAND_LINE +
                                'console=ttyAMA0')
-        console_pattern = 'Please append a correct "root=" boot option'
+        console_pattern = 'Kernel panic - not syncing: VFS:'
 
         plugin_log = tempfile.NamedTemporaryFile(mode="r+t", prefix="plugin",
                                                  suffix=".log")
 
         self.run_vm(kernel_path, kernel_command_line,
-                    self.plugin_file('libinsn'), plugin_log.name,
+                    "tests/tcg/plugins/libinsn.so", plugin_log.name,
                     console_pattern)
 
         with plugin_log as lf, \
@@ -94,13 +91,13 @@ class PluginKernelNormal(PluginKernelBase):
         kernel_path = self.ASSET_KERNEL.fetch()
         kernel_command_line = (self.KERNEL_COMMON_COMMAND_LINE +
                                'console=ttyAMA0')
-        console_pattern = 'Please append a correct "root=" boot option'
+        console_pattern = 'Kernel panic - not syncing: VFS:'
 
         plugin_log = tempfile.NamedTemporaryFile(mode="r+t", prefix="plugin",
                                                  suffix=".log")
 
         self.run_vm(kernel_path, kernel_command_line,
-                    self.plugin_file('libinsn'), plugin_log.name,
+                    "tests/tcg/plugins/libinsn.so", plugin_log.name,
                     console_pattern,
                     args=('-icount', 'shift=1'))
 

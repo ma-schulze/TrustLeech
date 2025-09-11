@@ -37,19 +37,19 @@ static bool compat_policy_input_ok1(const char *adjective,
     }
 }
 
-bool compat_policy_input_ok(uint64_t features,
+bool compat_policy_input_ok(unsigned special_features,
                             const CompatPolicy *policy,
                             ErrorClass error_class,
                             const char *kind, const char *name,
                             Error **errp)
 {
-    if ((features & 1u << QAPI_DEPRECATED)
+    if ((special_features & 1u << QAPI_DEPRECATED)
         && !compat_policy_input_ok1("Deprecated",
                                     policy->deprecated_input,
                                     error_class, kind, name, errp)) {
         return false;
     }
-    if ((features & (1u << QAPI_UNSTABLE))
+    if ((special_features & (1u << QAPI_UNSTABLE))
         && !compat_policy_input_ok1("Unstable",
                                     policy->unstable_input,
                                     error_class, kind, name, errp)) {

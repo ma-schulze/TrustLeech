@@ -8,18 +8,11 @@
     'documentation-exceptions': [ 'Enum', 'Variant1', 'Alternate', 'cmd' ] } }
 
 ##
-# *******
-# Section
-# *******
+# = Section
 ##
 
 ##
-# Just text, no heading.
-##
-
-##
-# Subsection
-# ==========
+# == Subsection
 #
 # *with emphasis*
 # @var {in braces}
@@ -147,8 +140,7 @@
   'if': { 'not': { 'any': [ 'IFONE', 'IFTWO' ] } } }
 
 ##
-# Another subsection
-# ==================
+# == Another subsection
 ##
 
 ##
@@ -216,7 +208,7 @@
 #
 #    -> "this example"
 #
-#    <- ... has no title ...
+#    <- "has no title"
 ##
 { 'command': 'cmd-boxed', 'boxed': true,
   'data': 'Object',

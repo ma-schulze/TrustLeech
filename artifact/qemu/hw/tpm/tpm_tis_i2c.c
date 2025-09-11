@@ -211,6 +211,8 @@ static inline void tpm_tis_i2c_clear_data(TPMStateI2C *i2cst)
     i2cst->tis_addr = 0xffffffff;
     i2cst->reg_name = NULL;
     memset(i2cst->data, 0, sizeof(i2cst->data));
+
+    return;
 }
 
 /* Send data to TPM */
@@ -279,6 +281,8 @@ static inline void tpm_tis_i2c_tpm_send(TPMStateI2C *i2cst)
 
         tpm_tis_i2c_clear_data(i2cst);
     }
+
+    return;
 }
 
 /* Callback from TPM to indicate that response is copied */
@@ -487,8 +491,9 @@ static int tpm_tis_i2c_send(I2CSlave *i2c, uint8_t data)
     return 1;
 }
 
-static const Property tpm_tis_i2c_properties[] = {
+static Property tpm_tis_i2c_properties[] = {
     DEFINE_PROP_TPMBE("tpmdev", TPMStateI2C, state.be_driver),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
 static void tpm_tis_i2c_realizefn(DeviceState *dev, Error **errp)
@@ -526,7 +531,7 @@ static void tpm_tis_i2c_reset(DeviceState *dev)
     return tpm_tis_reset(s);
 }
 
-static void tpm_tis_i2c_class_init(ObjectClass *klass, const void *data)
+static void tpm_tis_i2c_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
     I2CSlaveClass *k = I2C_SLAVE_CLASS(klass);
@@ -552,7 +557,7 @@ static const TypeInfo tpm_tis_i2c_info = {
     .parent        = TYPE_I2C_SLAVE,
     .instance_size = sizeof(TPMStateI2C),
     .class_init    = tpm_tis_i2c_class_init,
-        .interfaces = (const InterfaceInfo[]) {
+        .interfaces = (InterfaceInfo[]) {
         { TYPE_TPM_IF },
         { }
     }

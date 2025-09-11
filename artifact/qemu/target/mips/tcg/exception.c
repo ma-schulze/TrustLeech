@@ -23,7 +23,7 @@
 #include "cpu.h"
 #include "internal.h"
 #include "exec/helper-proto.h"
-#include "exec/translation-block.h"
+#include "exec/exec-all.h"
 
 target_ulong exception_resume_pc(CPUMIPSState *env)
 {

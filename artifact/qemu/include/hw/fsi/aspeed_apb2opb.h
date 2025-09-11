@@ -8,7 +8,7 @@
 #ifndef FSI_ASPEED_APB2OPB_H
 #define FSI_ASPEED_APB2OPB_H
 
-#include "system/memory.h"
+#include "exec/memory.h"
 #include "hw/fsi/fsi-master.h"
 #include "hw/sysbus.h"
 

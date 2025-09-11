@@ -158,7 +158,8 @@ static void test_crypto_tls_session_psk(void)
             rv = qcrypto_tls_session_handshake(serverSess,
                                                &error_abort);
             g_assert(rv >= 0);
-            if (rv == QCRYPTO_TLS_HANDSHAKE_COMPLETE) {
+            if (qcrypto_tls_session_get_handshake_status(serverSess) ==
+                QCRYPTO_TLS_HANDSHAKE_COMPLETE) {
                 serverShake = true;
             }
         }
@@ -166,7 +167,8 @@ static void test_crypto_tls_session_psk(void)
             rv = qcrypto_tls_session_handshake(clientSess,
                                                &error_abort);
             g_assert(rv >= 0);
-            if (rv == QCRYPTO_TLS_HANDSHAKE_COMPLETE) {
+            if (qcrypto_tls_session_get_handshake_status(clientSess) ==
+                QCRYPTO_TLS_HANDSHAKE_COMPLETE) {
                 clientShake = true;
             }
         }
@@ -350,7 +352,8 @@ static void test_crypto_tls_session_x509(const void *opaque)
             rv = qcrypto_tls_session_handshake(serverSess,
                                                &error_abort);
             g_assert(rv >= 0);
-            if (rv == QCRYPTO_TLS_HANDSHAKE_COMPLETE) {
+            if (qcrypto_tls_session_get_handshake_status(serverSess) ==
+                QCRYPTO_TLS_HANDSHAKE_COMPLETE) {
                 serverShake = true;
             }
         }
@@ -358,7 +361,8 @@ static void test_crypto_tls_session_x509(const void *opaque)
             rv = qcrypto_tls_session_handshake(clientSess,
                                                &error_abort);
             g_assert(rv >= 0);
-            if (rv == QCRYPTO_TLS_HANDSHAKE_COMPLETE) {
+            if (qcrypto_tls_session_get_handshake_status(clientSess) ==
+                QCRYPTO_TLS_HANDSHAKE_COMPLETE) {
                 clientShake = true;
             }
         }

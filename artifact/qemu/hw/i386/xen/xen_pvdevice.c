@@ -115,14 +115,15 @@ static void xen_pv_realize(PCIDevice *pci_dev, Error **errp)
                      &d->mmio);
 }
 
-static const Property xen_pv_props[] = {
+static Property xen_pv_props[] = {
     DEFINE_PROP_UINT16("vendor-id", XenPVDevice, vendor_id, PCI_VENDOR_ID_XEN),
     DEFINE_PROP_UINT16("device-id", XenPVDevice, device_id, 0xffff),
     DEFINE_PROP_UINT8("revision", XenPVDevice, revision, 0x01),
     DEFINE_PROP_UINT32("size", XenPVDevice, size, 0x400000),
+    DEFINE_PROP_END_OF_LIST()
 };
 
-static void xen_pv_class_init(ObjectClass *klass, const void *data)
+static void xen_pv_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
     PCIDeviceClass *k = PCI_DEVICE_CLASS(klass);
@@ -139,7 +140,7 @@ static const TypeInfo xen_pv_type_info = {
     .parent        = TYPE_PCI_DEVICE,
     .instance_size = sizeof(XenPVDevice),
     .class_init    = xen_pv_class_init,
-    .interfaces = (const InterfaceInfo[]) {
+    .interfaces = (InterfaceInfo[]) {
         { INTERFACE_CONVENTIONAL_PCI_DEVICE },
         { },
     },

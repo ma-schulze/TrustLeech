@@ -12,13 +12,11 @@
 #include "qemu/osdep.h"
 
 #include "cpu.h"
-#include "exec/target_page.h"
 #include "s390x-internal.h"
 #include "hw/s390x/ioinst.h"
 #include "trace.h"
 #include "hw/s390x/s390-pci-bus.h"
 #include "target/s390x/kvm/pv.h"
-#include "hw/s390x/ap-bridge.h"
 
 /* All I/O instructions but chsc use the s format */
 static uint64_t get_address_from_regs(CPUS390XState *env, uint32_t ipb,
@@ -575,19 +573,13 @@ out:
 
 static int chsc_sei_nt0_get_event(void *res)
 {
-    if (s390_has_feat(S390_FEAT_AP)) {
-        return ap_chsc_sei_nt0_get_event(res);
-    }
-
+    /* no events yet */
     return 1;
 }
 
 static int chsc_sei_nt0_have_event(void)
 {
-    if (s390_has_feat(S390_FEAT_AP)) {
-        return ap_chsc_sei_nt0_have_event();
-    }
-
+    /* no events yet */
     return 0;
 }
 

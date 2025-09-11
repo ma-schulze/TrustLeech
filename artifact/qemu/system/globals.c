@@ -28,23 +28,13 @@
 #include "hw/loader.h"
 #include "hw/xen/xen.h"
 #include "net/net.h"
-#include "system/cpus.h"
-#include "system/system.h"
-
-bool should_mlock(MlockState state)
-{
-    return state == MLOCK_ON || state == MLOCK_ON_FAULT;
-}
-
-bool is_mlock_on_fault(MlockState state)
-{
-    return state == MLOCK_ON_FAULT;
-}
+#include "sysemu/cpus.h"
+#include "sysemu/sysemu.h"
 
 enum vga_retrace_method vga_retrace_method = VGA_RETRACE_DUMB;
 int display_opengl;
 const char* keyboard_layout;
-MlockState mlock_state;
+bool enable_mlock;
 bool enable_cpu_pm;
 int autostart = 1;
 int vga_interface_type = VGA_NONE;
@@ -58,6 +48,7 @@ unsigned int nb_prom_envs;
 const char *prom_envs[MAX_PROM_ENVS];
 uint8_t *boot_splash_filedata;
 int only_migratable; /* turn it off unless user states otherwise */
+int icount_align_option;
 
 /* The bytes in qemu_uuid are in the order specified by RFC4122, _not_ in the
  * little-endian "wire format" described in the SMBIOS 2.6 specification.

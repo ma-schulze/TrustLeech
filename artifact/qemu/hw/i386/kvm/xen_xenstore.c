@@ -28,8 +28,8 @@
 #include "xen_primary_console.h"
 #include "xen_xenstore.h"
 
-#include "system/kvm.h"
-#include "system/kvm_xen.h"
+#include "sysemu/kvm.h"
+#include "sysemu/kvm_xen.h"
 
 #include "trace.h"
 
@@ -209,6 +209,7 @@ static int xen_xenstore_post_load(void *opaque, int ver)
 {
     XenXenstoreState *s = opaque;
     GByteArray *save;
+    int ret;
 
     /*
      * As qemu/dom0, rebind to the guest's port. The Windows drivers may
@@ -230,7 +231,8 @@ static int xen_xenstore_post_load(void *opaque, int ver)
     s->impl_state = NULL;
     s->impl_state_size = 0;
 
-    return xs_impl_deserialize(s->impl, save, xen_domid, fire_watch_cb, s);
+    ret = xs_impl_deserialize(s->impl, save, xen_domid, fire_watch_cb, s);
+    return ret;
 }
 
 static const VMStateDescription xen_xenstore_vmstate = {
@@ -259,7 +261,7 @@ static const VMStateDescription xen_xenstore_vmstate = {
     }
 };
 
-static void xen_xenstore_class_init(ObjectClass *klass, const void *data)
+static void xen_xenstore_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
 
@@ -527,10 +529,6 @@ static void xs_read(XenXenstoreState *s, unsigned int req_id,
     len = data->len;
     if (len > XENSTORE_PAYLOAD_MAX) {
         xs_error(s, req_id, tx_id, E2BIG);
-        return;
-    }
-
-    if (!len) {
         return;
     }
 

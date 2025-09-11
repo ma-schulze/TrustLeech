@@ -10,7 +10,7 @@
 
 #include "hw/block/block.h"
 #include "hw/xen/xen-bus.h"
-#include "system/iothread.h"
+#include "sysemu/iothread.h"
 
 typedef struct XenBlockDataPlane XenBlockDataPlane;
 

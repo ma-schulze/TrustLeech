@@ -12,11 +12,25 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
+import os
 import logging
 
 from qemu_test import QemuSystemTest, Asset
 from qemu_test import wait_for_console_pattern
-from qemu_test import skipIfMissingImports, skipUntrustedTest
+from unittest import skipUnless
+
+
+NUMPY_AVAILABLE = True
+try:
+    import numpy as np
+except ImportError:
+    NUMPY_AVAILABLE = False
+
+CV2_AVAILABLE = True
+try:
+    import cv2
+except ImportError:
+    CV2_AVAILABLE = False
 
 
 class IntegratorMachine(QemuSystemTest):
@@ -49,7 +63,7 @@ class IntegratorMachine(QemuSystemTest):
                          '-append', 'printk.time=0 console=ttyAMA0')
         self.vm.launch()
 
-    @skipUntrustedTest()
+    @skipUnless(os.getenv('QEMU_TEST_ALLOW_UNTRUSTED_CODE'), 'untrusted code')
     def test_integratorcp_console(self):
         """
         Boots the Linux kernel and checks that the console is operational
@@ -57,26 +71,22 @@ class IntegratorMachine(QemuSystemTest):
         self.boot_integratorcp()
         wait_for_console_pattern(self, 'Log in as root')
 
-    @skipIfMissingImports("numpy", "cv2")
-    @skipUntrustedTest()
+    @skipUnless(NUMPY_AVAILABLE, 'Python NumPy not installed')
+    @skipUnless(CV2_AVAILABLE, 'Python OpenCV not installed')
+    @skipUnless(os.getenv('QEMU_TEST_ALLOW_UNTRUSTED_CODE'), 'untrusted code')
     def test_framebuffer_tux_logo(self):
         """
         Boot Linux and verify the Tux logo is displayed on the framebuffer.
         """
-        import numpy as np
-        import cv2
-
-        screendump_path = self.scratch_file("screendump.pbm")
+        screendump_path = os.path.join(self.workdir, "screendump.pbm")
         tuxlogo_path = self.ASSET_TUXLOGO.fetch()
 
         self.boot_integratorcp()
         framebuffer_ready = 'Console: switching to colour frame buffer device'
         wait_for_console_pattern(self, framebuffer_ready)
         self.vm.cmd('human-monitor-command', command_line='stop')
-        res = self.vm.cmd('human-monitor-command',
-                          command_line='screendump %s' % screendump_path)
-        if 'unknown command' in res:
-            self.skipTest('screendump not available')
+        self.vm.cmd('human-monitor-command',
+                    command_line='screendump %s' % screendump_path)
         logger = logging.getLogger('framebuffer')
 
         cpu_count = 1

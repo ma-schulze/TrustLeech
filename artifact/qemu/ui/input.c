@@ -1,12 +1,12 @@
 #include "qemu/osdep.h"
-#include "system/system.h"
+#include "sysemu/sysemu.h"
 #include "qapi/error.h"
 #include "qapi/qapi-commands-ui.h"
 #include "trace.h"
 #include "ui/input.h"
 #include "ui/console.h"
-#include "system/replay.h"
-#include "system/runstate.h"
+#include "sysemu/replay.h"
+#include "sysemu/runstate.h"
 
 struct QemuInputHandlerState {
     DeviceState       *dev;

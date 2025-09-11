@@ -39,18 +39,19 @@ else
   native_qemu_keymap = qemu_keymap
 endif
 
-keymap_targets = []
 if native_qemu_keymap.found()
+  t = []
   foreach km, args: keymaps
     # generate with qemu-kvm
-    keymap_targets += custom_target(km,
-                                    build_by_default: true,
-                                    output: km,
-                                    command: [native_qemu_keymap, '-f', '@OUTPUT@', args.split()],
-                                    install: have_system,
-                                    install_dir: qemu_datadir / 'keymaps')
+    t += custom_target(km,
+                       build_by_default: true,
+                       output: km,
+                       command: [native_qemu_keymap, '-f', '@OUTPUT@', args.split()],
+                       install: have_system,
+                       install_dir: qemu_datadir / 'keymaps')
   endforeach
-  alias_target('update-keymaps', keymap_targets)
+
+  alias_target('update-keymaps', t)
 else
   install_data(keymaps.keys(), install_dir: qemu_datadir / 'keymaps')
 endif

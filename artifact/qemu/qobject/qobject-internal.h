@@ -10,7 +10,7 @@
 #ifndef QOBJECT_INTERNAL_H
 #define QOBJECT_INTERNAL_H
 
-#include "qobject/qobject.h"
+#include "qapi/qmp/qobject.h"
 
 static inline void qobject_init(QObject *obj, QType type)
 {

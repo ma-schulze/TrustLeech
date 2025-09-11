@@ -21,7 +21,7 @@
 
 #include "hw/boards.h"
 #include "hw/sysbus.h"
-#include "system/numa.h"
+#include "sysemu/numa.h"
 
 /**
  * riscv_socket_count:

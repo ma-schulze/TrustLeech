@@ -28,6 +28,12 @@ struct QemuSemaphore {
     bool initialized;
 };
 
+struct QemuEvent {
+    int value;
+    HANDLE event;
+    bool initialized;
+};
+
 typedef struct QemuThreadData QemuThreadData;
 struct QemuThread {
     QemuThreadData *data;

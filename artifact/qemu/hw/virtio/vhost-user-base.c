@@ -66,7 +66,7 @@ err_host_notifiers:
     vhost_dev_disable_notifiers(&vub->vhost_dev, vdev);
 }
 
-static int vub_stop(VirtIODevice *vdev)
+static void vub_stop(VirtIODevice *vdev)
 {
     VHostUserBase *vub = VHOST_USER_BASE(vdev);
     BusState *qbus = BUS(qdev_get_parent_bus(DEVICE(vdev)));
@@ -74,39 +74,34 @@ static int vub_stop(VirtIODevice *vdev)
     int ret;
 
     if (!k->set_guest_notifiers) {
-        return 0;
+        return;
     }
 
-    ret = vhost_dev_stop(&vub->vhost_dev, vdev, true);
+    vhost_dev_stop(&vub->vhost_dev, vdev, true);
 
-    if (k->set_guest_notifiers(qbus->parent, vub->vhost_dev.nvqs, false) < 0) {
+    ret = k->set_guest_notifiers(qbus->parent, vub->vhost_dev.nvqs, false);
+    if (ret < 0) {
         error_report("vhost guest notifier cleanup failed: %d", ret);
-        return -1;
+        return;
     }
 
     vhost_dev_disable_notifiers(&vub->vhost_dev, vdev);
-    return ret;
 }
 
-static int vub_set_status(VirtIODevice *vdev, uint8_t status)
+static void vub_set_status(VirtIODevice *vdev, uint8_t status)
 {
     VHostUserBase *vub = VHOST_USER_BASE(vdev);
     bool should_start = virtio_device_should_start(vdev, status);
 
     if (vhost_dev_is_started(&vub->vhost_dev) == should_start) {
-        return 0;
+        return;
     }
 
     if (should_start) {
         vub_start(vdev);
     } else {
-        int ret;
-        ret = vub_stop(vdev);
-        if (ret < 0) {
-            return ret;
-        }
+        vub_stop(vdev);
     }
-    return 0;
 }
 
 /*
@@ -353,7 +348,7 @@ static void vub_device_unrealize(DeviceState *dev)
     do_vhost_user_cleanup(vdev, vub);
 }
 
-static void vub_class_init(ObjectClass *klass, const void *data)
+static void vub_class_init(ObjectClass *klass, void *data)
 {
     VirtioDeviceClass *vdc = VIRTIO_DEVICE_CLASS(klass);
 

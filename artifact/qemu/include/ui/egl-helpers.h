@@ -17,8 +17,6 @@ extern bool qemu_egl_angle_d3d;
 typedef struct egl_fb {
     int width;
     int height;
-    int x;
-    int y;
     GLuint texture;
     GLuint framebuffer;
     bool delete_texture;
@@ -28,7 +26,7 @@ typedef struct egl_fb {
 #define EGL_FB_INIT { 0, }
 
 void egl_fb_destroy(egl_fb *fb);
-void egl_fb_setup_default(egl_fb *fb, int width, int height, int x, int y);
+void egl_fb_setup_default(egl_fb *fb, int width, int height);
 void egl_fb_setup_for_tex(egl_fb *fb, int width, int height,
                           GLuint texture, bool delete);
 void egl_fb_setup_new_tex(egl_fb *fb, int width, int height);
@@ -48,9 +46,8 @@ extern int qemu_egl_rn_fd;
 extern struct gbm_device *qemu_egl_rn_gbm_dev;
 
 int egl_rendernode_init(const char *rendernode, DisplayGLMode mode);
-bool egl_dmabuf_export_texture(uint32_t tex_id, int *fd, EGLint *offset,
-                               EGLint *stride, EGLint *fourcc, int *num_planes,
-                               EGLuint64KHR *modifier);
+int egl_get_fd_for_texture(uint32_t tex_id, EGLint *stride, EGLint *fourcc,
+                           EGLuint64KHR *modifier);
 
 void egl_dmabuf_import_texture(QemuDmaBuf *dmabuf);
 void egl_dmabuf_release_texture(QemuDmaBuf *dmabuf);

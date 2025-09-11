@@ -67,7 +67,6 @@ typedef struct MicrochipIcicleKitState {
     MachineState parent_obj;
 
     /*< public >*/
-    uint32_t clint_timebase_freq;
     MicrochipPFSoCState soc;
 } MicrochipIcicleKitState;
 

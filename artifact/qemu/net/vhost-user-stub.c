@@ -11,6 +11,7 @@
 #include "qemu/osdep.h"
 #include "clients.h"
 #include "net/vhost_net.h"
+#include "net/vhost-user.h"
 #include "qemu/error-report.h"
 #include "qapi/error.h"
 

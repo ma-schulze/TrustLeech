@@ -83,7 +83,7 @@ err_host_notifiers:
     return ret;
 }
 
-static int vu_scmi_stop(VirtIODevice *vdev)
+static void vu_scmi_stop(VirtIODevice *vdev)
 {
     VHostUserSCMI *scmi = VHOST_USER_SCMI(vdev);
     BusState *qbus = BUS(qdev_get_parent_bus(DEVICE(vdev)));
@@ -93,46 +93,41 @@ static int vu_scmi_stop(VirtIODevice *vdev)
 
     /* vhost_dev_is_started() check in the callers is not fully reliable. */
     if (!scmi->started_vu) {
-        return 0;
+        return;
     }
     scmi->started_vu = false;
 
     if (!k->set_guest_notifiers) {
-        return 0;
+        return;
     }
 
-    ret = vhost_dev_stop(vhost_dev, vdev, true);
+    vhost_dev_stop(vhost_dev, vdev, true);
 
-    if (k->set_guest_notifiers(qbus->parent, vhost_dev->nvqs, false) < 0) {
+    ret = k->set_guest_notifiers(qbus->parent, vhost_dev->nvqs, false);
+    if (ret < 0) {
         error_report("vhost guest notifier cleanup failed: %d", ret);
-        return -1;
+        return;
     }
     vhost_dev_disable_notifiers(vhost_dev, vdev);
-    return ret;
 }
 
-static int vu_scmi_set_status(VirtIODevice *vdev, uint8_t status)
+static void vu_scmi_set_status(VirtIODevice *vdev, uint8_t status)
 {
     VHostUserSCMI *scmi = VHOST_USER_SCMI(vdev);
     bool should_start = virtio_device_should_start(vdev, status);
 
     if (!scmi->connected) {
-        return -1;
+        return;
     }
     if (vhost_dev_is_started(&scmi->vhost_dev) == should_start) {
-        return 0;
+        return;
     }
 
     if (should_start) {
         vu_scmi_start(vdev);
     } else {
-        int ret;
-        ret = vu_scmi_stop(vdev);
-        if (ret < 0) {
-            return ret;
-        }
+        vu_scmi_stop(vdev);
     }
-    return 0;
 }
 
 static uint64_t vu_scmi_get_features(VirtIODevice *vdev, uint64_t features,
@@ -263,6 +258,8 @@ static void vu_scmi_device_realize(DeviceState *dev, Error **errp)
 
     qemu_chr_fe_set_handlers(&scmi->chardev, NULL, NULL, vu_scmi_event, NULL,
                              dev, NULL, true);
+
+    return;
 }
 
 static void vu_scmi_device_unrealize(DeviceState *dev)
@@ -280,11 +277,12 @@ static const VMStateDescription vu_scmi_vmstate = {
     .unmigratable = 1,
 };
 
-static const Property vu_scmi_properties[] = {
+static Property vu_scmi_properties[] = {
     DEFINE_PROP_CHR("chardev", VHostUserSCMI, chardev),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
-static void vu_scmi_class_init(ObjectClass *klass, const void *data)
+static void vu_scmi_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
     VirtioDeviceClass *vdc = VIRTIO_DEVICE_CLASS(klass);

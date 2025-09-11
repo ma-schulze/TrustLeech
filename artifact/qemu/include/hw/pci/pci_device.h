@@ -38,8 +38,6 @@ struct PCIDeviceClass {
     uint16_t subsystem_id;              /* only for header type = 0 */
 
     const char *romfile;                /* rom bar */
-
-    bool sriov_vf_user_creatable;
 };
 
 enum PCIReqIDType {
@@ -59,7 +57,7 @@ typedef struct PCIReqIDCache PCIReqIDCache;
 struct PCIDevice {
     DeviceState qdev;
     bool partially_hotplugged;
-    bool enabled;
+    bool has_power;
 
     /* PCI config space */
     uint8_t *config;
@@ -90,7 +88,6 @@ struct PCIDevice {
     char name[64];
     PCIIORegion io_regions[PCI_NUM_REGIONS];
     AddressSpace bus_master_as;
-    bool is_master;
     MemoryRegion bus_master_container_region;
     MemoryRegion bus_master_enable_region;
 
@@ -107,9 +104,6 @@ struct PCIDevice {
 
     /* Capability bits */
     uint32_t cap_present;
-
-    /* Offset of PM capability in config space */
-    uint8_t pm_cap;
 
     /* Offset of MSI-X capability in config space */
     uint8_t msix_cap;
@@ -154,7 +148,7 @@ struct PCIDevice {
     uint32_t romsize;
     bool has_rom;
     MemoryRegion rom;
-    int32_t rom_bar;
+    uint32_t rom_bar;
 
     /* INTx routing notifier */
     PCIINTxRoutingNotifier intx_routing_notifier;
@@ -180,8 +174,6 @@ struct PCIDevice {
      * realizing the device.
      */
     uint32_t max_bounce_buffer_size;
-
-    char *sriov_pf;
 };
 
 static inline int pci_intx(PCIDevice *pci_dev)
@@ -214,7 +206,7 @@ static inline int pci_is_express_downstream_port(const PCIDevice *d)
 
 static inline int pci_is_vf(const PCIDevice *d)
 {
-    return d->sriov_pf || d->exp.sriov_vf.pf != NULL;
+    return d->exp.sriov_vf.pf != NULL;
 }
 
 static inline uint32_t pci_config_size(const PCIDevice *d)

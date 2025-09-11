@@ -24,12 +24,13 @@
  */
 
 #include "qemu/osdep.h"
-#include "system/tcg.h"
-#include "system/replay.h"
-#include "exec/icount.h"
+#include "sysemu/tcg.h"
+#include "sysemu/replay.h"
+#include "sysemu/cpu-timers.h"
 #include "qemu/main-loop.h"
 #include "qemu/notify.h"
 #include "qemu/guest-random.h"
+#include "exec/exec-all.h"
 #include "hw/boards.h"
 #include "tcg/startup.h"
 #include "tcg-accel-ops.h"
@@ -113,6 +114,7 @@ static void *mttcg_cpu_thread_fn(void *arg)
             }
         }
 
+        qatomic_set_mb(&cpu->exit_request, 0);
         qemu_wait_io_event(cpu);
     } while (!cpu->unplug || cpu_can_run(cpu));
 

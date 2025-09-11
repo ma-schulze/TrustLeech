@@ -29,7 +29,7 @@
 #include "block/blockjob_int.h"
 #include "block/block_int.h"
 #include "block/trace.h"
-#include "system/block-backend.h"
+#include "sysemu/block-backend.h"
 #include "qapi/error.h"
 #include "qapi/qapi-events-block-core.h"
 #include "qapi/qmp/qerror.h"
@@ -144,9 +144,9 @@ static TransactionActionDrv change_child_job_context = {
     .clean = g_free,
 };
 
-static bool GRAPH_RDLOCK
-child_job_change_aio_ctx(BdrvChild *c, AioContext *ctx, GHashTable *visited,
-                         Transaction *tran, Error **errp)
+static bool child_job_change_aio_ctx(BdrvChild *c, AioContext *ctx,
+                                     GHashTable *visited, Transaction *tran,
+                                     Error **errp)
 {
     BlockJob *job = c->opaque;
     BdrvStateChildJobContext *s;
@@ -198,7 +198,7 @@ void block_job_remove_all_bdrv(BlockJob *job)
      * one to make sure that such a concurrent access does not attempt
      * to process an already freed BdrvChild.
      */
-    bdrv_graph_wrlock_drained();
+    bdrv_graph_wrlock();
     while (job->nodes) {
         GSList *l = job->nodes;
         BdrvChild *c = l->data;
@@ -496,7 +496,7 @@ void *block_job_create(const char *job_id, const BlockJobDriver *driver,
     int ret;
     GLOBAL_STATE_CODE();
 
-    bdrv_graph_wrlock_drained();
+    bdrv_graph_wrlock();
 
     if (job_id == NULL && !(flags & JOB_INTERNAL)) {
         job_id = bdrv_get_device_name(bs);
@@ -538,6 +538,8 @@ void *block_job_create(const char *job_id, const BlockJobDriver *driver,
     if (ret < 0) {
         goto fail;
     }
+
+    bdrv_op_unblock(bs, BLOCK_OP_TYPE_DATAPLANE, job->blocker);
 
     if (!block_job_set_speed(job, speed, errp)) {
         goto fail;

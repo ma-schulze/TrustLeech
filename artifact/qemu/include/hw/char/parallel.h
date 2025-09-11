@@ -1,7 +1,7 @@
 #ifndef HW_PARALLEL_H
 #define HW_PARALLEL_H
 
-#include "system/memory.h"
+#include "exec/memory.h"
 #include "hw/isa/isa.h"
 #include "hw/irq.h"
 #include "chardev/char-fe.h"

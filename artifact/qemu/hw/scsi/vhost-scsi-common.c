@@ -101,25 +101,24 @@ err_host_notifiers:
     return ret;
 }
 
-int vhost_scsi_common_stop(VHostSCSICommon *vsc)
+void vhost_scsi_common_stop(VHostSCSICommon *vsc)
 {
     VirtIODevice *vdev = VIRTIO_DEVICE(vsc);
     BusState *qbus = BUS(qdev_get_parent_bus(DEVICE(vdev)));
     VirtioBusClass *k = VIRTIO_BUS_GET_CLASS(qbus);
     int ret = 0;
 
-    ret = vhost_dev_stop(&vsc->dev, vdev, true);
+    vhost_dev_stop(&vsc->dev, vdev, true);
 
     if (k->set_guest_notifiers) {
-        int r = k->set_guest_notifiers(qbus->parent, vsc->dev.nvqs, false);
-        if (r < 0) {
-            error_report("vhost guest notifier cleanup failed: %d", ret);
-            return r;
+        ret = k->set_guest_notifiers(qbus->parent, vsc->dev.nvqs, false);
+        if (ret < 0) {
+                error_report("vhost guest notifier cleanup failed: %d", ret);
         }
     }
+    assert(ret >= 0);
 
     vhost_dev_disable_notifiers(&vsc->dev, vdev);
-    return ret;
 }
 
 uint64_t vhost_scsi_common_get_features(VirtIODevice *vdev, uint64_t features,

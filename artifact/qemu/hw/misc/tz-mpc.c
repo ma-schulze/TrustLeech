@@ -587,12 +587,13 @@ static const VMStateDescription tz_mpc_vmstate = {
     }
 };
 
-static const Property tz_mpc_properties[] = {
+static Property tz_mpc_properties[] = {
     DEFINE_PROP_LINK("downstream", TZMPC, downstream,
                      TYPE_MEMORY_REGION, MemoryRegion *),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
-static void tz_mpc_class_init(ObjectClass *klass, const void *data)
+static void tz_mpc_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
 
@@ -611,7 +612,7 @@ static const TypeInfo tz_mpc_info = {
 };
 
 static void tz_mpc_iommu_memory_region_class_init(ObjectClass *klass,
-                                                  const void *data)
+                                                  void *data)
 {
     IOMMUMemoryRegionClass *imrc = IOMMU_MEMORY_REGION_CLASS(klass);
 

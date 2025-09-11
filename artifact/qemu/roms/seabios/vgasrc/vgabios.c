@@ -114,14 +114,14 @@ set_active_page(u8 page)
         return;
 
     // Get the mode
-    struct vgamode_s *curmode_g = get_current_mode();
-    if (!curmode_g)
+    struct vgamode_s *vmode_g = get_current_mode();
+    if (!vmode_g)
         return;
 
     // Calculate memory address of start of page
     struct cursorpos cp = {0, 0, page};
     int address = (int)text_address(cp);
-    vgahw_set_displaystart(curmode_g, address);
+    vgahw_set_displaystart(vmode_g, address);
 
     // And change the BIOS page
     SET_BDA(video_pagestart, address);
@@ -134,12 +134,12 @@ set_active_page(u8 page)
 }
 
 static void
-set_character_height(u8 lines)
+set_scan_lines(u8 lines)
 {
-    stdvga_set_character_height(lines);
+    stdvga_set_scan_lines(lines);
     SET_BDA(char_height, lines);
-    u16 vertical_size = stdvga_get_vertical_size();
-    u8 rows = vertical_size / lines;
+    u16 vde = stdvga_get_vde();
+    u8 rows = vde / lines;
     SET_BDA(video_rows, rows - 1);
     u16 cols = GET_BDA(video_cols);
     SET_BDA(video_pagesize, calc_page_size(MM_TEXT, cols, rows));
@@ -457,13 +457,13 @@ handle_100a(struct bregs *regs)
 static void
 handle_100b00(struct bregs *regs)
 {
-    stdvga_set_cga_background_color(regs->bl);
+    stdvga_set_border_color(regs->bl);
 }
 
 static void
 handle_100b01(struct bregs *regs)
 {
-    stdvga_set_cga_palette(regs->bl);
+    stdvga_set_palette(regs->bl);
 }
 
 static void
@@ -544,7 +544,7 @@ handle_101002(struct bregs *regs)
 static void
 handle_101003(struct bregs *regs)
 {
-    stdvga_set_palette_blinking(regs->bl);
+    stdvga_toggle_intensity(regs->bl);
 }
 
 static void
@@ -567,42 +567,39 @@ handle_101009(struct bregs *regs)
     stdvga_get_all_palette_reg(regs->es, (u8*)(regs->dx + 0));
 }
 
-static void
+static void noinline
 handle_101010(struct bregs *regs)
 {
-    struct vbe_palette_entry rgb = {
-        .red=regs->dh, .green=regs->ch, .blue=regs->cl };
-    stdvga_dac_write(regs->bx, rgb);
+    u8 rgb[3] = {regs->dh, regs->ch, regs->cl};
+    stdvga_dac_write(GET_SEG(SS), rgb, regs->bx, 1);
 }
 
 static void
 handle_101012(struct bregs *regs)
 {
-    stdvga_dac_write_many(regs->es, (u8*)(regs->dx + 0), regs->bx, regs->cx);
+    stdvga_dac_write(regs->es, (u8*)(regs->dx + 0), regs->bx, regs->cx);
 }
 
 static void
 handle_101013(struct bregs *regs)
 {
-    if (!(regs->bl & 0x01))
-        stdvga_set_palette_pagesize(regs->bh);
-    else
-        stdvga_set_palette_page(regs->bh);
+    stdvga_select_video_dac_color_page(regs->bl, regs->bh);
 }
 
-static void
+static void noinline
 handle_101015(struct bregs *regs)
 {
-    struct vbe_palette_entry rgb = stdvga_dac_read(regs->bx);
-    regs->dh = rgb.red;
-    regs->ch = rgb.green;
-    regs->cl = rgb.blue;
+    u8 rgb[3];
+    stdvga_dac_read(GET_SEG(SS), rgb, regs->bx, 1);
+    regs->dh = rgb[0];
+    regs->ch = rgb[1];
+    regs->cl = rgb[2];
 }
 
 static void
 handle_101017(struct bregs *regs)
 {
-    stdvga_dac_read_many(regs->es, (u8*)(regs->dx + 0), regs->bx, regs->cx);
+    stdvga_dac_read(regs->es, (u8*)(regs->dx + 0), regs->bx, regs->cx);
 }
 
 static void
@@ -620,7 +617,7 @@ handle_101019(struct bregs *regs)
 static void
 handle_10101a(struct bregs *regs)
 {
-    stdvga_get_palette_page(&regs->bl, &regs->bh);
+    stdvga_read_video_dac_state(&regs->bl, &regs->bh);
 }
 
 static void
@@ -686,7 +683,7 @@ handle_101102(struct bregs *regs)
 static void
 handle_101103(struct bregs *regs)
 {
-    stdvga_set_font_location(regs->bl);
+    stdvga_set_text_block_specifier(regs->bl);
 }
 
 static void
@@ -700,28 +697,28 @@ handle_101110(struct bregs *regs)
 {
     stdvga_load_font(regs->es, (void*)(regs->bp+0), regs->cx
                      , regs->dx, regs->bl, regs->bh);
-    set_character_height(regs->bh);
+    set_scan_lines(regs->bh);
 }
 
 static void
 handle_101111(struct bregs *regs)
 {
     stdvga_load_font(get_global_seg(), vgafont14, 0x100, 0, regs->bl, 14);
-    set_character_height(14);
+    set_scan_lines(14);
 }
 
 static void
 handle_101112(struct bregs *regs)
 {
     stdvga_load_font(get_global_seg(), vgafont8, 0x100, 0, regs->bl, 8);
-    set_character_height(8);
+    set_scan_lines(8);
 }
 
 static void
 handle_101114(struct bregs *regs)
 {
     stdvga_load_font(get_global_seg(), vgafont16, 0x100, 0, regs->bl, 16);
-    set_character_height(16);
+    set_scan_lines(16);
 }
 
 static void
@@ -1084,7 +1081,7 @@ handle_101c(struct bregs *regs)
     if (ret < 0)
         goto fail;
     if (cmd == 0)
-        regs->bx = DIV_ROUND_UP(ret, 64);
+        regs->bx = ret / 64;
     regs->al = 0x1c;
 fail:
     return;

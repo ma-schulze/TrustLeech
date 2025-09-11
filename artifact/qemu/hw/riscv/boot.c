@@ -27,17 +27,17 @@
 #include "hw/riscv/boot.h"
 #include "hw/riscv/boot_opensbi.h"
 #include "elf.h"
-#include "system/device_tree.h"
-#include "system/qtest.h"
-#include "system/kvm.h"
-#include "system/reset.h"
+#include "sysemu/device_tree.h"
+#include "sysemu/qtest.h"
+#include "sysemu/kvm.h"
+#include "sysemu/reset.h"
 
 #include <libfdt.h>
 
 bool riscv_is_32bit(RISCVHartArrayState *harts)
 {
     RISCVCPUClass *mcc = RISCV_CPU_GET_CLASS(&harts->harts[0]);
-    return mcc->def->misa_mxl_max == MXL_RV32;
+    return mcc->misa_mxl_max == MXL_RV32;
 }
 
 /*
@@ -67,16 +67,9 @@ char *riscv_plic_hart_config_string(int hart_count)
     return g_strjoinv(",", (char **)vals);
 }
 
-void riscv_boot_info_init(RISCVBootInfo *info, RISCVHartArrayState *harts)
-{
-    info->kernel_size = 0;
-    info->initrd_size = 0;
-    info->is_32bit = riscv_is_32bit(harts);
-}
-
-target_ulong riscv_calc_kernel_start_addr(RISCVBootInfo *info,
+target_ulong riscv_calc_kernel_start_addr(RISCVHartArrayState *harts,
                                           target_ulong firmware_end_addr) {
-    if (info->is_32bit) {
+    if (riscv_is_32bit(harts)) {
         return QEMU_ALIGN_UP(firmware_end_addr, 4 * MiB);
     } else {
         return QEMU_ALIGN_UP(firmware_end_addr, 2 * MiB);
@@ -182,7 +175,7 @@ target_ulong riscv_load_firmware(const char *firmware_filename,
     exit(1);
 }
 
-static void riscv_load_initrd(MachineState *machine, RISCVBootInfo *info)
+static void riscv_load_initrd(MachineState *machine, uint64_t kernel_entry)
 {
     const char *filename = machine->initrd_filename;
     uint64_t mem_size = machine->ram_size;
@@ -203,7 +196,7 @@ static void riscv_load_initrd(MachineState *machine, RISCVBootInfo *info)
      * halfway into RAM, and for boards with 1GB of RAM or more we put
      * the initrd at 512MB.
      */
-    start = info->image_low_addr + MIN(mem_size / 2, 512 * MiB);
+    start = kernel_entry + MIN(mem_size / 2, 512 * MiB);
 
     size = load_ramdisk(filename, start, mem_size - start);
     if (size == -1) {
@@ -214,9 +207,6 @@ static void riscv_load_initrd(MachineState *machine, RISCVBootInfo *info)
         }
     }
 
-    info->initrd_start = start;
-    info->initrd_size = size;
-
     /* Some RISC-V machines (e.g. opentitan) don't have a fdt. */
     if (fdt) {
         end = start + size;
@@ -225,14 +215,14 @@ static void riscv_load_initrd(MachineState *machine, RISCVBootInfo *info)
     }
 }
 
-void riscv_load_kernel(MachineState *machine,
-                       RISCVBootInfo *info,
-                       target_ulong kernel_start_addr,
-                       bool load_initrd,
-                       symbol_fn_t sym_cb)
+target_ulong riscv_load_kernel(MachineState *machine,
+                               RISCVHartArrayState *harts,
+                               target_ulong kernel_start_addr,
+                               bool load_initrd,
+                               symbol_fn_t sym_cb)
 {
     const char *kernel_filename = machine->kernel_filename;
-    ssize_t kernel_size;
+    uint64_t kernel_load_base, kernel_entry;
     void *fdt = machine->fdt;
 
     g_assert(kernel_filename != NULL);
@@ -244,29 +234,21 @@ void riscv_load_kernel(MachineState *machine,
      * the (expected) load address load address. This allows kernels to have
      * separate SBI and ELF entry points (used by FreeBSD, for example).
      */
-    kernel_size = load_elf_ram_sym(kernel_filename, NULL, NULL, NULL, NULL,
-                                   &info->image_low_addr, &info->image_high_addr,
-                                   NULL, ELFDATA2LSB, EM_RISCV,
-                                   1, 0, NULL, true, sym_cb);
-    if (kernel_size > 0) {
-        info->kernel_size = kernel_size;
+    if (load_elf_ram_sym(kernel_filename, NULL, NULL, NULL,
+                         NULL, &kernel_load_base, NULL, NULL, 0,
+                         EM_RISCV, 1, 0, NULL, true, sym_cb) > 0) {
+        kernel_entry = kernel_load_base;
         goto out;
     }
 
-    kernel_size = load_uimage_as(kernel_filename, &info->image_low_addr,
-                                 NULL, NULL, NULL, NULL, NULL);
-    if (kernel_size > 0) {
-        info->kernel_size = kernel_size;
-        info->image_high_addr = info->image_low_addr + kernel_size;
+    if (load_uimage_as(kernel_filename, &kernel_entry, NULL, NULL,
+                       NULL, NULL, NULL) > 0) {
         goto out;
     }
 
-    kernel_size = load_image_targphys_as(kernel_filename, kernel_start_addr,
-                                         current_machine->ram_size, NULL);
-    if (kernel_size > 0) {
-        info->kernel_size = kernel_size;
-        info->image_low_addr = kernel_start_addr;
-        info->image_high_addr = info->image_low_addr + kernel_size;
+    if (load_image_targphys_as(kernel_filename, kernel_start_addr,
+                               current_machine->ram_size, NULL) > 0) {
+        kernel_entry = kernel_start_addr;
         goto out;
     }
 
@@ -275,21 +257,23 @@ void riscv_load_kernel(MachineState *machine,
 
 out:
     /*
-     * For 32 bit CPUs 'image_low_addr' can be sign-extended by
+     * For 32 bit CPUs 'kernel_entry' can be sign-extended by
      * load_elf_ram_sym().
      */
-    if (info->is_32bit) {
-        info->image_low_addr = extract64(info->image_low_addr, 0, 32);
+    if (riscv_is_32bit(harts)) {
+        kernel_entry = extract64(kernel_entry, 0, 32);
     }
 
     if (load_initrd && machine->initrd_filename) {
-        riscv_load_initrd(machine, info);
+        riscv_load_initrd(machine, kernel_entry);
     }
 
     if (fdt && machine->kernel_cmdline && *machine->kernel_cmdline) {
         qemu_fdt_setprop_string(fdt, "/chosen", "bootargs",
                                 machine->kernel_cmdline);
     }
+
+    return kernel_entry;
 }
 
 /*
@@ -309,12 +293,11 @@ out:
  * The FDT is fdt_packed() during the calculation.
  */
 uint64_t riscv_compute_fdt_addr(hwaddr dram_base, hwaddr dram_size,
-                                MachineState *ms, RISCVBootInfo *info)
+                                MachineState *ms)
 {
     int ret = fdt_pack(ms->fdt);
     hwaddr dram_end, temp;
     int fdtsize;
-    uint64_t dtb_start, dtb_start_limit;
 
     /* Should only fail if we've built a corrupted tree */
     g_assert(ret == 0);
@@ -323,17 +306,6 @@ uint64_t riscv_compute_fdt_addr(hwaddr dram_base, hwaddr dram_size,
     if (fdtsize <= 0) {
         error_report("invalid device-tree");
         exit(1);
-    }
-
-    if (info->initrd_size) {
-        /* If initrd is successfully loaded, place DTB after it. */
-        dtb_start_limit = info->initrd_start + info->initrd_size;
-    } else if (info->kernel_size) {
-        /* If only kernel is successfully loaded, place DTB after it. */
-        dtb_start_limit = info->image_high_addr;
-    } else {
-        /* Otherwise, do not check DTB overlapping */
-        dtb_start_limit = 0;
     }
 
     /*
@@ -345,24 +317,13 @@ uint64_t riscv_compute_fdt_addr(hwaddr dram_base, hwaddr dram_size,
 
     /*
      * We should put fdt as far as possible to avoid kernel/initrd overwriting
-     * its content. But it should be addressable by 32 bit system as well in RV32.
-     * Thus, put it near to the end of dram in RV64, and put it near to the end
-     * of dram or 3GB whichever is lesser in RV32.
+     * its content. But it should be addressable by 32 bit system as well.
+     * Thus, put it at an 2MB aligned address that less than fdt size from the
+     * end of dram or 3GB whichever is lesser.
      */
-    if (!info->is_32bit) {
-        temp = dram_end;
-    } else {
-        temp = (dram_base < 3072 * MiB) ? MIN(dram_end, 3072 * MiB) : dram_end;
-    }
+    temp = (dram_base < 3072 * MiB) ? MIN(dram_end, 3072 * MiB) : dram_end;
 
-    dtb_start = QEMU_ALIGN_DOWN(temp - fdtsize, 2 * MiB);
-
-    if (dtb_start_limit && (dtb_start < dtb_start_limit)) {
-        error_report("No enough memory to place DTB after kernel/initrd");
-        exit(1);
-    }
-
-    return dtb_start;
+    return QEMU_ALIGN_DOWN(temp - fdtsize, 2 * MiB);
 }
 
 /*
@@ -374,6 +335,8 @@ void riscv_load_fdt(hwaddr fdt_addr, void *fdt)
     uint32_t fdtsize = fdt_totalsize(fdt);
 
     /* copy in the device tree */
+    qemu_fdt_dumpdtb(fdt, fdtsize);
+
     rom_add_blob_fixed_as("fdt", fdt, fdtsize, fdt_addr,
                           &address_space_memory);
     qemu_register_reset_nosnapshotload(qemu_fdt_randomize_seeds,

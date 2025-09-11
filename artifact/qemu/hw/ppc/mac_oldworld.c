@@ -28,12 +28,11 @@
 #include "qemu/datadir.h"
 #include "qemu/units.h"
 #include "qapi/error.h"
-#include "exec/target_page.h"
 #include "hw/ppc/ppc.h"
 #include "hw/qdev-properties.h"
 #include "hw/boards.h"
 #include "hw/input/adb.h"
-#include "system/system.h"
+#include "sysemu/sysemu.h"
 #include "net/net.h"
 #include "hw/isa/isa.h"
 #include "hw/pci/pci.h"
@@ -46,8 +45,8 @@
 #include "hw/fw-path-provider.h"
 #include "elf.h"
 #include "qemu/error-report.h"
-#include "system/kvm.h"
-#include "system/reset.h"
+#include "sysemu/kvm.h"
+#include "sysemu/reset.h"
 #include "kvm_ppc.h"
 
 #define MAX_IDE_BUS 2
@@ -137,7 +136,7 @@ static void ppc_heathrow_init(MachineState *machine)
     if (filename) {
         /* Load OpenBIOS (ELF) */
         bios_size = load_elf(filename, NULL, NULL, NULL, NULL, &bios_addr,
-                             NULL, NULL, ELFDATA2MSB, PPC_ELF_MACHINE, 0, 0);
+                             NULL, NULL, 1, PPC_ELF_MACHINE, 0, 0);
         /* Unfortunately, load_elf sign-extends reading elf32 */
         bios_addr = (uint32_t)bios_addr;
 
@@ -154,14 +153,19 @@ static void ppc_heathrow_init(MachineState *machine)
     }
 
     if (machine->kernel_filename) {
+        int bswap_needed = 0;
+
+#ifdef BSWAP_NEEDED
+        bswap_needed = 1;
+#endif
         kernel_base = KERNEL_LOAD_ADDR;
         kernel_size = load_elf(machine->kernel_filename, NULL,
                                translate_kernel_address, NULL, NULL, NULL,
-                               NULL, NULL, ELFDATA2MSB, PPC_ELF_MACHINE, 0, 0);
+                               NULL, NULL, 1, PPC_ELF_MACHINE, 0, 0);
         if (kernel_size < 0) {
             kernel_size = load_aout(machine->kernel_filename, kernel_base,
                                     machine->ram_size - kernel_base,
-                                    true, TARGET_PAGE_SIZE);
+                                    bswap_needed, TARGET_PAGE_SIZE);
         }
         if (kernel_size < 0) {
             kernel_size = load_image_targphys(machine->kernel_filename,
@@ -402,7 +406,7 @@ static int heathrow_kvm_type(MachineState *machine, const char *arg)
     return 2;
 }
 
-static void heathrow_class_init(ObjectClass *oc, const void *data)
+static void heathrow_class_init(ObjectClass *oc, void *data)
 {
     MachineClass *mc = MACHINE_CLASS(oc);
     FWPathProviderClass *fwc = FW_PATH_PROVIDER_CLASS(oc);
@@ -430,7 +434,7 @@ static const TypeInfo ppc_heathrow_machine_info = {
     .name          = MACHINE_TYPE_NAME("g3beige"),
     .parent        = TYPE_MACHINE,
     .class_init    = heathrow_class_init,
-    .interfaces = (const InterfaceInfo[]) {
+    .interfaces = (InterfaceInfo[]) {
         { TYPE_FW_PATH_PROVIDER },
         { }
     },

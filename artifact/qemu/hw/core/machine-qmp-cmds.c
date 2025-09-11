@@ -14,20 +14,17 @@
 #include "hw/mem/memory-device.h"
 #include "qapi/error.h"
 #include "qapi/qapi-builtin-visit.h"
-#include "qapi/qapi-commands-accelerator.h"
 #include "qapi/qapi-commands-machine.h"
-#include "qobject/qobject.h"
+#include "qapi/qmp/qobject.h"
 #include "qapi/qobject-input-visitor.h"
 #include "qapi/type-helpers.h"
 #include "qemu/uuid.h"
-#include "qemu/target-info-qapi.h"
 #include "qom/qom-qobject.h"
-#include "system/hostmem.h"
-#include "system/hw_accel.h"
-#include "system/numa.h"
-#include "system/runstate.h"
-#include "system/system.h"
-#include "hw/s390x/storage-keys.h"
+#include "sysemu/hostmem.h"
+#include "sysemu/hw_accel.h"
+#include "sysemu/numa.h"
+#include "sysemu/runstate.h"
+#include "sysemu/sysemu.h"
 
 /*
  * fast means: we NEVER interrupt vCPU threads to retrieve
@@ -38,7 +35,8 @@ CpuInfoFastList *qmp_query_cpus_fast(Error **errp)
     MachineState *ms = MACHINE(qdev_get_machine());
     MachineClass *mc = MACHINE_GET_CLASS(ms);
     CpuInfoFastList *head = NULL, **tail = &head;
-    SysEmuTarget target = target_arch();
+    SysEmuTarget target = qapi_enum_parse(&SysEmuTarget_lookup, target_name(),
+                                          -1, &error_abort);
     CPUState *cpu;
 
     CPU_FOREACH(cpu) {
@@ -47,7 +45,6 @@ CpuInfoFastList *qmp_query_cpus_fast(Error **errp)
         value->cpu_index = cpu->cpu_index;
         value->qom_path = object_get_canonical_path(OBJECT(cpu));
         value->thread_id = cpu->thread_id;
-        value->qom_type = g_strdup(object_get_typename(OBJECT(cpu)));
 
         if (mc->cpu_index_to_instance_props) {
             CpuInstanceProperties *props;
@@ -136,11 +133,12 @@ CurrentMachineParams *qmp_query_current_machine(Error **errp)
     return params;
 }
 
-QemuTargetInfo *qmp_query_target(Error **errp)
+TargetInfo *qmp_query_target(Error **errp)
 {
-    QemuTargetInfo *info = g_malloc0(sizeof(*info));
+    TargetInfo *info = g_malloc0(sizeof(*info));
 
-    info->arch = target_arch();
+    info->arch = qapi_enum_parse(&SysEmuTarget_lookup, target_name(), -1,
+                                 &error_abort);
 
     return info;
 }
@@ -408,17 +406,4 @@ GuidInfo *qmp_query_vm_generation_id(Error **errp)
     info = g_malloc0(sizeof(*info));
     info->guid = qemu_uuid_unparse_strdup(&vms->guid);
     return info;
-}
-
-void qmp_dump_skeys(const char *filename, Error **errp)
-{
-    ObjectClass *mc = object_get_class(qdev_get_machine());
-    ObjectClass *oc = object_class_dynamic_cast(mc, TYPE_DUMP_SKEYS_INTERFACE);
-
-    if (!oc) {
-        error_setg(errp, "Storage keys information not available"
-                         " for this architecture");
-        return;
-    }
-    DUMP_SKEYS_INTERFACE_CLASS(oc)->qmp_dump_skeys(filename, errp);
 }

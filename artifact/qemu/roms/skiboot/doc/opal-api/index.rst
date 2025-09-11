@@ -85,6 +85,10 @@ The OPAL API is the interface between an Operating System and OPAL.
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
 | :ref:`OPAL_PCI_SET_PELTV`                   |  32          | v1.0 (Initial Release) | POWER8   |                 |
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
+| :ref:`OPAL_PCI_SET_MVE`                     |  33          | v1.0 (Initial Release) | POWER8   |                 |
++---------------------------------------------+--------------+------------------------+----------+-----------------+
+| :ref:`OPAL_PCI_SET_MVE_ENABLE`              |  34          | v1.0 (Initial Release) | POWER8   |                 |
++---------------------------------------------+--------------+------------------------+----------+-----------------+
 | :ref:`OPAL_PCI_GET_XIVE_REISSUE`            |  35          | Never                  |          | Never used or   |
 |                                             |              |                        |          | Implemented     |
 +---------------------------------------------+--------------+------------------------+----------+-----------------+
@@ -450,10 +454,6 @@ removed and no longer supported.
 +---------------------------------------------+-------+-----------------------+-----------------------+
 | :ref:`OPAL_PCI_EEH_FREEZE_STATUS2`          |  61   | v1.0 Initial Release  | :ref:`skiboot-6.4`    |
 +---------------------------------------------+-------+-----------------------+-----------------------+
-| :ref:`OPAL_PCI_SET_MVE`                     |  33   | v1.0 Initial Release  | :ref:`skiboot-7.1`    |
-+---------------------------------------------+--------------+------------------------+----------+----+
-| :ref:`OPAL_PCI_SET_MVE_ENABLE`              |  34   | v1.0 Initial Release  | :ref:`skiboot-7.1`    |
-+---------------------------------------------+--------------+------------------------+----------+----+
 
 .. _OPAL_GET_COMPLETION_TOKEN_STATUS:
 
@@ -664,21 +664,6 @@ and bring-up purposes.
 
 Support for p5ioc was removed from the Linux kernel in v4.6-rc1.
 
-.. _OPAL_PCI_SET_MVE:
-
-OPAL_PCI_SET_MVE
-^^^^^^^^^^^^^^^^
-
-Dead code, as the callback did nothing after the P7IOC code was removed in
-skiboot 6.4. Removed in :ref:`skiboot-7.1`.
-
-.. _OPAL_PCI_SET_MVE_ENABLE:
-
-OPAL_PCI_SET_MVE_ENABLE
-^^^^^^^^^^^^^^^^^^^^^^^
-
-Dead code, as the callback did nothing after the P7IOC code was removed in
-skiboot 6.4. Removed in :ref:`skiboot-7.1`.
 
 Future Calls
 ------------

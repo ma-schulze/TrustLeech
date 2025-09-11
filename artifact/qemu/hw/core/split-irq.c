@@ -59,11 +59,12 @@ static void split_irq_realize(DeviceState *dev, Error **errp)
     qdev_init_gpio_out(dev, s->out_irq, s->num_lines);
 }
 
-static const Property split_irq_properties[] = {
+static Property split_irq_properties[] = {
     DEFINE_PROP_UINT16("num-lines", SplitIRQ, num_lines, 1),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
-static void split_irq_class_init(ObjectClass *klass, const void *data)
+static void split_irq_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
 

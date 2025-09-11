@@ -21,11 +21,10 @@
 #include "cpu.h"
 #include "internal.h"
 #include "tcg/tcg.h"
-#include "accel/tcg/cpu-ldst.h"
-#include "accel/tcg/probe.h"
+#include "exec/exec-all.h"
+#include "exec/cpu_ldst.h"
 #include "exec/helper-proto.h"
 #include "exec/memop.h"
-#include "exec/target_page.h"
 #include "fpu/softfloat.h"
 #include "fpu_helper.h"
 
@@ -5578,7 +5577,7 @@ static inline int64_t msa_mulr_q_df(uint32_t df, int64_t arg1, int64_t arg2)
 {
     int64_t q_min = DF_MIN_INT(df);
     int64_t q_max = DF_MAX_INT(df);
-    int64_t r_bit = 1LL << (DF_BITS(df) - 2);
+    int64_t r_bit = 1 << (DF_BITS(df) - 2);
 
     if (arg1 == q_min && arg2 == q_min) {
         return q_max;
@@ -5686,7 +5685,7 @@ static inline int64_t msa_maddr_q_df(uint32_t df, int64_t dest, int64_t arg1,
 
     int64_t q_max = DF_MAX_INT(df);
     int64_t q_min = DF_MIN_INT(df);
-    int64_t r_bit = 1LL << (DF_BITS(df) - 2);
+    int64_t r_bit = 1 << (DF_BITS(df) - 2);
 
     q_prod = arg1 * arg2;
     q_ret = ((dest << (DF_BITS(df) - 1)) + q_prod + r_bit) >> (DF_BITS(df) - 1);
@@ -5701,7 +5700,7 @@ static inline int64_t msa_msubr_q_df(uint32_t df, int64_t dest, int64_t arg1,
 
     int64_t q_max = DF_MAX_INT(df);
     int64_t q_min = DF_MIN_INT(df);
-    int64_t r_bit = 1LL << (DF_BITS(df) - 2);
+    int64_t r_bit = 1 << (DF_BITS(df) - 2);
 
     q_prod = arg1 * arg2;
     q_ret = ((dest << (DF_BITS(df) - 1)) - q_prod + r_bit) >> (DF_BITS(df) - 1);
@@ -6232,7 +6231,7 @@ static inline int update_msacsr(CPUMIPSState *env, int action, int denormal)
     enable = GET_FP_ENABLE(env->active_tc.msacsr) | FP_UNIMPLEMENTED;
 
     /* Set Inexact (I) when flushing inputs to zero */
-    if ((ieee_exception_flags & float_flag_input_denormal_flushed) &&
+    if ((ieee_exception_flags & float_flag_input_denormal) &&
             (env->active_tc.msacsr & MSACSR_FS_MASK) != 0) {
         if (action & CLEAR_IS_INEXACT) {
             mips_exception_flags &= ~FP_INEXACT;
@@ -6242,7 +6241,7 @@ static inline int update_msacsr(CPUMIPSState *env, int action, int denormal)
     }
 
     /* Set Inexact (I) and Underflow (U) when flushing outputs to zero */
-    if ((ieee_exception_flags & float_flag_output_denormal_flushed) &&
+    if ((ieee_exception_flags & float_flag_output_denormal) &&
             (env->active_tc.msacsr & MSACSR_FS_MASK) != 0) {
         mips_exception_flags |= FP_INEXACT;
         if (action & CLEAR_FS_UNDERFLOW) {
@@ -8212,6 +8211,7 @@ void helper_msa_ffint_u_df(CPUMIPSState *env, uint32_t df, uint32_t wd,
 /* Element-by-element access macros */
 #define DF_ELEMENTS(df) (MSA_WRLEN / DF_BITS(df))
 
+#if TARGET_BIG_ENDIAN
 static inline uint64_t bswap16x4(uint64_t x)
 {
     uint64_t m = 0x00ff00ff00ff00ffull;
@@ -8222,6 +8222,7 @@ static inline uint64_t bswap32x2(uint64_t x)
 {
     return ror64(bswap64(x), 32);
 }
+#endif
 
 void helper_msa_ld_b(CPUMIPSState *env, uint32_t wd,
                      target_ulong addr)
@@ -8250,10 +8251,10 @@ void helper_msa_ld_h(CPUMIPSState *env, uint32_t wd,
      */
     d0 = cpu_ldq_le_data_ra(env, addr + 0, ra);
     d1 = cpu_ldq_le_data_ra(env, addr + 8, ra);
-    if (mips_env_is_bigendian(env)) {
-        d0 = bswap16x4(d0);
-        d1 = bswap16x4(d1);
-    }
+#if TARGET_BIG_ENDIAN
+    d0 = bswap16x4(d0);
+    d1 = bswap16x4(d1);
+#endif
     pwd->d[0] = d0;
     pwd->d[1] = d1;
 }
@@ -8271,10 +8272,10 @@ void helper_msa_ld_w(CPUMIPSState *env, uint32_t wd,
      */
     d0 = cpu_ldq_le_data_ra(env, addr + 0, ra);
     d1 = cpu_ldq_le_data_ra(env, addr + 8, ra);
-    if (mips_env_is_bigendian(env)) {
-        d0 = bswap32x2(d0);
-        d1 = bswap32x2(d1);
-    }
+#if TARGET_BIG_ENDIAN
+    d0 = bswap32x2(d0);
+    d1 = bswap32x2(d1);
+#endif
     pwd->d[0] = d0;
     pwd->d[1] = d1;
 }
@@ -8337,10 +8338,10 @@ void helper_msa_st_h(CPUMIPSState *env, uint32_t wd,
     /* Store 8 bytes at a time.  See helper_msa_ld_h. */
     d0 = pwd->d[0];
     d1 = pwd->d[1];
-    if (mips_env_is_bigendian(env)) {
-        d0 = bswap16x4(d0);
-        d1 = bswap16x4(d1);
-    }
+#if TARGET_BIG_ENDIAN
+    d0 = bswap16x4(d0);
+    d1 = bswap16x4(d1);
+#endif
     cpu_stq_le_data_ra(env, addr + 0, d0, ra);
     cpu_stq_le_data_ra(env, addr + 8, d1, ra);
 }
@@ -8358,10 +8359,10 @@ void helper_msa_st_w(CPUMIPSState *env, uint32_t wd,
     /* Store 8 bytes at a time.  See helper_msa_ld_w. */
     d0 = pwd->d[0];
     d1 = pwd->d[1];
-    if (mips_env_is_bigendian(env)) {
-        d0 = bswap32x2(d0);
-        d1 = bswap32x2(d1);
-    }
+#if TARGET_BIG_ENDIAN
+    d0 = bswap32x2(d0);
+    d1 = bswap32x2(d1);
+#endif
     cpu_stq_le_data_ra(env, addr + 0, d0, ra);
     cpu_stq_le_data_ra(env, addr + 8, d1, ra);
 }

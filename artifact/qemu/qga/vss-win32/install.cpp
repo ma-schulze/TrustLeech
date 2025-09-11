@@ -287,13 +287,9 @@ STDAPI COMRegister(void)
 
     chk(QGAProviderFind(QGAProviderCount, (void *)&count));
     if (count) {
-        qga_debug("QGA VSS Provider is already installed. Attempting to unregister first.");
-        hr = COMUnregister();
-        if (FAILED(hr)) {
-            errmsg(hr, "Failed to unregister existing QGA VSS Provider. Aborting installation.");
-            qga_debug_end;
-            return E_ABORT;
-        }
+        errmsg(E_ABORT, "QGA VSS Provider is already installed");
+        qga_debug_end;
+        return E_ABORT;
     }
 
     chk(CoCreateInstance(CLSID_COMAdminCatalog, NULL, CLSCTX_INPROC_SERVER,
@@ -389,10 +385,7 @@ out:
 STDAPI_(void) CALLBACK DLLCOMRegister(HWND, HINSTANCE, LPSTR, int);
 STDAPI_(void) CALLBACK DLLCOMRegister(HWND, HINSTANCE, LPSTR, int)
 {
-    HRESULT hr = COMRegister();
-    if (FAILED(hr)) {
-        exit(hr);
-    }
+    COMRegister();
 }
 
 STDAPI_(void) CALLBACK DLLCOMUnregister(HWND, HINSTANCE, LPSTR, int);

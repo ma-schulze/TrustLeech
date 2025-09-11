@@ -47,9 +47,9 @@ class QAPISourceInfo:
         self.defn_meta = meta
         self.defn_name = name
 
-    def next_line(self: T, n: int = 1) -> T:
+    def next_line(self: T) -> T:
         info = copy.copy(self)
-        info.line += n
+        info.line += 1
         return info
 
     def loc(self) -> str:

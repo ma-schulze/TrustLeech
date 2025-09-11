@@ -22,7 +22,7 @@
 
 #include "hw/sysbus.h"
 #include "net/net.h"
-#include "system/memory.h"
+#include "exec/memory.h"
 
 #define SONIC_REG_COUNT  0x40
 

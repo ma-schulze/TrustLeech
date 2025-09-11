@@ -296,11 +296,12 @@ static void canokey_unrealize(USBDevice *base)
     trace_canokey_unrealize();
 }
 
-static const Property canokey_properties[] = {
+static Property canokey_properties[] = {
     DEFINE_PROP_STRING("file", CanoKeyState, file),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
-static void canokey_class_init(ObjectClass *klass, const void *data)
+static void canokey_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
     USBDeviceClass *uc = USB_DEVICE_CLASS(klass);

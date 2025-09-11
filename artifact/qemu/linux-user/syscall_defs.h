@@ -462,7 +462,7 @@ typedef struct {
     abi_ulong sig[TARGET_NSIG_WORDS];
 } target_sigset_t;
 
-#if HOST_BIG_ENDIAN != TARGET_BIG_ENDIAN
+#ifdef BSWAP_NEEDED
 static inline void tswap_sigset(target_sigset_t *d, const target_sigset_t *s)
 {
     int i;
@@ -515,6 +515,10 @@ struct target_sigaction {
     abi_ulong       _sa_handler;
 #endif
     target_sigset_t sa_mask;
+#ifdef TARGET_ARCH_HAS_SA_RESTORER
+    /* ??? This is always present, but ignored unless O32.  */
+    abi_ulong sa_restorer;
+#endif
 };
 #else
 struct target_old_sigaction {
@@ -2616,12 +2620,6 @@ struct target_ucred {
     abi_uint pid;
     abi_uint uid;
     abi_uint gid;
-};
-
-struct target_in_pktinfo {
-    abi_int               ipi_ifindex;
-    struct target_in_addr ipi_spec_dst;
-    struct target_in_addr ipi_addr;
 };
 
 typedef abi_int target_timer_t;

@@ -11,6 +11,7 @@
 
 #include "qemu/osdep.h"
 #include "hw/virtio/virtio.h"
+#include "cpu.h"
 
 uint32_t virtio_config_readb(VirtIODevice *vdev, uint32_t addr)
 {

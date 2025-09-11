@@ -31,7 +31,7 @@
 #include "qemu/module.h"
 #include "net/checksum.h"
 #include "net/eth.h"
-#include "system/system.h"
+#include "sysemu/sysemu.h"
 #include "trace.h"
 #include "qom/object.h"
 
@@ -177,8 +177,9 @@ struct SunHMEState {
     uint16_t miiregs[HME_MII_REGS_SIZE];
 };
 
-static const Property sunhme_properties[] = {
+static Property sunhme_properties[] = {
     DEFINE_NIC_PROPERTIES(SunHMEState, conf),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
 static void sunhme_reset_tx(SunHMEState *s)
@@ -937,7 +938,7 @@ static const VMStateDescription vmstate_hme = {
     }
 };
 
-static void sunhme_class_init(ObjectClass *klass, const void *data)
+static void sunhme_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
     PCIDeviceClass *k = PCI_DEVICE_CLASS(klass);
@@ -958,7 +959,7 @@ static const TypeInfo sunhme_info = {
     .class_init    = sunhme_class_init,
     .instance_size = sizeof(SunHMEState),
     .instance_init = sunhme_instance_init,
-    .interfaces = (const InterfaceInfo[]) {
+    .interfaces = (InterfaceInfo[]) {
         { INTERFACE_CONVENTIONAL_PCI_DEVICE },
         { }
     }

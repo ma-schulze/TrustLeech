@@ -98,7 +98,7 @@ static uint64_t bcm2835_aux_read(void *opaque, hwaddr offset, unsigned size)
          * interrupts are active, besides that this cannot occur. At
          * present, we choose to prioritise the rx interrupt, since
          * the tx fifo is always empty. */
-        if ((s->iir & RX_INT) && s->read_count != 0) {
+        if (s->read_count != 0) {
             res |= 0x4;
         } else {
             res |= 0x2;
@@ -221,7 +221,7 @@ static int bcm2835_aux_can_receive(void *opaque)
 {
     BCM2835AuxState *s = opaque;
 
-    return BCM2835_AUX_RX_FIFO_LEN - s->read_count;
+    return s->read_count < BCM2835_AUX_RX_FIFO_LEN;
 }
 
 static void bcm2835_aux_put_fifo(void *opaque, uint8_t value)
@@ -243,9 +243,7 @@ static void bcm2835_aux_put_fifo(void *opaque, uint8_t value)
 
 static void bcm2835_aux_receive(void *opaque, const uint8_t *buf, int size)
 {
-    for (int i = 0; i < size; i++) {
-        bcm2835_aux_put_fifo(opaque, buf[i]);
-    }
+    bcm2835_aux_put_fifo(opaque, *buf);
 }
 
 static const MemoryRegionOps bcm2835_aux_ops = {
@@ -292,11 +290,12 @@ static void bcm2835_aux_realize(DeviceState *dev, Error **errp)
                              bcm2835_aux_receive, NULL, NULL, s, NULL, true);
 }
 
-static const Property bcm2835_aux_props[] = {
+static Property bcm2835_aux_props[] = {
     DEFINE_PROP_CHR("chardev", BCM2835AuxState, chr),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
-static void bcm2835_aux_class_init(ObjectClass *oc, const void *data)
+static void bcm2835_aux_class_init(ObjectClass *oc, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(oc);
 

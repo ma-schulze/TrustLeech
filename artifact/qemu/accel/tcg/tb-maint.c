@@ -22,21 +22,16 @@
 #include "qemu/qtree.h"
 #include "exec/cputlb.h"
 #include "exec/log.h"
+#include "exec/exec-all.h"
 #include "exec/page-protection.h"
-#include "exec/mmap-lock.h"
 #include "exec/tb-flush.h"
-#include "exec/target_page.h"
-#include "accel/tcg/cpu-ops.h"
-#include "tb-internal.h"
-#include "system/tcg.h"
+#include "exec/translate-all.h"
+#include "sysemu/tcg.h"
 #include "tcg/tcg.h"
 #include "tb-hash.h"
 #include "tb-context.h"
-#include "tb-internal.h"
 #include "internal-common.h"
-#ifdef CONFIG_USER_ONLY
-#include "user/page-protection.h"
-#endif
+#include "internal-target.h"
 
 
 /* List iterators for lists of tagged pointers in TranslationBlock. */
@@ -157,7 +152,11 @@ static PageForEachNext foreach_tb_next(PageForEachNext tb,
 /*
  * In system mode we want L1_MAP to be based on ram offsets.
  */
-#define L1_MAP_ADDR_SPACE_BITS  HOST_LONG_BITS
+#if HOST_LONG_BITS < TARGET_PHYS_ADDR_SPACE_BITS
+# define L1_MAP_ADDR_SPACE_BITS  HOST_LONG_BITS
+#else
+# define L1_MAP_ADDR_SPACE_BITS  TARGET_PHYS_ADDR_SPACE_BITS
+#endif
 
 /* Size of the L2 (and L3, etc) page tables.  */
 #define V_L2_BITS 10
@@ -1006,8 +1005,7 @@ TranslationBlock *tb_link_page(TranslationBlock *tb)
  * Called with mmap_lock held for user-mode emulation.
  * NOTE: this function must not be called while a TB is running.
  */
-void tb_invalidate_phys_range(CPUState *cpu, tb_page_addr_t start,
-                              tb_page_addr_t last)
+void tb_invalidate_phys_range(tb_page_addr_t start, tb_page_addr_t last)
 {
     TranslationBlock *tb;
     PageForEachNext n;
@@ -1030,16 +1028,17 @@ static void tb_invalidate_phys_page(tb_page_addr_t addr)
 
     start = addr & TARGET_PAGE_MASK;
     last = addr | ~TARGET_PAGE_MASK;
-    tb_invalidate_phys_range(NULL, start, last);
+    tb_invalidate_phys_range(start, last);
 }
 
 /*
  * Called with mmap_lock held. If pc is not 0 then it indicates the
  * host PC of the faulting store instruction that caused this invalidate.
- * Returns true if the caller needs to abort execution of the current TB.
+ * Returns true if the caller needs to abort execution of the current
+ * TB (because it was modified by this store and the guest CPU has
+ * precise-SMC semantics).
  */
-bool tb_invalidate_phys_page_unwind(CPUState *cpu, tb_page_addr_t addr,
-                                    uintptr_t pc)
+bool tb_invalidate_phys_page_unwind(tb_page_addr_t addr, uintptr_t pc)
 {
     TranslationBlock *current_tb;
     bool current_tb_modified;
@@ -1051,7 +1050,10 @@ bool tb_invalidate_phys_page_unwind(CPUState *cpu, tb_page_addr_t addr,
      * Without precise smc semantics, or when outside of a TB,
      * we can skip to invalidate.
      */
-    if (!pc || !cpu || !cpu->cc->tcg_ops->precise_smc) {
+#ifndef TARGET_HAS_PRECISE_SMC
+    pc = 0;
+#endif
+    if (!pc) {
         tb_invalidate_phys_page(addr);
         return false;
     }
@@ -1074,14 +1076,15 @@ bool tb_invalidate_phys_page_unwind(CPUState *cpu, tb_page_addr_t addr,
              * the CPU state.
              */
             current_tb_modified = true;
-            cpu_restore_state_from_tb(cpu, current_tb, pc);
+            cpu_restore_state_from_tb(current_cpu, current_tb, pc);
         }
         tb_phys_invalidate__locked(tb);
     }
 
     if (current_tb_modified) {
         /* Force execution of one insn next time.  */
-        cpu->cflags_next_tb = 1 | CF_NOIRQ | curr_cflags(cpu);
+        CPUState *cpu = current_cpu;
+        cpu->cflags_next_tb = 1 | CF_NOIRQ | curr_cflags(current_cpu);
         return true;
     }
     return false;
@@ -1090,27 +1093,22 @@ bool tb_invalidate_phys_page_unwind(CPUState *cpu, tb_page_addr_t addr,
 /*
  * @p must be non-NULL.
  * Call with all @pages locked.
- * (@cpu, @retaddr) may be (NULL, 0) outside of a cpu context,
- * in which case precise_smc need not be detected.
  */
 static void
-tb_invalidate_phys_page_range__locked(CPUState *cpu,
-                                      struct page_collection *pages,
+tb_invalidate_phys_page_range__locked(struct page_collection *pages,
                                       PageDesc *p, tb_page_addr_t start,
                                       tb_page_addr_t last,
                                       uintptr_t retaddr)
 {
     TranslationBlock *tb;
     PageForEachNext n;
+#ifdef TARGET_HAS_PRECISE_SMC
     bool current_tb_modified = false;
-    TranslationBlock *current_tb = NULL;
+    TranslationBlock *current_tb = retaddr ? tcg_tb_lookup(retaddr) : NULL;
+#endif /* TARGET_HAS_PRECISE_SMC */
 
     /* Range may not cross a page. */
     tcg_debug_assert(((start ^ last) & TARGET_PAGE_MASK) == 0);
-
-    if (retaddr && cpu && cpu->cc->tcg_ops->precise_smc) {
-        current_tb = tcg_tb_lookup(retaddr);
-    }
 
     /*
      * We remove all the TBs in the range [start, last].
@@ -1129,7 +1127,8 @@ tb_invalidate_phys_page_range__locked(CPUState *cpu,
             tb_last = tb_start + (tb_last & ~TARGET_PAGE_MASK);
         }
         if (!(tb_last < start || tb_start > last)) {
-            if (unlikely(current_tb == tb) &&
+#ifdef TARGET_HAS_PRECISE_SMC
+            if (current_tb == tb &&
                 (tb_cflags(current_tb) & CF_COUNT_MASK) != 1) {
                 /*
                  * If we are modifying the current TB, we must stop
@@ -1139,8 +1138,9 @@ tb_invalidate_phys_page_range__locked(CPUState *cpu,
                  * restore the CPU state.
                  */
                 current_tb_modified = true;
-                cpu_restore_state_from_tb(cpu, current_tb, retaddr);
+                cpu_restore_state_from_tb(current_cpu, current_tb, retaddr);
             }
+#endif /* TARGET_HAS_PRECISE_SMC */
             tb_phys_invalidate__locked(tb);
         }
     }
@@ -1150,13 +1150,15 @@ tb_invalidate_phys_page_range__locked(CPUState *cpu,
         tlb_unprotect_code(start);
     }
 
-    if (unlikely(current_tb_modified)) {
+#ifdef TARGET_HAS_PRECISE_SMC
+    if (current_tb_modified) {
         page_collection_unlock(pages);
         /* Force execution of one insn next time.  */
-        cpu->cflags_next_tb = 1 | CF_NOIRQ | curr_cflags(cpu);
+        current_cpu->cflags_next_tb = 1 | CF_NOIRQ | curr_cflags(current_cpu);
         mmap_unlock();
-        cpu_loop_exit_noexc(cpu);
+        cpu_loop_exit_noexc(current_cpu);
     }
+#endif
 }
 
 /*
@@ -1166,8 +1168,7 @@ tb_invalidate_phys_page_range__locked(CPUState *cpu,
  * access: the virtual CPU will exit the current TB if code is modified inside
  * this TB.
  */
-void tb_invalidate_phys_range(CPUState *cpu, tb_page_addr_t start,
-                              tb_page_addr_t last)
+void tb_invalidate_phys_range(tb_page_addr_t start, tb_page_addr_t last)
 {
     struct page_collection *pages;
     tb_page_addr_t index, index_last;
@@ -1186,10 +1187,28 @@ void tb_invalidate_phys_range(CPUState *cpu, tb_page_addr_t start,
         page_start = index << TARGET_PAGE_BITS;
         page_last = page_start | ~TARGET_PAGE_MASK;
         page_last = MIN(page_last, last);
-        tb_invalidate_phys_page_range__locked(cpu, pages, pd,
+        tb_invalidate_phys_page_range__locked(pages, pd,
                                               page_start, page_last, 0);
     }
     page_collection_unlock(pages);
+}
+
+/*
+ * Call with all @pages in the range [@start, @start + len[ locked.
+ */
+static void tb_invalidate_phys_page_fast__locked(struct page_collection *pages,
+                                                 tb_page_addr_t start,
+                                                 unsigned len, uintptr_t ra)
+{
+    PageDesc *p;
+
+    p = page_find(start >> TARGET_PAGE_BITS);
+    if (!p) {
+        return;
+    }
+
+    assert_page_locked(p);
+    tb_invalidate_phys_page_range__locked(pages, p, start, start + len - 1, ra);
 }
 
 /*
@@ -1197,19 +1216,15 @@ void tb_invalidate_phys_range(CPUState *cpu, tb_page_addr_t start,
  * Called via softmmu_template.h when code areas are written to with
  * iothread mutex not held.
  */
-void tb_invalidate_phys_range_fast(CPUState *cpu, ram_addr_t start,
-                                   unsigned len, uintptr_t ra)
+void tb_invalidate_phys_range_fast(ram_addr_t ram_addr,
+                                   unsigned size,
+                                   uintptr_t retaddr)
 {
-    PageDesc *p = page_find(start >> TARGET_PAGE_BITS);
+    struct page_collection *pages;
 
-    if (p) {
-        ram_addr_t last = start + len - 1;
-        struct page_collection *pages = page_collection_lock(start, last);
-
-        tb_invalidate_phys_page_range__locked(cpu, pages, p,
-                                              start, last, ra);
-        page_collection_unlock(pages);
-    }
+    pages = page_collection_lock(ram_addr, ram_addr + size - 1);
+    tb_invalidate_phys_page_fast__locked(pages, ram_addr, size, retaddr);
+    page_collection_unlock(pages);
 }
 
 #endif /* CONFIG_USER_ONLY */

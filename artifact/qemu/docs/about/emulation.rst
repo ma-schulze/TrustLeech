@@ -176,8 +176,6 @@ for that architecture.
     - System
     - Tensilica ISS SIMCALL
 
-.. _tcg-plugins:
-
 TCG Plugins
 -----------
 
@@ -811,10 +809,6 @@ This plugin can limit the number of Instructions Per Second that are executed::
   * - ips=N
     - Maximum number of instructions per cpu that can be executed in one second.
       The plugin will sleep when the given number of instructions is reached.
-  * - ipq=N
-    - Instructions per quantum. How many instructions before we re-calculate time.
-      The lower the number the more accurate time will be, but the less efficient the plugin.
-      Defaults to ips/10
 
 Other emulation features
 ------------------------

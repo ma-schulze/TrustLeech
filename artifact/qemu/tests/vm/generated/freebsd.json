@@ -13,7 +13,7 @@
     "bzip2",
     "ca_root_nss",
     "capstone4",
-    "ccache4",
+    "ccache",
     "cmocka",
     "ctags",
     "curl",
@@ -73,7 +73,6 @@
     "usbredir",
     "virglrenderer",
     "vte3",
-    "vulkan-tools",
     "xorriso",
     "zstd"
   ],

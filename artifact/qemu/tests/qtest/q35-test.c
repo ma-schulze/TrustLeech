@@ -14,7 +14,7 @@
 #include "libqos/pci.h"
 #include "libqos/pci-pc.h"
 #include "hw/pci-host/q35.h"
-#include "qobject/qdict.h"
+#include "qapi/qmp/qdict.h"
 
 #define TSEG_SIZE_TEST_GUEST_RAM_MBYTES 128
 
@@ -83,6 +83,7 @@ static void test_smram_lock(void)
 {
     QPCIBus *pcibus;
     QPCIDevice *pcidev;
+    QDict *response;
     QTestState *qts;
 
     qts = qtest_init("-M q35");
@@ -106,7 +107,10 @@ static void test_smram_lock(void)
     g_assert(smram_test_bit(pcidev, MCH_HOST_BRIDGE_SMRAM_D_OPEN) == false);
 
     /* reset */
-    qtest_system_reset(qts);
+    response = qtest_qmp(qts, "{'execute': 'system_reset', 'arguments': {} }");
+    g_assert(response);
+    g_assert(!qdict_haskey(response, "error"));
+    qobject_unref(response);
 
     /* check open is settable again */
     smram_set_bit(pcidev, MCH_HOST_BRIDGE_SMRAM_D_OPEN, false);
@@ -190,6 +194,7 @@ static void test_smram_smbase_lock(void)
 {
     QPCIBus *pcibus;
     QPCIDevice *pcidev;
+    QDict *response;
     QTestState *qts;
     int i;
 
@@ -232,13 +237,51 @@ static void test_smram_smbase_lock(void)
     }
 
     /* reset */
-    qtest_system_reset(qts);
+    response = qtest_qmp(qts, "{'execute': 'system_reset', 'arguments': {} }");
+    g_assert(response);
+    g_assert(!qdict_haskey(response, "error"));
+    qobject_unref(response);
 
     /* check RAM at SMBASE is available after reset */
     g_assert_cmpint(qtest_readb(qts, SMBASE), ==, SMRAM_TEST_PATTERN);
     g_assert(qpci_config_readb(pcidev, MCH_HOST_BRIDGE_F_SMBASE) == 0);
     qtest_writeb(qts, SMBASE, SMRAM_TEST_RESET_PATTERN);
     g_assert_cmpint(qtest_readb(qts, SMBASE), ==, SMRAM_TEST_RESET_PATTERN);
+
+    g_free(pcidev);
+    qpci_free_pc(pcibus);
+
+    qtest_quit(qts);
+}
+
+static void test_without_smram_base(void)
+{
+    QPCIBus *pcibus;
+    QPCIDevice *pcidev;
+    QTestState *qts;
+    int i;
+
+    qts = qtest_init("-M pc-q35-4.1");
+
+    pcibus = qpci_new_pc(qts, NULL);
+    g_assert(pcibus != NULL);
+
+    pcidev = qpci_device_find(pcibus, 0);
+    g_assert(pcidev != NULL);
+
+    /* check that RAM is accessible */
+    qtest_writeb(qts, SMBASE, SMRAM_TEST_PATTERN);
+    g_assert_cmpint(qtest_readb(qts, SMBASE), ==, SMRAM_TEST_PATTERN);
+
+    /* check that writing to 0x9c succeeds */
+    for (i = 0; i <= 0xff; i++) {
+        qpci_config_writeb(pcidev, MCH_HOST_BRIDGE_F_SMBASE, i);
+        g_assert(qpci_config_readb(pcidev, MCH_HOST_BRIDGE_F_SMBASE) == i);
+    }
+
+    /* check that RAM is still accessible */
+    qtest_writeb(qts, SMBASE, SMRAM_TEST_PATTERN + 1);
+    g_assert_cmpint(qtest_readb(qts, SMBASE), ==, (SMRAM_TEST_PATTERN + 1));
 
     g_free(pcidev);
     qpci_free_pc(pcibus);
@@ -258,6 +301,6 @@ int main(int argc, char **argv)
     qtest_add_data_func("/q35/tseg-size/ext/16mb", &tseg_ext_16mb,
                         test_tseg_size);
     qtest_add_func("/q35/smram/smbase_lock", test_smram_smbase_lock);
-
+    qtest_add_func("/q35/smram/legacy_smbase", test_without_smram_base);
     return g_test_run();
 }

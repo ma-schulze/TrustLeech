@@ -154,6 +154,7 @@ static void ibex_spi_host_reset(DeviceState *dev)
     ibex_spi_txfifo_reset(s);
 
     s->init_status = true;
+    return;
 }
 
 /*
@@ -560,8 +561,9 @@ static const MemoryRegionOps ibex_spi_ops = {
     .endianness = DEVICE_LITTLE_ENDIAN,
 };
 
-static const Property ibex_spi_properties[] = {
+static Property ibex_spi_properties[] = {
     DEFINE_PROP_UINT32("num_cs", IbexSPIHostState, num_cs, 1),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
 static const VMStateDescription vmstate_ibex = {
@@ -622,7 +624,7 @@ static void ibex_spi_host_init(Object *obj)
     sysbus_init_mmio(SYS_BUS_DEVICE(obj), &s->mmio);
 }
 
-static void ibex_spi_host_class_init(ObjectClass *klass, const void *data)
+static void ibex_spi_host_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
     dc->realize = ibex_spi_host_realize;

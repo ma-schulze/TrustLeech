@@ -19,16 +19,16 @@
 #include "hw/virtio/virtio-net.h"
 #include "chardev/char-fe.h"
 #include "io/channel-socket.h"
-#include "system/kvm.h"
+#include "sysemu/kvm.h"
 #include "qemu/error-report.h"
 #include "qemu/main-loop.h"
 #include "qemu/uuid.h"
 #include "qemu/sockets.h"
-#include "system/runstate.h"
-#include "system/cryptodev.h"
+#include "sysemu/runstate.h"
+#include "sysemu/cryptodev.h"
 #include "migration/postcopy-ram.h"
 #include "trace.h"
-#include "system/ramblock.h"
+#include "exec/ramblock.h"
 
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -654,6 +654,8 @@ static void scrub_shadow_regions(struct vhost_dev *dev,
     }
     *nr_rem_reg = rm_idx;
     *nr_add_reg = add_idx;
+
+    return;
 }
 
 static int send_remove_regions(struct vhost_dev *dev,

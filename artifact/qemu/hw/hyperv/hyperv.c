@@ -11,11 +11,9 @@
 #include "qemu/main-loop.h"
 #include "qemu/module.h"
 #include "qapi/error.h"
-#include "system/address-spaces.h"
-#include "system/memory.h"
-#include "exec/target_page.h"
-#include "linux/kvm.h"
-#include "system/kvm.h"
+#include "exec/address-spaces.h"
+#include "exec/memory.h"
+#include "sysemu/kvm.h"
 #include "qemu/bitops.h"
 #include "qemu/error-report.h"
 #include "qemu/lockable.h"
@@ -25,7 +23,8 @@
 #include "hw/hyperv/hyperv.h"
 #include "qom/object.h"
 #include "target/i386/kvm/hyperv-proto.h"
-#include "exec/target_page.h"
+#include "target/i386/cpu.h"
+#include "exec/cpu-all.h"
 
 struct SynICState {
     DeviceState parent_obj;
@@ -134,7 +133,7 @@ static void synic_reset(DeviceState *dev)
     assert(QLIST_EMPTY(&synic->sint_routes));
 }
 
-static void synic_class_init(ObjectClass *klass, const void *data)
+static void synic_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
 

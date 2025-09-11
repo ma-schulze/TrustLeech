@@ -140,8 +140,3 @@ int recv(int fd, void *buf, int maxlen, int flags)
 
     return len;
 }
-
-void virtio_net_deinit(void)
-{
-    virtio_reset(virtio_get_device());
-}

@@ -1250,8 +1250,9 @@ static int spapr_vscsi_devnode(SpaprVioDevice *dev, void *fdt, int node_off)
     return 0;
 }
 
-static const Property spapr_vscsi_properties[] = {
+static Property spapr_vscsi_properties[] = {
     DEFINE_SPAPR_PROPERTIES(VSCSIState, vdev),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
 static const VMStateDescription vmstate_spapr_vscsi = {
@@ -1267,7 +1268,7 @@ static const VMStateDescription vmstate_spapr_vscsi = {
     },
 };
 
-static void spapr_vscsi_class_init(ObjectClass *klass, const void *data)
+static void spapr_vscsi_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
     SpaprVioDeviceClass *k = VIO_SPAPR_DEVICE_CLASS(klass);

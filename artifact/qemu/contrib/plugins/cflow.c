@@ -76,8 +76,6 @@ typedef struct {
 
 /* We use this to track the current execution state */
 typedef struct {
-    /* address of current translated block */
-    uint64_t tb_pc;
     /* address of end of block */
     uint64_t end_block;
     /* next pc after end of block */
@@ -87,7 +85,6 @@ typedef struct {
 } VCPUScoreBoard;
 
 /* descriptors for accessing the above scoreboard */
-static qemu_plugin_u64 tb_pc;
 static qemu_plugin_u64 end_block;
 static qemu_plugin_u64 pc_after_block;
 static qemu_plugin_u64 last_pc;
@@ -98,7 +95,7 @@ static GHashTable *nodes;
 struct qemu_plugin_scoreboard *state;
 
 /* SORT_HOTTEST */
-static gint hottest(gconstpointer a, gconstpointer b, gpointer d)
+static gint hottest(gconstpointer a, gconstpointer b)
 {
     NodeData *na = (NodeData *) a;
     NodeData *nb = (NodeData *) b;
@@ -107,7 +104,7 @@ static gint hottest(gconstpointer a, gconstpointer b, gpointer d)
         na->dest_count == nb->dest_count ? 0 : 1;
 }
 
-static gint exception(gconstpointer a, gconstpointer b, gpointer d)
+static gint exception(gconstpointer a, gconstpointer b)
 {
     NodeData *na = (NodeData *) a;
     NodeData *nb = (NodeData *) b;
@@ -116,7 +113,7 @@ static gint exception(gconstpointer a, gconstpointer b, gpointer d)
         na->early_exit == nb->early_exit ? 0 : 1;
 }
 
-static gint popular(gconstpointer a, gconstpointer b, gpointer d)
+static gint popular(gconstpointer a, gconstpointer b)
 {
     NodeData *na = (NodeData *) a;
     NodeData *nb = (NodeData *) b;
@@ -138,7 +135,7 @@ static void plugin_exit(qemu_plugin_id_t id, void *p)
 {
     g_autoptr(GString) result = g_string_new("collected ");
     GList *data;
-    GCompareDataFunc sort = &hottest;
+    GCompareFunc sort = &hottest;
     int i = 0;
 
     g_mutex_lock(&node_lock);
@@ -162,7 +159,7 @@ static void plugin_exit(qemu_plugin_id_t id, void *p)
         break;
     }
 
-    data = g_list_sort_with_data(data, sort, NULL);
+    data = g_list_sort(data, sort);
 
     for (GList *l = data;
          l != NULL && i < topn;
@@ -192,11 +189,10 @@ static void plugin_exit(qemu_plugin_id_t id, void *p)
 static void plugin_init(void)
 {
     g_mutex_init(&node_lock);
-    nodes = g_hash_table_new(g_int64_hash, g_int64_equal);
+    nodes = g_hash_table_new(NULL, g_direct_equal);
     state = qemu_plugin_scoreboard_new(sizeof(VCPUScoreBoard));
 
     /* score board declarations */
-    tb_pc = qemu_plugin_scoreboard_u64_in_struct(state, VCPUScoreBoard, tb_pc);
     end_block = qemu_plugin_scoreboard_u64_in_struct(state, VCPUScoreBoard,
                                                      end_block);
     pc_after_block = qemu_plugin_scoreboard_u64_in_struct(state, VCPUScoreBoard,
@@ -219,10 +215,10 @@ static NodeData *fetch_node(uint64_t addr, bool create_if_not_found)
     NodeData *node = NULL;
 
     g_mutex_lock(&node_lock);
-    node = (NodeData *) g_hash_table_lookup(nodes, &addr);
+    node = (NodeData *) g_hash_table_lookup(nodes, (gconstpointer) addr);
     if (!node && create_if_not_found) {
         node = create_node(addr);
-        g_hash_table_insert(nodes, &node->addr, node);
+        g_hash_table_insert(nodes, (gpointer) addr, (gpointer) node);
     }
     g_mutex_unlock(&node_lock);
     return node;
@@ -238,7 +234,7 @@ static void vcpu_tb_branched_exec(unsigned int cpu_index, void *udata)
     uint64_t lpc = qemu_plugin_u64_get(last_pc, cpu_index);
     uint64_t ebpc = qemu_plugin_u64_get(end_block, cpu_index);
     uint64_t npc = qemu_plugin_u64_get(pc_after_block, cpu_index);
-    uint64_t pc = qemu_plugin_u64_get(tb_pc, cpu_index);
+    uint64_t pc = GPOINTER_TO_UINT(udata);
 
     /* return early for address 0 */
     if (!lpc) {
@@ -309,11 +305,10 @@ static void vcpu_tb_trans(qemu_plugin_id_t id, struct qemu_plugin_tb *tb)
      * handle both early block exits and normal branches in the
      * callback if we hit it.
      */
-    qemu_plugin_register_vcpu_tb_exec_inline_per_vcpu(
-        tb, QEMU_PLUGIN_INLINE_STORE_U64, tb_pc, pc);
+    gpointer udata = GUINT_TO_POINTER(pc);
     qemu_plugin_register_vcpu_tb_exec_cond_cb(
         tb, vcpu_tb_branched_exec, QEMU_PLUGIN_CB_NO_REGS,
-        QEMU_PLUGIN_COND_NE, pc_after_block, pc, NULL);
+        QEMU_PLUGIN_COND_NE, pc_after_block, pc, udata);
 
     /*
      * Now we can set start/end for this block so the next block can

@@ -22,7 +22,6 @@
 #include "vga-access.h"
 #include "hw/qdev-properties.h"
 #include "vga_regs.h"
-#include "qemu/bswap.h"
 #include "qemu/log.h"
 #include "qemu/module.h"
 #include "qemu/error-report.h"
@@ -1040,7 +1039,7 @@ static void ati_vga_exit(PCIDevice *dev)
     graphic_console_close(s->vga.con);
 }
 
-static const Property ati_vga_properties[] = {
+static Property ati_vga_properties[] = {
     DEFINE_PROP_UINT32("vgamem_mb", ATIVGAState, vga.vram_size_mb, 16),
     DEFINE_PROP_STRING("model", ATIVGAState, model),
     DEFINE_PROP_UINT16("x-device-id", ATIVGAState, dev_id,
@@ -1048,9 +1047,10 @@ static const Property ati_vga_properties[] = {
     DEFINE_PROP_BOOL("guest_hwcursor", ATIVGAState, cursor_guest_mode, false),
     /* this is a debug option, prefer PROP_UINT over PROP_BIT for simplicity */
     DEFINE_PROP_UINT8("x-pixman", ATIVGAState, use_pixman, DEFAULT_X_PIXMAN),
+    DEFINE_PROP_END_OF_LIST()
 };
 
-static void ati_vga_class_init(ObjectClass *klass, const void *data)
+static void ati_vga_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
     PCIDeviceClass *k = PCI_DEVICE_CLASS(klass);
@@ -1080,7 +1080,7 @@ static const TypeInfo ati_vga_info = {
     .instance_size = sizeof(ATIVGAState),
     .class_init = ati_vga_class_init,
     .instance_init = ati_vga_init,
-    .interfaces = (const InterfaceInfo[]) {
+    .interfaces = (InterfaceInfo[]) {
           { INTERFACE_CONVENTIONAL_PCI_DEVICE },
           { },
     },

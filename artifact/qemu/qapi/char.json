@@ -3,9 +3,7 @@
 #
 
 ##
-# *****************
-# Character devices
-# *****************
+# = Character devices
 ##
 
 { 'include': 'sockets.json' }
@@ -36,7 +34,9 @@
 ##
 # @query-chardev:
 #
-# Return information about current character devices.
+# Returns information about current character devices.
+#
+# Returns: a list of @ChardevInfo
 #
 # Since: 0.14
 #
@@ -80,7 +80,9 @@
 ##
 # @query-chardev-backends:
 #
-# Return information about character device backends.
+# Returns information about character device backends.
+#
+# Returns: a list of @ChardevBackendInfo
 #
 # Since: 2.0
 #
@@ -272,7 +274,7 @@
 # @reconnect: For a client socket, if a socket is disconnected, then
 #     attempt a reconnect after the given number of seconds.  Setting
 #     this to zero disables this function.  The use of this member is
-#     deprecated, use @reconnect-ms instead.  (default: 0) (Since: 2.2)
+#     deprecated, use @reconnect-ms instead. (default: 0) (Since: 2.2)
 #
 # @reconnect-ms: For a client socket, if a socket is disconnected,
 #     then attempt a reconnect after the given number of milliseconds.
@@ -331,25 +333,12 @@
   'base': 'ChardevCommon' }
 
 ##
-# @ChardevHub:
-#
-# Configuration info for hub chardevs.
-#
-# @chardevs: IDs to be added to this hub (maximum 4 devices).
-#
-# Since: 10.0
-##
-{ 'struct': 'ChardevHub',
-  'data': { 'chardevs': ['str'] },
-  'base': 'ChardevCommon' }
-
-##
 # @ChardevStdio:
 #
 # Configuration info for stdio chardevs.
 #
 # @signal: Allow signals (such as SIGINT triggered by ^C) be delivered
-#     to QEMU.  Default: true.
+#     to qemu.  Default: true.
 #
 # Since: 1.5
 ##
@@ -441,7 +430,7 @@
 ##
 # @ChardevQemuVDAgent:
 #
-# Configuration info for QEMU vdagent implementation.
+# Configuration info for qemu vdagent implementation.
 #
 # @mouse: enable/disable mouse, default is enabled.
 #
@@ -490,8 +479,6 @@
 #
 # @mux: (since 1.5)
 #
-# @hub: (since 10.0)
-#
 # @msmouse: emulated Microsoft serial mouse (since 1.5)
 #
 # @wctablet: emulated Wacom Penpartner serial tablet (since 2.9)
@@ -534,7 +521,6 @@
             'pty',
             'null',
             'mux',
-            'hub',
             'msmouse',
             'wctablet',
             { 'name': 'braille', 'if': 'CONFIG_BRLAPI' },
@@ -610,16 +596,6 @@
   'data': { 'data': 'ChardevMux' } }
 
 ##
-# @ChardevHubWrapper:
-#
-# @data: Configuration info for hub chardevs
-#
-# Since: 10.0
-##
-{ 'struct': 'ChardevHubWrapper',
-  'data': { 'data': 'ChardevHub' } }
-
-##
 # @ChardevStdioWrapper:
 #
 # @data: Configuration info for stdio chardevs
@@ -654,7 +630,7 @@
 ##
 # @ChardevQemuVDAgentWrapper:
 #
-# @data: Configuration info for QEMU vdagent implementation
+# @data: Configuration info for qemu vdagent implementation
 #
 # Since: 6.1
 ##
@@ -727,7 +703,6 @@
             'pty': 'ChardevPtyWrapper',
             'null': 'ChardevCommonWrapper',
             'mux': 'ChardevMuxWrapper',
-            'hub': 'ChardevHubWrapper',
             'msmouse': 'ChardevCommonWrapper',
             'wctablet': 'ChardevCommonWrapper',
             'braille': { 'type': 'ChardevCommonWrapper',
@@ -770,6 +745,8 @@
 #
 # @backend: backend type and parameters
 #
+# Returns: ChardevReturn.
+#
 # Since: 1.4
 #
 # .. qmp-example::
@@ -807,6 +784,8 @@
 # @id: the chardev's ID, must exist
 #
 # @backend: new backend type and parameters
+#
+# Returns: ChardevReturn.
 #
 # Since: 2.10
 #

@@ -132,7 +132,6 @@ exec "$@"\n' > /usr/bin/nosync && \
                util-linux \
                virglrenderer-devel \
                vte291-devel \
-               vulkan-tools \
                which \
                xen-devel \
                xorriso \

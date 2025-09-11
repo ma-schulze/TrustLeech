@@ -364,6 +364,8 @@ static void test_watchdog_inten_luminary(const void *ptr)
 
 int main(int argc, char **argv)
 {
+    int r;
+
     g_test_init(&argc, &argv, NULL);
     g_test_set_nonfatal_assertions();
 
@@ -391,5 +393,7 @@ int main(int argc, char **argv)
                             test_watchdog_inten);
     }
 
-    return g_test_run();
+    r = g_test_run();
+
+    return r;
 }

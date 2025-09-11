@@ -24,11 +24,10 @@
 
 #include "qemu/osdep.h"
 #include "tcg/tcg.h"
-#include "tcg-has.h"
 
-const TCGOpDef tcg_op_defs[] = {
+TCGOpDef tcg_op_defs[] = {
 #define DEF(s, oargs, iargs, cargs, flags) \
-         { #s, oargs, iargs, cargs, iargs + oargs + cargs, flags },
+         { #s, oargs, iargs, cargs, iargs + oargs + cargs, flags, NULL },
 #include "tcg/tcg-opc.h"
 #undef DEF
 };

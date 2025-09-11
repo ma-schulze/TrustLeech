@@ -17,12 +17,11 @@
 
 #include "qemu/osdep.h"
 #include "qemu/units.h"
-#include "qemu/bswap.h"
 #include "qapi/error.h"
 #include "qemu/config-file.h"
 #include "qemu/module.h"
 #include "qemu/option.h"
-#include "system/system.h"
+#include "sysemu/sysemu.h"
 #include "qemu/uuid.h"
 #include "hw/firmware/smbios.h"
 #include "hw/loader.h"

@@ -29,9 +29,6 @@ typedef struct BlockExportDriver {
      */
     size_t instance_size;
 
-    /* True if the export type supports running on an inactive node */
-    bool supports_inactive;
-
     /* Creates and starts a new block export */
     int (*create)(BlockExport *, BlockExportOptions *, Error **);
 

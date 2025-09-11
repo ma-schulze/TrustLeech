@@ -144,11 +144,7 @@ typedef struct VirtioNetRssData {
     bool    enabled_software_rss;
     bool    redirect;
     bool    populate_hash;
-    bool    peer_hash_available;
-    uint32_t runtime_hash_types;
-    uint32_t supported_hash_types;
-    uint32_t peer_hash_types;
-    OnOffAutoBit64 specified_hash_types;
+    uint32_t hash_types;
     uint8_t key[VIRTIO_NET_RSS_MAX_KEY_SIZE];
     uint16_t indirections_len;
     uint16_t *indirections_table;

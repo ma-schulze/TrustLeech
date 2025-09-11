@@ -14,7 +14,7 @@
 #include "qapi/error.h"
 #include "qemu/timer.h"
 #include "hw/sysbus.h"
-#include "system/system.h"
+#include "sysemu/sysemu.h"
 #include "net/eth.h"
 #include "hw/net/lasi_82596.h"
 #include "hw/net/i82596.h"
@@ -158,11 +158,12 @@ static void lasi_82596_instance_init(Object *obj)
                                   DEVICE(obj));
 }
 
-static const Property lasi_82596_properties[] = {
+static Property lasi_82596_properties[] = {
     DEFINE_NIC_PROPERTIES(SysBusI82596State, state.conf),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
-static void lasi_82596_class_init(ObjectClass *klass, const void *data)
+static void lasi_82596_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
 

@@ -54,10 +54,6 @@ config AHCI_ICH9
     depends on PCI
     select AHCI
 
-config AHCI_SYSBUS
-    bool
-    select AHCI
-
 config IDE_SII3112
     bool
     select IDE_PCI

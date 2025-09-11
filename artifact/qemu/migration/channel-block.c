@@ -170,7 +170,7 @@ qio_channel_block_set_aio_fd_handler(QIOChannel *ioc,
 
 static void
 qio_channel_block_class_init(ObjectClass *klass,
-                             const void *class_data G_GNUC_UNUSED)
+                             void *class_data G_GNUC_UNUSED)
 {
     QIOChannelClass *ioc_klass = QIO_CHANNEL_CLASS(klass);
 

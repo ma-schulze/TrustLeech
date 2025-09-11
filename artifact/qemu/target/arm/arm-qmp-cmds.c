@@ -21,17 +21,15 @@
  */
 
 #include "qemu/osdep.h"
-#include "qemu/target-info.h"
 #include "hw/boards.h"
 #include "kvm_arm.h"
 #include "qapi/error.h"
 #include "qapi/visitor.h"
 #include "qapi/qobject-input-visitor.h"
-#include "qapi/qapi-commands-machine.h"
-#include "qapi/qapi-commands-misc-arm.h"
-#include "qobject/qdict.h"
+#include "qapi/qapi-commands-machine-target.h"
+#include "qapi/qapi-commands-misc-target.h"
+#include "qapi/qmp/qdict.h"
 #include "qom/qom-qobject.h"
-#include "cpu.h"
 
 static GICCapability *gic_cap_new(int version)
 {
@@ -48,7 +46,7 @@ static inline void gic_cap_kvm_probe(GICCapability *v2, GICCapability *v3)
 #ifdef CONFIG_KVM
     int fdarray[3];
 
-    if (!kvm_arm_create_scratch_host_vcpu(fdarray, NULL)) {
+    if (!kvm_arm_create_scratch_host_vcpu(NULL, fdarray, NULL)) {
         return;
     }
 
@@ -96,7 +94,7 @@ static const char *cpu_model_advertised_features[] = {
     "sve640", "sve768", "sve896", "sve1024", "sve1152", "sve1280",
     "sve1408", "sve1536", "sve1664", "sve1792", "sve1920", "sve2048",
     "kvm-no-adjvtime", "kvm-steal-time",
-    "pauth", "pauth-impdef", "pauth-qarma3", "pauth-qarma5",
+    "pauth", "pauth-impdef", "pauth-qarma3",
     NULL
 };
 
@@ -242,7 +240,7 @@ CpuDefinitionInfoList *qmp_query_cpu_definitions(Error **errp)
     CpuDefinitionInfoList *cpu_list = NULL;
     GSList *list;
 
-    list = object_class_get_list(target_cpu_type(), false);
+    list = object_class_get_list(TYPE_ARM_CPU, false);
     g_slist_foreach(list, arm_cpu_add_definition, &cpu_list);
     g_slist_free(list);
 

@@ -28,10 +28,18 @@
 #include "chardev/char-fe.h"
 #include "qemu/timer.h"
 #include "qemu/error-report.h"
-#include "system/address-spaces.h"
-#include "system/dma.h"
-#include "system/runstate.h"
-#include "trace.h"
+#include "exec/address-spaces.h"
+#include "exec/tswap.h"
+#include "sysemu/dma.h"
+#include "sysemu/runstate.h"
+
+#define RISCV_DEBUG_HTIF 0
+#define HTIF_DEBUG(fmt, ...)                                                   \
+    do {                                                                       \
+        if (RISCV_DEBUG_HTIF) {                                                \
+            qemu_log_mask(LOG_TRACE, "%s: " fmt "\n", __func__, ##__VA_ARGS__);\
+        }                                                                      \
+    } while (0)
 
 #define HTIF_DEV_SHIFT          56
 #define HTIF_CMD_SHIFT          48
@@ -151,7 +159,8 @@ static void htif_handle_tohost_write(HTIFState *s, uint64_t val_written)
     uint64_t payload = val_written & 0xFFFFFFFFFFFFULL;
     int resp = 0;
 
-    trace_htif_uart_write_to_host(device, cmd, payload);
+    HTIF_DEBUG("mtohost write: device: %d cmd: %d what: %02" PRIx64
+        " -payload: %016" PRIx64 "\n", device, cmd, payload & 0xFF, payload);
 
     /*
      * Currently, there is a fixed mapping of devices:
@@ -203,11 +212,11 @@ static void htif_handle_tohost_write(HTIFState *s, uint64_t val_written)
             } else {
                 uint64_t syscall[8];
                 cpu_physical_memory_read(payload, syscall, sizeof(syscall));
-                if (le64_to_cpu(syscall[0]) == PK_SYS_WRITE &&
-                    le64_to_cpu(syscall[1]) == HTIF_DEV_CONSOLE &&
-                    le64_to_cpu(syscall[3]) == HTIF_CONSOLE_CMD_PUTC) {
+                if (tswap64(syscall[0]) == PK_SYS_WRITE &&
+                    tswap64(syscall[1]) == HTIF_DEV_CONSOLE &&
+                    tswap64(syscall[3]) == HTIF_CONSOLE_CMD_PUTC) {
                     uint8_t ch;
-                    cpu_physical_memory_read(le64_to_cpu(syscall[2]), &ch, 1);
+                    cpu_physical_memory_read(tswap64(syscall[2]), &ch, 1);
                     /*
                      * XXX this blocks entire thread. Rewrite to use
                      * qemu_chr_fe_write and background I/O callbacks
@@ -242,7 +251,8 @@ static void htif_handle_tohost_write(HTIFState *s, uint64_t val_written)
         }
     } else {
         qemu_log("HTIF unknown device or command\n");
-        trace_htif_uart_unknown_device_command(device, cmd, payload);
+        HTIF_DEBUG("device: %d cmd: %d what: %02" PRIx64
+            " payload: %016" PRIx64, device, cmd, payload & 0xFF, payload);
     }
     /*
      * Latest bbl does not set fromhost to 0 if there is a value in tohost.
@@ -314,11 +324,6 @@ static void htif_mm_write(void *opaque, hwaddr addr,
 static const MemoryRegionOps htif_mm_ops = {
     .read = htif_mm_read,
     .write = htif_mm_write,
-    .endianness = DEVICE_LITTLE_ENDIAN,
-    .impl = {
-        .min_access_size = 4,
-        .max_access_size = 4,
-    },
 };
 
 HTIFState *htif_mm_init(MemoryRegion *address_space, Chardev *chr,

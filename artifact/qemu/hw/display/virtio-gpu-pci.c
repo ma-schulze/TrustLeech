@@ -21,8 +21,9 @@
 #include "hw/virtio/virtio-gpu-pci.h"
 #include "qom/object.h"
 
-static const Property virtio_gpu_pci_base_properties[] = {
+static Property virtio_gpu_pci_base_properties[] = {
     DEFINE_VIRTIO_GPU_PCI_PROPERTIES(VirtIOPCIProxy),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
 static void virtio_gpu_pci_base_realize(VirtIOPCIProxy *vpci_dev, Error **errp)
@@ -57,7 +58,7 @@ static void virtio_gpu_pci_base_realize(VirtIOPCIProxy *vpci_dev, Error **errp)
     }
 }
 
-static void virtio_gpu_pci_base_class_init(ObjectClass *klass, const void *data)
+static void virtio_gpu_pci_base_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
     VirtioPCIClass *k = VIRTIO_PCI_CLASS(klass);

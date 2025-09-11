@@ -5,15 +5,13 @@ This library exports helper Rust types, Rust macros and C FFI bindings for inter
 The C bindings can be generated with `bindgen`, using this build target:
 
 ```console
-$ make bindings.inc.rs
+$ ninja bindings.rs
 ```
 
 ## Generate Rust documentation
 
-Common Cargo tasks can be performed from the QEMU build directory
+To generate docs for this crate, including private items:
 
-```console
-$ make clippy
-$ make rustfmt
-$ make rustdoc
+```sh
+cargo doc --no-deps --document-private-items
 ```

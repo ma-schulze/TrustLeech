@@ -47,6 +47,14 @@ static void syscfg_set_irq(int num, int level)
    qtest_set_irq_in(global_qtest, SOC, NULL, num, level);
 }
 
+static void system_reset(void)
+{
+    QDict *response;
+    response = qtest_qmp(global_qtest, "{'execute': 'system_reset'}");
+    g_assert(qdict_haskey(response, "return"));
+    qobject_unref(response);
+}
+
 static void test_reset(void)
 {
     /*
@@ -174,7 +182,7 @@ static void test_set_only_bits(void)
     syscfg_writel(SYSCFG_SWPR2, 0x00000000);
     g_assert_cmphex(syscfg_readl(SYSCFG_SWPR2), ==, 0xFFFFFFFF);
 
-    qtest_system_reset(global_qtest);
+    system_reset();
 }
 
 static void test_clear_only_bits(void)
@@ -186,7 +194,7 @@ static void test_clear_only_bits(void)
     syscfg_writel(SYSCFG_CFGR1, 0x00000001);
     g_assert_cmphex(syscfg_readl(SYSCFG_CFGR1), ==, 0x00000000);
 
-    qtest_system_reset(global_qtest);
+    system_reset();
 }
 
 static void test_interrupt(void)

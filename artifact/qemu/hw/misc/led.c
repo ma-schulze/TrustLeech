@@ -101,13 +101,14 @@ static void led_realize(DeviceState *dev, Error **errp)
     qdev_init_gpio_in(DEVICE(s), led_set_state_gpio_handler, 1);
 }
 
-static const Property led_properties[] = {
+static Property led_properties[] = {
     DEFINE_PROP_STRING("color", LEDState, color),
     DEFINE_PROP_STRING("description", LEDState, description),
     DEFINE_PROP_BOOL("gpio-active-high", LEDState, gpio_active_high, true),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
-static void led_class_init(ObjectClass *klass, const void *data)
+static void led_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
 

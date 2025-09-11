@@ -17,8 +17,6 @@
 #include "chardev/char-fe.h"
 #include "qom/object.h"
 
-#define FIFO_DEPTH 4
-
 struct mcf_uart_state {
     SysBusDevice parent_obj;
 
@@ -29,7 +27,7 @@ struct mcf_uart_state {
     uint8_t imr;
     uint8_t bg1;
     uint8_t bg2;
-    uint8_t fifo[FIFO_DEPTH];
+    uint8_t fifo[4];
     uint8_t tb;
     int current_mr;
     int fifo_len;
@@ -249,16 +247,14 @@ static void mcf_uart_reset(DeviceState *dev)
 static void mcf_uart_push_byte(mcf_uart_state *s, uint8_t data)
 {
     /* Break events overwrite the last byte if the fifo is full.  */
-    if (s->fifo_len == FIFO_DEPTH) {
+    if (s->fifo_len == 4)
         s->fifo_len--;
-    }
 
     s->fifo[s->fifo_len] = data;
     s->fifo_len++;
     s->sr |= MCF_UART_RxRDY;
-    if (s->fifo_len == FIFO_DEPTH) {
+    if (s->fifo_len == 4)
         s->sr |= MCF_UART_FFULL;
-    }
 
     mcf_uart_update(s);
 }
@@ -281,16 +277,14 @@ static int mcf_uart_can_receive(void *opaque)
 {
     mcf_uart_state *s = (mcf_uart_state *)opaque;
 
-    return s->rx_enabled ? FIFO_DEPTH - s->fifo_len : 0;
+    return s->rx_enabled && (s->sr & MCF_UART_FFULL) == 0;
 }
 
 static void mcf_uart_receive(void *opaque, const uint8_t *buf, int size)
 {
     mcf_uart_state *s = (mcf_uart_state *)opaque;
 
-    for (int i = 0; i < size; i++) {
-        mcf_uart_push_byte(s, buf[i]);
-    }
+    mcf_uart_push_byte(s, buf[0]);
 }
 
 static const MemoryRegionOps mcf_uart_ops = {
@@ -318,11 +312,12 @@ static void mcf_uart_realize(DeviceState *dev, Error **errp)
                              mcf_uart_event, NULL, s, NULL, true);
 }
 
-static const Property mcf_uart_properties[] = {
+static Property mcf_uart_properties[] = {
     DEFINE_PROP_CHR("chardev", mcf_uart_state, chr),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
-static void mcf_uart_class_init(ObjectClass *oc, const void *data)
+static void mcf_uart_class_init(ObjectClass *oc, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(oc);
 

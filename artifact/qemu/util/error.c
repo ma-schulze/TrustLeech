@@ -15,7 +15,15 @@
 #include "qemu/osdep.h"
 #include "qapi/error.h"
 #include "qemu/error-report.h"
-#include "qapi/error-internal.h"
+
+struct Error
+{
+    char *msg;
+    ErrorClass err_class;
+    const char *src, *func;
+    int line;
+    GString *hint;
+};
 
 Error *error_abort;
 Error *error_fatal;
@@ -24,13 +32,8 @@ Error *error_warn;
 static void error_handle(Error **errp, Error *err)
 {
     if (errp == &error_abort) {
-        if (err->func) {
-            fprintf(stderr, "Unexpected error in %s() at %.*s:%d:\n",
-                    err->func, err->src_len, err->src, err->line);
-        } else {
-            fprintf(stderr, "Unexpected error at %.*s:%d:\n",
-		    err->src_len, err->src, err->line);
-        }
+        fprintf(stderr, "Unexpected error in %s() at %s:%d:\n",
+                err->func, err->src, err->line);
         error_report("%s", error_get_pretty(err));
         if (err->hint) {
             error_printf("%s", err->hint->str);
@@ -72,7 +75,6 @@ static void error_setv(Error **errp,
         g_free(msg);
     }
     err->err_class = err_class;
-    err->src_len = -1;
     err->src = src;
     err->line = line;
     err->func = func;
@@ -243,17 +245,6 @@ void warn_report_err(Error *err)
         error_printf("%s", err->hint->str);
     }
     error_free(err);
-}
-
-bool warn_report_err_once_cond(bool *printed, Error *err)
-{
-    if (*printed) {
-        error_free(err);
-        return false;
-    }
-    *printed = true;
-    warn_report_err(err);
-    return true;
 }
 
 void error_reportf_err(Error *err, const char *fmt, ...)

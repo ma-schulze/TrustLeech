@@ -22,9 +22,10 @@
 #include "cpu.h"
 #include "s390x-internal.h"
 #include "tcg_s390x.h"
+#include "exec/exec-all.h"
 #include "qemu/host-utils.h"
 #include "exec/helper-proto.h"
-#include "accel/tcg/cpu-ldst.h"
+#include "exec/cpu_ldst.h"
 
 /* #define DEBUG_HELPER */
 #ifdef DEBUG_HELPER

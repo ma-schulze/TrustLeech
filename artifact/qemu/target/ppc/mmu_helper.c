@@ -20,13 +20,12 @@
 #include "qemu/osdep.h"
 #include "qemu/units.h"
 #include "cpu.h"
-#include "system/kvm.h"
+#include "sysemu/kvm.h"
 #include "kvm_ppc.h"
 #include "mmu-hash64.h"
 #include "mmu-hash32.h"
-#include "exec/cputlb.h"
+#include "exec/exec-all.h"
 #include "exec/page-protection.h"
-#include "exec/target_page.h"
 #include "exec/log.h"
 #include "helper_regs.h"
 #include "qemu/error-report.h"
@@ -36,7 +35,7 @@
 #include "mmu-radix64.h"
 #include "mmu-booke.h"
 #include "exec/helper-proto.h"
-#include "accel/tcg/cpu-ldst.h"
+#include "exec/cpu_ldst.h"
 
 /* #define FLUSH_ALL_TLBS */
 

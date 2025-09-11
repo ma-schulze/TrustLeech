@@ -211,7 +211,7 @@ static const VMStateDescription vmstate_mips_gcr = {
     },
 };
 
-static const Property mips_gcr_properties[] = {
+static Property mips_gcr_properties[] = {
     DEFINE_PROP_UINT32("num-vp", MIPSGCRState, num_vps, 1),
     DEFINE_PROP_INT32("gcr-rev", MIPSGCRState, gcr_rev, 0x800),
     DEFINE_PROP_UINT64("gcr-base", MIPSGCRState, gcr_base, GCR_BASE_ADDR),
@@ -219,6 +219,7 @@ static const Property mips_gcr_properties[] = {
                      MemoryRegion *),
     DEFINE_PROP_LINK("cpc", MIPSGCRState, cpc_mr, TYPE_MEMORY_REGION,
                      MemoryRegion *),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
 static void mips_gcr_realize(DeviceState *dev, Error **errp)
@@ -229,7 +230,7 @@ static void mips_gcr_realize(DeviceState *dev, Error **errp)
     s->vps = g_new(MIPSGCRVPState, s->num_vps);
 }
 
-static void mips_gcr_class_init(ObjectClass *klass, const void *data)
+static void mips_gcr_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
     device_class_set_props(dc, mips_gcr_properties);

@@ -32,15 +32,15 @@
 #include "qapi/qobject-input-visitor.h"
 #include "qapi/qapi-visit-audio.h"
 #include "qapi/qapi-commands-audio.h"
-#include "qobject/qdict.h"
+#include "qapi/qmp/qdict.h"
 #include "qemu/cutils.h"
 #include "qemu/error-report.h"
 #include "qemu/log.h"
 #include "qemu/module.h"
 #include "qemu/help_option.h"
-#include "system/system.h"
-#include "system/replay.h"
-#include "system/runstate.h"
+#include "sysemu/sysemu.h"
+#include "sysemu/replay.h"
+#include "sysemu/runstate.h"
 #include "ui/qemu-spice.h"
 #include "trace.h"
 
@@ -905,14 +905,6 @@ size_t AUD_read(SWVoiceIn *sw, void *buf, size_t size)
 
 int AUD_get_buffer_size_out(SWVoiceOut *sw)
 {
-    if (!sw) {
-        return 0;
-    }
-
-    if (audio_get_pdo_out(sw->s->dev)->mixing_engine) {
-        return sw->resample_buf.size * sw->info.bytes_per_frame;
-    }
-
     return sw->hw->samples * sw->hw->info.bytes_per_frame;
 }
 
@@ -1892,8 +1884,7 @@ CaptureVoiceOut *AUD_add_capture(
         cap->buf = g_malloc0_n(hw->mix_buf.size, hw->info.bytes_per_frame);
 
         if (hw->info.is_float) {
-            hw->clip = mixeng_clip_float[hw->info.nchannels == 2]
-                [hw->info.swap_endianness];
+            hw->clip = mixeng_clip_float[hw->info.nchannels == 2];
         } else {
             hw->clip = mixeng_clip
                 [hw->info.nchannels == 2]
@@ -2283,19 +2274,17 @@ size_t audio_rate_peek_bytes(RateCtl *rate, struct audio_pcm_info *info)
     ticks = now - rate->start_ticks;
     bytes = muldiv64(ticks, info->bytes_per_second, NANOSECONDS_PER_SECOND);
     frames = (bytes - rate->bytes_sent) / info->bytes_per_frame;
-    rate->peeked_frames = frames;
+    if (frames < 0 || frames > 65536) {
+        AUD_log(NULL, "Resetting rate control (%" PRId64 " frames)\n", frames);
+        audio_rate_start(rate);
+        frames = 0;
+    }
 
-    return frames < 0 ? 0 : frames * info->bytes_per_frame;
+    return frames * info->bytes_per_frame;
 }
 
 void audio_rate_add_bytes(RateCtl *rate, size_t bytes_used)
 {
-    if (rate->peeked_frames < 0 || rate->peeked_frames > 65536) {
-        AUD_log(NULL, "Resetting rate control (%" PRId64 " frames)\n",
-                rate->peeked_frames);
-        audio_rate_start(rate);
-    }
-
     rate->bytes_sent += bytes_used;
 }
 

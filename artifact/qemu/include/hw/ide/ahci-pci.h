@@ -9,7 +9,6 @@
 #include "qom/object.h"
 #include "hw/ide/ahci.h"
 #include "hw/pci/pci_device.h"
-#include "hw/irq.h"
 
 #define TYPE_ICH9_AHCI "ich9-ahci"
 OBJECT_DECLARE_SIMPLE_TYPE(AHCIPCIState, ICH9_AHCI)
@@ -18,7 +17,6 @@ struct AHCIPCIState {
     PCIDevice parent_obj;
 
     AHCIState ahci;
-    IRQState irq;
 };
 
 #endif

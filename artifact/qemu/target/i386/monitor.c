@@ -27,8 +27,9 @@
 #include "monitor/monitor.h"
 #include "monitor/hmp-target.h"
 #include "monitor/hmp.h"
-#include "qobject/qdict.h"
+#include "qapi/qmp/qdict.h"
 #include "qapi/error.h"
+#include "qapi/qapi-commands-misc-target.h"
 #include "qapi/qapi-commands-misc.h"
 
 /* Perform linear address sign extension */

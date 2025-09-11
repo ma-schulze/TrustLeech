@@ -21,7 +21,7 @@
 
 #include "qemu/sockets.h"
 #include "io/channel.h"
-#include "system/tpm.h"
+#include "sysemu/tpm.h"
 #include "libqtest.h"
 
 struct tpm_hdr {

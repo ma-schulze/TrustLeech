@@ -38,6 +38,4 @@ or Hypervisor.Framework.
    security
    multi-process
    confidential-guest-support
-   igvm
    vm-templating
-   sriov

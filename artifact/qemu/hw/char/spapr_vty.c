@@ -163,9 +163,10 @@ void spapr_vty_create(SpaprVioBus *bus, Chardev *chardev)
     qdev_realize_and_unref(dev, &bus->bus, &error_fatal);
 }
 
-static const Property spapr_vty_properties[] = {
+static Property spapr_vty_properties[] = {
     DEFINE_SPAPR_PROPERTIES(SpaprVioVty, sdev),
     DEFINE_PROP_CHR("chardev", SpaprVioVty, chardev),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
 static const VMStateDescription vmstate_spapr_vty = {
@@ -182,7 +183,7 @@ static const VMStateDescription vmstate_spapr_vty = {
     },
 };
 
-static void spapr_vty_class_init(ObjectClass *klass, const void *data)
+static void spapr_vty_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
     SpaprVioDeviceClass *k = VIO_SPAPR_DEVICE_CLASS(klass);

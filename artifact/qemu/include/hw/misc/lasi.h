@@ -12,7 +12,7 @@
 #ifndef LASI_H
 #define LASI_H
 
-#include "system/address-spaces.h"
+#include "exec/address-spaces.h"
 #include "hw/pci/pci_host.h"
 #include "hw/boards.h"
 

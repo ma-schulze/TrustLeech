@@ -38,60 +38,49 @@ struct PCIIPMIBTDevice {
     uint32_t uuid;
 };
 
-static void pci_ipmi_bt_get_fwinfo(struct IPMIInterface *ii, IPMIFwInfo *info)
+static void pci_ipmi_raise_irq(IPMIBT *ik)
 {
-    PCIIPMIBTDevice *pib = PCI_IPMI_BT(ii);
+    PCIIPMIBTDevice *pik = ik->opaque;
 
-    ipmi_bt_get_fwinfo(&pib->bt, info);
-    info->irq_source = IPMI_PCI_IRQ;
-    info->interrupt_number = pci_intx(&pib->dev);
-    info->i2c_slave_address = pib->bt.bmc->slave_addr;
-    info->uuid = pib->uuid;
+    pci_set_irq(&pik->dev, true);
 }
 
-static void pci_ipmi_raise_irq(IPMIBT *ib)
+static void pci_ipmi_lower_irq(IPMIBT *ik)
 {
-    PCIIPMIBTDevice *pib = ib->opaque;
+    PCIIPMIBTDevice *pik = ik->opaque;
 
-    pci_set_irq(&pib->dev, true);
-}
-
-static void pci_ipmi_lower_irq(IPMIBT *ib)
-{
-    PCIIPMIBTDevice *pib = ib->opaque;
-
-    pci_set_irq(&pib->dev, false);
+    pci_set_irq(&pik->dev, false);
 }
 
 static void pci_ipmi_bt_realize(PCIDevice *pd, Error **errp)
 {
     Error *err = NULL;
-    PCIIPMIBTDevice *pib = PCI_IPMI_BT(pd);
+    PCIIPMIBTDevice *pik = PCI_IPMI_BT(pd);
     IPMIInterface *ii = IPMI_INTERFACE(pd);
     IPMIInterfaceClass *iic = IPMI_INTERFACE_GET_CLASS(ii);
 
-    if (!pib->bt.bmc) {
+    if (!pik->bt.bmc) {
         error_setg(errp, "IPMI device requires a bmc attribute to be set");
         return;
     }
 
-    pib->uuid = ipmi_next_uuid();
+    pik->uuid = ipmi_next_uuid();
 
-    pib->bt.bmc->intf = ii;
-    pib->bt.opaque = pib;
+    pik->bt.bmc->intf = ii;
+    pik->bt.opaque = pik;
 
     pci_config_set_prog_interface(pd->config, 0x02); /* BT */
     pci_config_set_interrupt_pin(pd->config, 0x01);
-    pib->bt.use_irq = 1;
-    pib->bt.raise_irq = pci_ipmi_raise_irq;
-    pib->bt.lower_irq = pci_ipmi_lower_irq;
+    pik->bt.use_irq = 1;
+    pik->bt.raise_irq = pci_ipmi_raise_irq;
+    pik->bt.lower_irq = pci_ipmi_lower_irq;
 
     iic->init(ii, 8, &err);
     if (err) {
         error_propagate(errp, err);
         return;
     }
-    pci_register_bar(pd, 0, PCI_BASE_ADDRESS_SPACE_IO, &pib->bt.io);
+    pci_register_bar(pd, 0, PCI_BASE_ADDRESS_SPACE_IO, &pik->bt.io);
 }
 
 const VMStateDescription vmstate_PCIIPMIBTDevice = {
@@ -107,19 +96,19 @@ const VMStateDescription vmstate_PCIIPMIBTDevice = {
 
 static void pci_ipmi_bt_instance_init(Object *obj)
 {
-    PCIIPMIBTDevice *pib = PCI_IPMI_BT(obj);
+    PCIIPMIBTDevice *pik = PCI_IPMI_BT(obj);
 
-    ipmi_bmc_find_and_link(obj, (Object **) &pib->bt.bmc);
+    ipmi_bmc_find_and_link(obj, (Object **) &pik->bt.bmc);
 }
 
 static void *pci_ipmi_bt_get_backend_data(IPMIInterface *ii)
 {
-    PCIIPMIBTDevice *pib = PCI_IPMI_BT(ii);
+    PCIIPMIBTDevice *pik = PCI_IPMI_BT(ii);
 
-    return &pib->bt;
+    return &pik->bt;
 }
 
-static void pci_ipmi_bt_class_init(ObjectClass *oc, const void *data)
+static void pci_ipmi_bt_class_init(ObjectClass *oc, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(oc);
     PCIDeviceClass *pdc = PCI_DEVICE_CLASS(oc);
@@ -136,7 +125,6 @@ static void pci_ipmi_bt_class_init(ObjectClass *oc, const void *data)
 
     iic->get_backend_data = pci_ipmi_bt_get_backend_data;
     ipmi_bt_class_init(iic);
-    iic->get_fwinfo = pci_ipmi_bt_get_fwinfo;
 }
 
 static const TypeInfo pci_ipmi_bt_info = {
@@ -145,7 +133,7 @@ static const TypeInfo pci_ipmi_bt_info = {
     .instance_size = sizeof(PCIIPMIBTDevice),
     .instance_init = pci_ipmi_bt_instance_init,
     .class_init    = pci_ipmi_bt_class_init,
-    .interfaces = (const InterfaceInfo[]) {
+    .interfaces = (InterfaceInfo[]) {
         { TYPE_IPMI_INTERFACE },
         { INTERFACE_CONVENTIONAL_PCI_DEVICE },
         { }

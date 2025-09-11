@@ -4,7 +4,7 @@ struct s {
 	int val;
 };
 
-int main(void)
+int main(int argc, char *argv[])
 {
 	struct s
 #ifdef FAIL

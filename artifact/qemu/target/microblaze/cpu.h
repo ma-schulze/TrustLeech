@@ -21,10 +21,8 @@
 #define MICROBLAZE_CPU_H
 
 #include "cpu-qom.h"
-#include "exec/cpu-common.h"
 #include "exec/cpu-defs.h"
 #include "qemu/cpu-float.h"
-#include "exec/cpu-interrupt.h"
 
 typedef struct CPUArchState CPUMBState;
 #if !defined(CONFIG_USER_ONLY)
@@ -233,6 +231,8 @@ typedef struct CPUArchState CPUMBState;
 #define STREAM_CONTROL   (1 << 3)
 #define STREAM_NONBLOCK  (1 << 4)
 
+#define TARGET_INSN_START_EXTRA_WORDS 1
+
 /* use-non-secure property masks */
 #define USE_NON_SECURE_M_AXI_DP_MASK 0x1
 #define USE_NON_SECURE_M_AXI_IP_MASK 0x2
@@ -248,7 +248,7 @@ struct CPUArchState {
     uint32_t pc;
     uint32_t msr;    /* All bits of MSR except MSR[C] and MSR[CC] */
     uint32_t msr_c;  /* MSR[C], in low bit; other bits must be 0 */
-    uint64_t ear;
+    target_ulong ear;
     uint32_t esr;
     uint32_t fsr;
     uint32_t btr;
@@ -398,8 +398,6 @@ static inline void mb_cpu_write_msr(CPUMBState *env, uint32_t val)
 }
 
 void mb_tcg_init(void);
-void mb_translate_code(CPUState *cs, TranslationBlock *tb,
-                       int *max_insns, vaddr pc, void *host_pc);
 
 #define CPU_RESOLVING_TYPE TYPE_MICROBLAZE_CPU
 
@@ -409,14 +407,17 @@ void mb_translate_code(CPUState *cs, TranslationBlock *tb,
 #define MMU_USER_IDX    2
 /* See NB_MMU_MODES in cpu-defs.h. */
 
+#include "exec/cpu-all.h"
+
 /* Ensure there is no overlap between the two masks. */
 QEMU_BUILD_BUG_ON(MSR_TB_MASK & IFLAGS_TB_MASK);
 
-static inline bool mb_cpu_is_big_endian(CPUState *cs)
+static inline void cpu_get_tb_cpu_state(CPUMBState *env, vaddr *pc,
+                                        uint64_t *cs_base, uint32_t *flags)
 {
-    MicroBlazeCPU *cpu = MICROBLAZE_CPU(cs);
-
-    return !cpu->cfg.endi;
+    *pc = env->pc;
+    *flags = (env->iflags & IFLAGS_TB_MASK) | (env->msr & MSR_TB_MASK);
+    *cs_base = (*flags & IMM_FLAG ? env->imm : 0);
 }
 
 #if !defined(CONFIG_USER_ONLY)

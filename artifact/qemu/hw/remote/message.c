@@ -13,12 +13,12 @@
 #include "io/channel.h"
 #include "hw/remote/mpqemu-link.h"
 #include "qapi/error.h"
-#include "system/runstate.h"
+#include "sysemu/runstate.h"
 #include "hw/pci/pci.h"
 #include "exec/memattrs.h"
 #include "hw/remote/memory.h"
 #include "hw/remote/iohub.h"
-#include "system/reset.h"
+#include "sysemu/reset.h"
 
 static void process_config_write(QIOChannel *ioc, PCIDevice *dev,
                                  MPQemuMsg *msg, Error **errp);

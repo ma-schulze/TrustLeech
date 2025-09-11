@@ -28,10 +28,9 @@
 #include "qapi/error.h"
 #include "cpu.h"
 #include "trace.h"
+#include "exec/exec-all.h"
 #include "exec/helper-proto.h"
-#include "exec/watchpoint.h"
-#include "system/cpu-timers.h"
-#include "exec/icount.h"
+#include "sysemu/cpu-timers.h"
 
 /*
  * The following M-mode trigger CSRs are implemented:
@@ -552,6 +551,8 @@ static void type2_reg_write(CPURISCVState *env, target_ulong index,
     default:
         g_assert_not_reached();
     }
+
+    return;
 }
 
 /* type 6 trigger */
@@ -666,6 +667,8 @@ static void type6_reg_write(CPURISCVState *env, target_ulong index,
     default:
         g_assert_not_reached();
     }
+
+    return;
 }
 
 /* icount trigger type */
@@ -846,6 +849,8 @@ static void itrigger_reg_write(CPURISCVState *env, target_ulong index,
     default:
         g_assert_not_reached();
     }
+
+    return;
 }
 
 static int itrigger_get_adjust_count(CPURISCVState *env)

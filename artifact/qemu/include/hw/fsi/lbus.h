@@ -9,7 +9,7 @@
 
 #include "hw/qdev-core.h"
 #include "qemu/units.h"
-#include "system/memory.h"
+#include "exec/memory.h"
 
 #define TYPE_FSI_LBUS_DEVICE "fsi.lbus.device"
 OBJECT_DECLARE_SIMPLE_TYPE(FSILBusDevice, FSI_LBUS_DEVICE)

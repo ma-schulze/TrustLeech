@@ -205,6 +205,7 @@ out:
 
 error:
     s->smb_stat |= STS_DEV_ERR;
+    return;
 }
 
 static void smb_transaction_start(PMSMBus *s)

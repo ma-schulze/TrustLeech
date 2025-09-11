@@ -24,7 +24,7 @@
 #ifndef TPM_TPM_TIS_H
 #define TPM_TPM_TIS_H
 
-#include "system/tpm_backend.h"
+#include "sysemu/tpm_backend.h"
 #include "tpm_ppi.h"
 
 #define TPM_TIS_NUM_LOCALITIES      5     /* per spec */

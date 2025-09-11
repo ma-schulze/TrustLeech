@@ -173,11 +173,13 @@ static bool get_config_isr_status(QVirtioDevice *d)
 
 static void wait_config_isr_status(QVirtioDevice *d, gint64 timeout_us)
 {
+    QVirtioPCIDevice *dev = container_of(d, QVirtioPCIDevice, vdev);
     gint64 start_time = g_get_monotonic_time();
 
-    while (!get_config_isr_status(d)) {
+    do {
         g_assert(g_get_monotonic_time() - start_time <= timeout_us);
-    }
+        qtest_clock_step(dev->pdev->bus->qts, 100);
+    } while (!get_config_isr_status(d));
 }
 
 static void queue_select(QVirtioDevice *d, uint16_t index)

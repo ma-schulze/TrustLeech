@@ -40,7 +40,7 @@
 #include "net/tap.h"
 #include "qemu/module.h"
 #include "qemu/range.h"
-#include "system/system.h"
+#include "sysemu/sysemu.h"
 #include "hw/hw.h"
 #include "hw/net/mii.h"
 #include "hw/pci/msi.h"
@@ -372,7 +372,8 @@ static int
 e1000e_add_pm_capability(PCIDevice *pdev, uint8_t offset, uint16_t pmc)
 {
     Error *local_err = NULL;
-    int ret = pci_pm_init(pdev, offset, &local_err);
+    int ret = pci_add_capability(pdev, PCI_CAP_ID_PM, offset,
+                                 PCI_PM_SIZEOF, &local_err);
 
     if (local_err) {
         error_report_err(local_err);
@@ -660,7 +661,7 @@ static PropertyInfo e1000e_prop_disable_vnet,
                     e1000e_prop_subsys_ven,
                     e1000e_prop_subsys;
 
-static const Property e1000e_properties[] = {
+static Property e1000e_properties[] = {
     DEFINE_NIC_PROPERTIES(E1000EState, conf),
     DEFINE_PROP_SIGNED("disable_vnet_hdr", E1000EState, disable_vnet, false,
                         e1000e_prop_disable_vnet, bool),
@@ -671,9 +672,10 @@ static const Property e1000e_properties[] = {
                         e1000e_prop_subsys, uint16_t),
     DEFINE_PROP_BOOL("init-vet", E1000EState, init_vet, true),
     DEFINE_PROP_BOOL("migrate-timadj", E1000EState, timadj, true),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
-static void e1000e_class_init(ObjectClass *class, const void *data)
+static void e1000e_class_init(ObjectClass *class, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(class);
     ResettableClass *rc = RESETTABLE_CLASS(class);
@@ -721,7 +723,7 @@ static const TypeInfo e1000e_info = {
     .instance_size = sizeof(E1000EState),
     .class_init = e1000e_class_init,
     .instance_init = e1000e_instance_init,
-    .interfaces = (const InterfaceInfo[]) {
+    .interfaces = (InterfaceInfo[]) {
         { INTERFACE_PCIE_DEVICE },
         { }
     },

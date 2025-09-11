@@ -27,7 +27,6 @@
 #include "qemu/log.h"
 #include "qemu/module.h"
 #include "qemu/fifo32.h"
-#include "trace.h"
 
 #ifndef DEBUG_IMX_UART
 #define DEBUG_IMX_UART 0
@@ -160,7 +159,6 @@ static void imx_serial_reset(IMXSerialState *s)
     s->ucr3 = 0x700;
     s->ubmr = 0;
     s->ubrc = 4;
-    s->ufcr = BIT(11) | BIT(0);
 
     fifo32_reset(&s->rx_fifo);
     timer_del(&s->ageing_timer);
@@ -186,10 +184,10 @@ static uint64_t imx_serial_read(void *opaque, hwaddr offset,
                                 unsigned size)
 {
     IMXSerialState *s = (IMXSerialState *)opaque;
-    Chardev *chr = qemu_chr_fe_get_driver(&s->chr);
     uint32_t c, rx_used;
     uint8_t rxtl = s->ufcr & TL_MASK;
-    uint64_t value;
+
+    DPRINTF("read(offset=0x%" HWADDR_PRIx ")\n", offset);
 
     switch (offset >> 2) {
     case 0x0: /* URXD */
@@ -210,67 +208,49 @@ static uint64_t imx_serial_read(void *opaque, hwaddr offset,
             imx_serial_rx_fifo_ageing_timer_restart(s);
             qemu_chr_fe_accept_input(&s->chr);
         }
-        value = c;
-        break;
+        return c;
 
     case 0x20: /* UCR1 */
-        value = s->ucr1;
-        break;
+        return s->ucr1;
 
     case 0x21: /* UCR2 */
-        value = s->ucr2;
-        break;
+        return s->ucr2;
 
     case 0x25: /* USR1 */
-        value = s->usr1;
-        break;
+        return s->usr1;
 
     case 0x26: /* USR2 */
-        value = s->usr2;
-        break;
+        return s->usr2;
 
     case 0x2A: /* BRM Modulator */
-        value = s->ubmr;
-        break;
+        return s->ubmr;
 
     case 0x2B: /* Baud Rate Count */
-        value = s->ubrc;
-        break;
+        return s->ubrc;
 
     case 0x2d: /* Test register */
-        value = s->uts1;
-        break;
+        return s->uts1;
 
     case 0x24: /* UFCR */
-        value = s->ufcr;
-        break;
+        return s->ufcr;
 
     case 0x2c:
-        value = s->onems;
-        break;
+        return s->onems;
 
     case 0x22: /* UCR3 */
-        value = s->ucr3;
-        break;
+        return s->ucr3;
 
     case 0x23: /* UCR4 */
-        value = s->ucr4;
-        break;
+        return s->ucr4;
 
     case 0x29: /* BRM Incremental */
-        value = 0x0; /* TODO */
-        break;
+        return 0x0; /* TODO */
 
     default:
         qemu_log_mask(LOG_GUEST_ERROR, "[%s]%s: Bad register at offset 0x%"
                       HWADDR_PRIx "\n", TYPE_IMX_SERIAL, __func__, offset);
-        value = 0;
-        break;
+        return 0;
     }
-
-    trace_imx_serial_read(chr ? chr->label : "NODEV", offset, value);
-
-    return value;
 }
 
 static void imx_serial_write(void *opaque, hwaddr offset,
@@ -280,7 +260,8 @@ static void imx_serial_write(void *opaque, hwaddr offset,
     Chardev *chr = qemu_chr_fe_get_driver(&s->chr);
     unsigned char ch;
 
-    trace_imx_serial_write(chr ? chr->label : "NODEV", offset, value);
+    DPRINTF("write(offset=0x%" HWADDR_PRIx ", value = 0x%x) to %s\n",
+            offset, (unsigned int)value, chr ? chr->label : "NODEV");
 
     switch (offset >> 2) {
     case 0x10: /* UTXD */
@@ -386,30 +367,27 @@ static void imx_serial_write(void *opaque, hwaddr offset,
 static int imx_can_receive(void *opaque)
 {
     IMXSerialState *s = (IMXSerialState *)opaque;
-
-    return s->ucr2 & UCR2_RXEN ? fifo32_num_free(&s->rx_fifo) : 0;
+    return s->ucr2 & UCR2_RXEN && fifo32_num_used(&s->rx_fifo) < FIFO_SIZE;
 }
 
 static void imx_put_data(void *opaque, uint32_t value)
 {
     IMXSerialState *s = (IMXSerialState *)opaque;
-    Chardev *chr = qemu_chr_fe_get_driver(&s->chr);
     uint8_t rxtl = s->ufcr & TL_MASK;
 
-    trace_imx_serial_put_data(chr ? chr->label : "NODEV", value);
-
+    DPRINTF("received char\n");
     imx_serial_rx_fifo_push(s, value);
     if (fifo32_num_used(&s->rx_fifo) >= rxtl) {
         s->usr1 |= USR1_RRDY;
     }
+
+    imx_serial_rx_fifo_ageing_timer_restart(s);
+
     s->usr2 |= USR2_RDR;
     s->uts1 &= ~UTS1_RXEMPTY;
     if (value & URXD_BRK) {
         s->usr2 |= USR2_BRCD;
     }
-
-    imx_serial_rx_fifo_ageing_timer_restart(s);
-
     imx_update(s);
 }
 
@@ -418,10 +396,7 @@ static void imx_receive(void *opaque, const uint8_t *buf, int size)
     IMXSerialState *s = (IMXSerialState *)opaque;
 
     s->usr2 |= USR2_WAKE;
-
-    for (int i = 0; i < size; i++) {
-        imx_put_data(opaque, buf[i]);
-    }
+    imx_put_data(opaque, *buf);
 }
 
 static void imx_event(void *opaque, QEMUChrEvent event)
@@ -463,11 +438,12 @@ static void imx_serial_init(Object *obj)
     sysbus_init_irq(sbd, &s->irq);
 }
 
-static const Property imx_serial_properties[] = {
+static Property imx_serial_properties[] = {
     DEFINE_PROP_CHR("chardev", IMXSerialState, chr),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
-static void imx_serial_class_init(ObjectClass *klass, const void *data)
+static void imx_serial_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
 

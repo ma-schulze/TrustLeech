@@ -28,7 +28,7 @@
 #include "qemu/main-loop.h"
 #include "qemu/option.h"
 #include "qom/object_interfaces.h"
-#include "system/system.h"
+#include "sysemu/sysemu.h"
 #include "ui/dbus-module.h"
 #ifdef CONFIG_OPENGL
 #include "ui/egl-helpers.h"
@@ -317,17 +317,11 @@ dbus_display_add_client(int csock, Error **errp)
     conn = g_socket_connection_factory_create_connection(socket);
 
     dbus_display->add_client_cancellable = g_cancellable_new();
-    GDBusConnectionFlags flags =
-        G_DBUS_CONNECTION_FLAGS_AUTHENTICATION_SERVER |
-        G_DBUS_CONNECTION_FLAGS_DELAY_MESSAGE_PROCESSING;
-
-#ifdef WIN32
-    flags |= G_DBUS_CONNECTION_FLAGS_AUTHENTICATION_ALLOW_ANONYMOUS;
-#endif
 
     g_dbus_connection_new(G_IO_STREAM(conn),
                           guid,
-                          flags,
+                          G_DBUS_CONNECTION_FLAGS_AUTHENTICATION_SERVER |
+                          G_DBUS_CONNECTION_FLAGS_DELAY_MESSAGE_PROCESSING,
                           NULL,
                           dbus_display->add_client_cancellable,
                           dbus_display_add_client_ready,
@@ -404,7 +398,7 @@ set_gl_mode(Object *o, int val, Error **errp)
 }
 
 static void
-dbus_display_class_init(ObjectClass *oc, const void *data)
+dbus_display_class_init(ObjectClass *oc, void *data)
 {
     UserCreatableClass *ucc = USER_CREATABLE_CLASS(oc);
 
@@ -453,7 +447,7 @@ dbus_vc_parse(QemuOpts *opts, ChardevBackend *backend,
 }
 
 static void
-dbus_vc_class_init(ObjectClass *oc, const void *data)
+dbus_vc_class_init(ObjectClass *oc, void *data)
 {
     DBusVCClass *klass = DBUS_VC_CLASS(oc);
     ChardevClass *cc = CHARDEV_CLASS(oc);
@@ -482,7 +476,7 @@ early_dbus_init(DisplayOptions *opts)
 #endif
     }
 
-    type_register_static(&dbus_vc_type_info);
+    type_register(&dbus_vc_type_info);
 }
 
 static void
@@ -514,7 +508,7 @@ static const TypeInfo dbus_display_info = {
     .instance_init = dbus_display_init,
     .instance_finalize = dbus_display_finalize,
     .class_init = dbus_display_class_init,
-    .interfaces = (const InterfaceInfo[]) {
+    .interfaces = (InterfaceInfo[]) {
         { TYPE_USER_CREATABLE },
         { }
     }

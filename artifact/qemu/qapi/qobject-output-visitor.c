@@ -17,12 +17,12 @@
 #include "qapi/qobject-output-visitor.h"
 #include "qapi/visitor-impl.h"
 #include "qemu/queue.h"
-#include "qobject/qbool.h"
-#include "qobject/qdict.h"
-#include "qobject/qlist.h"
-#include "qobject/qnull.h"
-#include "qobject/qnum.h"
-#include "qobject/qstring.h"
+#include "qapi/qmp/qbool.h"
+#include "qapi/qmp/qdict.h"
+#include "qapi/qmp/qlist.h"
+#include "qapi/qmp/qnull.h"
+#include "qapi/qmp/qnum.h"
+#include "qapi/qmp/qstring.h"
 
 typedef struct QStackEntry {
     QObject *value;
@@ -210,13 +210,13 @@ static bool qobject_output_type_null(Visitor *v, const char *name,
 }
 
 static bool qobject_output_policy_skip(Visitor *v, const char *name,
-                                       uint64_t features)
+                                       unsigned special_features)
 {
     CompatPolicy *pol = &v->compat_policy;
 
-    return ((features & 1u << QAPI_DEPRECATED)
+    return ((special_features & 1u << QAPI_DEPRECATED)
             && pol->deprecated_output == COMPAT_POLICY_OUTPUT_HIDE)
-        || ((features & 1u << QAPI_UNSTABLE)
+        || ((special_features & 1u << QAPI_UNSTABLE)
             && pol->unstable_output == COMPAT_POLICY_OUTPUT_HIDE);
 }
 

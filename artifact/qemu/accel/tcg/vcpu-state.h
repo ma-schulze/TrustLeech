@@ -1,11 +1,6 @@
 /*
- * TaskState helpers for QEMU
- *
- * Copyright (c) 2023 Linaro Ltd.
- *
- * Authors:
- *   Philippe Mathieu-Daudé
- *
+ * SPDX-FileContributor: Philippe Mathieu-Daudé <philmd@linaro.org>
+ * SPDX-FileCopyrightText: 2023 Linaro Ltd.
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #ifndef ACCEL_TCG_VCPU_STATE_H

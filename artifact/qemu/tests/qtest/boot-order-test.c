@@ -13,7 +13,7 @@
 #include "qemu/osdep.h"
 #include "libqos/fw_cfg.h"
 #include "libqtest.h"
-#include "qobject/qdict.h"
+#include "qapi/qmp/qdict.h"
 #include "standard-headers/linux/qemu_fw_cfg.h"
 
 typedef struct {
@@ -40,7 +40,12 @@ static void test_a_boot_order(const char *machine,
                       machine ?: "", test_args);
     actual = read_boot_order(qts);
     g_assert_cmphex(actual, ==, expected_boot);
-    qtest_system_reset(qts);
+    qtest_qmp_assert_success(qts, "{ 'execute': 'system_reset' }");
+    /*
+     * system_reset only requests reset.  We get a RESET event after
+     * the actual reset completes.  Need to wait for that.
+     */
+    qtest_qmp_eventwait(qts, "RESET");
     actual = read_boot_order(qts);
     g_assert_cmphex(actual, ==, expected_reboot);
     qtest_quit(qts);

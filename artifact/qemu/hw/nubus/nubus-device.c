@@ -107,12 +107,13 @@ static void nubus_device_realize(DeviceState *dev, Error **errp)
     }
 }
 
-static const Property nubus_device_properties[] = {
+static Property nubus_device_properties[] = {
     DEFINE_PROP_INT32("slot", NubusDevice, slot, -1),
     DEFINE_PROP_STRING("romfile", NubusDevice, romfile),
+    DEFINE_PROP_END_OF_LIST()
 };
 
-static void nubus_device_class_init(ObjectClass *oc, const void *data)
+static void nubus_device_class_init(ObjectClass *oc, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(oc);
 

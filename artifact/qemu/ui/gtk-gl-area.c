@@ -16,7 +16,7 @@
 #include "ui/gtk.h"
 #include "ui/egl-helpers.h"
 
-#include "system/system.h"
+#include "sysemu/sysemu.h"
 
 static void gtk_gl_area_set_scanout_mode(VirtualConsole *vc, bool scanout)
 {
@@ -42,37 +42,16 @@ void gd_gl_area_draw(VirtualConsole *vc)
 #ifdef CONFIG_GBM
     QemuDmaBuf *dmabuf = vc->gfx.guest_fb.dmabuf;
 #endif
-    int pw, ph, gs, y1, y2;
-    int ww, wh;
-    int ww_surface, wh_surface;
-    int fbw, fbh;
-    int wx_offset, wy_offset;
+    int ww, wh, ws, y1, y2;
 
     if (!vc->gfx.gls) {
         return;
     }
 
     gtk_gl_area_make_current(GTK_GL_AREA(vc->gfx.drawing_area));
-    gs = gdk_window_get_scale_factor(gtk_widget_get_window(vc->gfx.drawing_area));
-    fbw = surface_width(vc->gfx.ds);
-    fbh = surface_height(vc->gfx.ds);
-    ww = gtk_widget_get_allocated_width(vc->gfx.drawing_area);
-    wh = gtk_widget_get_allocated_height(vc->gfx.drawing_area);
-    pw = ww * gs;
-    ph = wh * gs;
-
-    gd_update_scale(vc, ww, wh, fbw, fbh);
-
-    ww_surface = fbw * vc->gfx.scale_x;
-    wh_surface = fbh * vc->gfx.scale_y;
-
-    wx_offset = wy_offset = 0;
-    if (ww > ww_surface) {
-        wx_offset = (ww - ww_surface) / 2;
-    }
-    if (wh > wh_surface) {
-        wy_offset = (wh - wh_surface) / 2;
-    }
+    ws = gdk_window_get_scale_factor(gtk_widget_get_window(vc->gfx.drawing_area));
+    ww = gtk_widget_get_allocated_width(vc->gfx.drawing_area) * ws;
+    wh = gtk_widget_get_allocated_height(vc->gfx.drawing_area) * ws;
 
     if (vc->gfx.scanout_mode) {
         if (!vc->gfx.guest_fb.framebuffer) {
@@ -92,29 +71,11 @@ void gd_gl_area_draw(VirtualConsole *vc)
         glBindFramebuffer(GL_READ_FRAMEBUFFER, vc->gfx.guest_fb.framebuffer);
         /* GtkGLArea sets GL_DRAW_FRAMEBUFFER for us */
 
-        if (wx_offset > 0) {
-            glEnable(GL_SCISSOR_TEST);
-            glScissor(0, 0, wx_offset * gs, wh * gs);
-            glClear(GL_COLOR_BUFFER_BIT);
-            glScissor((ww - wx_offset) * gs, 0, wx_offset * gs, wh * gs);
-            glClear(GL_COLOR_BUFFER_BIT);
-            glDisable(GL_SCISSOR_TEST);
-        }
-        if (wy_offset > 0) {
-            glEnable(GL_SCISSOR_TEST);
-            glScissor(0, 0, ww * gs, wy_offset * gs);
-            glClear(GL_COLOR_BUFFER_BIT);
-            glScissor(0, (wh - wy_offset) * gs, ww * gs, wy_offset * gs);
-            glClear(GL_COLOR_BUFFER_BIT);
-            glDisable(GL_SCISSOR_TEST);
-        }
-
-        glViewport(0, 0, pw, ph);
+        glViewport(0, 0, ww, wh);
         y1 = vc->gfx.y0_top ? 0 : vc->gfx.h;
         y2 = vc->gfx.y0_top ? vc->gfx.h : 0;
         glBlitFramebuffer(0, y1, vc->gfx.w, y2,
-                          wx_offset * gs, wy_offset * gs,
-                          (ww - wx_offset) * gs, (wh - wy_offset) * gs,
+                          0, 0, ww, wh,
                           GL_COLOR_BUFFER_BIT, GL_NEAREST);
 #ifdef CONFIG_GBM
         if (dmabuf) {
@@ -140,7 +101,7 @@ void gd_gl_area_draw(VirtualConsole *vc)
         }
         gtk_gl_area_make_current(GTK_GL_AREA(vc->gfx.drawing_area));
 
-        surface_gl_setup_viewport(vc->gfx.gls, vc->gfx.ds, pw, ph);
+        surface_gl_setup_viewport(vc->gfx.gls, vc->gfx.ds, ww, wh);
         surface_gl_render_texture(vc->gfx.gls, vc->gfx.ds);
     }
 }

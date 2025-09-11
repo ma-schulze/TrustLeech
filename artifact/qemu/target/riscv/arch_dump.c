@@ -19,7 +19,7 @@
 #include "qemu/osdep.h"
 #include "cpu.h"
 #include "elf.h"
-#include "system/dump.h"
+#include "sysemu/dump.h"
 
 /* struct user_regs_struct from arch/riscv/include/uapi/asm/ptrace.h */
 struct riscv64_user_regs {

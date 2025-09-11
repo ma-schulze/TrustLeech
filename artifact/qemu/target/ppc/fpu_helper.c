@@ -19,6 +19,7 @@
 #include "qemu/osdep.h"
 #include "cpu.h"
 #include "exec/helper-proto.h"
+#include "exec/exec-all.h"
 #include "internal.h"
 #include "fpu/softfloat.h"
 
@@ -154,7 +155,8 @@ void helper_compute_fprf_##tp(CPUPPCState *env, tp arg)           \
     } else if (tp##_is_infinity(arg)) {                           \
         fprf = neg ? 0x09 << FPSCR_FPRF : 0x05 << FPSCR_FPRF;     \
     } else {                                                      \
-        if (tp##_is_signaling_nan(arg, &env->fp_status)) {        \
+        float_status dummy = { };  /* snan_bit_is_one = 0 */      \
+        if (tp##_is_signaling_nan(arg, &dummy)) {                 \
             fprf = 0x00 << FPSCR_FPRF;                            \
         } else {                                                  \
             fprf = 0x11 << FPSCR_FPRF;                            \

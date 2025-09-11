@@ -18,7 +18,6 @@ Contents:
 
    target-arm
    target-avr
-   target-loongarch
    target-m68k
    target-mips
    target-ppc

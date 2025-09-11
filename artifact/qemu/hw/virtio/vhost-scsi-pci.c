@@ -38,9 +38,10 @@ struct VHostSCSIPCI {
     VHostSCSI vdev;
 };
 
-static const Property vhost_scsi_pci_properties[] = {
+static Property vhost_scsi_pci_properties[] = {
     DEFINE_PROP_UINT32("vectors", VirtIOPCIProxy, nvectors,
                        DEV_NVECTORS_UNSPECIFIED),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
 static void vhost_scsi_pci_realize(VirtIOPCIProxy *vpci_dev, Error **errp)
@@ -61,7 +62,7 @@ static void vhost_scsi_pci_realize(VirtIOPCIProxy *vpci_dev, Error **errp)
     qdev_realize(vdev, BUS(&vpci_dev->bus), errp);
 }
 
-static void vhost_scsi_pci_class_init(ObjectClass *klass, const void *data)
+static void vhost_scsi_pci_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
     VirtioPCIClass *k = VIRTIO_PCI_CLASS(klass);

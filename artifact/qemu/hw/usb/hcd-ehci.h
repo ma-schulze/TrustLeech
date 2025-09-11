@@ -20,7 +20,7 @@
 
 #include "qemu/timer.h"
 #include "hw/usb.h"
-#include "system/dma.h"
+#include "sysemu/dma.h"
 #include "hw/pci/pci_device.h"
 #include "hw/sysbus.h"
 

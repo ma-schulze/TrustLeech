@@ -415,7 +415,7 @@ static void edu_instance_init(Object *obj)
                                    &edu->dma_mask, OBJ_PROP_FLAG_READWRITE);
 }
 
-static void edu_class_init(ObjectClass *class, const void *data)
+static void edu_class_init(ObjectClass *class, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(class);
     PCIDeviceClass *k = PCI_DEVICE_CLASS(class);
@@ -429,18 +429,21 @@ static void edu_class_init(ObjectClass *class, const void *data)
     set_bit(DEVICE_CATEGORY_MISC, dc->categories);
 }
 
-static const TypeInfo edu_types[] = {
-    {
+static void pci_edu_register_types(void)
+{
+    static InterfaceInfo interfaces[] = {
+        { INTERFACE_CONVENTIONAL_PCI_DEVICE },
+        { },
+    };
+    static const TypeInfo edu_info = {
         .name          = TYPE_PCI_EDU_DEVICE,
         .parent        = TYPE_PCI_DEVICE,
         .instance_size = sizeof(EduState),
         .instance_init = edu_instance_init,
         .class_init    = edu_class_init,
-        .interfaces    = (const InterfaceInfo[]) {
-            { INTERFACE_CONVENTIONAL_PCI_DEVICE },
-            { },
-        },
-    }
-};
+        .interfaces = interfaces,
+    };
 
-DEFINE_TYPES(edu_types)
+    type_register_static(&edu_info);
+}
+type_init(pci_edu_register_types)

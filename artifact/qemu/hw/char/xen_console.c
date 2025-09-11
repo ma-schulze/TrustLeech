@@ -25,7 +25,7 @@
 #include <termios.h>
 
 #include "qapi/error.h"
-#include "system/system.h"
+#include "sysemu/sysemu.h"
 #include "chardev/char-fe.h"
 #include "hw/xen/xen-backend.h"
 #include "hw/xen/xen-bus-helper.h"
@@ -367,28 +367,28 @@ static char *xen_console_get_name(XenDevice *xendev, Error **errp)
 
     if (con->dev == -1) {
         XenBus *xenbus = XEN_BUS(qdev_get_parent_bus(DEVICE(xendev)));
+        char fe_path[XENSTORE_ABS_PATH_MAX + 1];
         int idx = (xen_mode == XEN_EMULATE) ? 0 : 1;
-        Error *local_err = NULL;
         char *value;
 
         /* Theoretically we could go up to INT_MAX here but that's overkill */
         while (idx < 100) {
             if (!idx) {
-                value = xs_node_read(xenbus->xsh, XBT_NULL, NULL, &local_err,
-                                     "/local/domain/%u/console",
-                                     xendev->frontend_id);
+                snprintf(fe_path, sizeof(fe_path),
+                         "/local/domain/%u/console", xendev->frontend_id);
             } else {
-                value = xs_node_read(xenbus->xsh, XBT_NULL, NULL, &local_err,
-                                     "/local/domain/%u/device/console/%u",
-                                     xendev->frontend_id, idx);
+                snprintf(fe_path, sizeof(fe_path),
+                         "/local/domain/%u/device/console/%u",
+                         xendev->frontend_id, idx);
             }
+            value = qemu_xen_xs_read(xenbus->xsh, XBT_NULL, fe_path, NULL);
             if (!value) {
                 if (errno == ENOENT) {
                     con->dev = idx;
-                    error_free(local_err);
                     goto found;
                 }
-                error_propagate(errp, local_err);
+                error_setg(errp, "cannot read %s: %s", fe_path,
+                           strerror(errno));
                 return NULL;
             }
             free(value);
@@ -487,12 +487,13 @@ static char *xen_console_get_frontend_path(XenDevice *xendev, Error **errp)
 }
 
 
-static const Property xen_console_properties[] = {
+static Property xen_console_properties[] = {
     DEFINE_PROP_CHR("chardev", XenConsole, chr),
     DEFINE_PROP_INT32("idx", XenConsole, dev, -1),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
-static void xen_console_class_init(ObjectClass *class, const void *data)
+static void xen_console_class_init(ObjectClass *class, void *data)
 {
     DeviceClass *dev_class = DEVICE_CLASS(class);
     XenDeviceClass *xendev_class = XEN_DEVICE_CLASS(class);
@@ -550,8 +551,7 @@ static void xen_console_device_create(XenBackendInstance *backend,
         goto fail;
     }
 
-    type = xs_node_read(xsh, XBT_NULL, NULL, errp, "%s/%s", fe, "type");
-    if (!type) {
+    if (xs_node_scanf(xsh, XBT_NULL, fe, "type", errp, "%ms", &type) != 1) {
         error_prepend(errp, "failed to read console device type: ");
         goto fail;
     }
@@ -569,8 +569,7 @@ static void xen_console_device_create(XenBackendInstance *backend,
 
     snprintf(label, sizeof(label), "xencons%ld", number);
 
-    output = xs_node_read(xsh, XBT_NULL, NULL, errp, "%s/%s", fe, "output");
-    if (output) {
+    if (xs_node_scanf(xsh, XBT_NULL, fe, "output", NULL, "%ms", &output) == 1) {
         /*
          * FIXME: sure we want to support implicit
          * muxed monitors here?
@@ -581,27 +580,19 @@ static void xen_console_device_create(XenBackendInstance *backend,
                        output);
             goto fail;
         }
-    } else if (errno != ENOENT) {
-        error_prepend(errp, "console: No valid chardev found: ");
-        goto fail;
+    } else if (number) {
+        cd = serial_hd(number);
+        if (!cd) {
+            error_prepend(errp, "console: No serial device #%ld found: ",
+                          number);
+            goto fail;
+        }
     } else {
-        error_free(*errp);
-        *errp = NULL;
-
-        if (number) {
-            cd = serial_hd(number);
-            if (!cd) {
-                error_setg(errp, "console: No serial device #%ld found",
-                           number);
-                goto fail;
-            }
-        } else {
-            /* No 'output' node on primary console: use null. */
-            cd = qemu_chr_new(label, "null", NULL);
-            if (!cd) {
-                error_setg(errp, "console: failed to create null device");
-                goto fail;
-            }
+        /* No 'output' node on primary console: use null. */
+        cd = qemu_chr_new(label, "null", NULL);
+        if (!cd) {
+            error_setg(errp, "console: failed to create null device");
+            goto fail;
         }
     }
 

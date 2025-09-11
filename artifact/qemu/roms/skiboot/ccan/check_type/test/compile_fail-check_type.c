@@ -2,8 +2,6 @@
 
 int main(int argc, char *argv[])
 {
-	(void)argc;
-	(void)argv;
 #ifdef FAIL
 	check_type(argc, char);
 #endif

@@ -24,7 +24,6 @@ struct SCSIRequest {
     SCSIBus           *bus;
     SCSIDevice        *dev;
     const SCSIReqOps  *ops;
-    AioContext        *ctx;
     uint32_t          refcount;
     uint32_t          tag;
     uint32_t          lun;
@@ -49,8 +48,6 @@ struct SCSIRequest {
     bool              dma_started;
     BlockAIOCB        *aiocb;
     QEMUSGList        *sg;
-
-    /* Protected by SCSIDevice->requests_lock */
     QTAILQ_ENTRY(SCSIRequest) next;
 };
 
@@ -79,7 +76,10 @@ struct SCSIDevice
     uint8_t sense[SCSI_SENSE_BUF_SIZE];
     uint32_t sense_len;
 
-    QemuMutex requests_lock; /* protects the requests list */
+    /*
+     * The requests list is only accessed from the AioContext that executes
+     * requests or from the main loop when IOThread processing is stopped.
+     */
     QTAILQ_HEAD(, SCSIRequest) requests;
 
     uint32_t channel;

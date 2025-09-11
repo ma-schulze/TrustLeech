@@ -300,7 +300,7 @@ static void pr_manager_helper_instance_init(Object *obj)
 }
 
 static void pr_manager_helper_class_init(ObjectClass *klass,
-                                         const void *class_data G_GNUC_UNUSED)
+                                         void *class_data G_GNUC_UNUSED)
 {
     PRManagerClass *prmgr_klass = PR_MANAGER_CLASS(klass);
     UserCreatableClass *uc_klass = USER_CREATABLE_CLASS(klass);

@@ -92,8 +92,9 @@ static const MemoryRegionOps armsse_cpuid_ops = {
     .valid.max_access_size = 4,
 };
 
-static const Property armsse_cpuid_props[] = {
+static Property armsse_cpuid_props[] = {
     DEFINE_PROP_UINT32("CPUID", ARMSSECPUID, cpuid, 0),
+    DEFINE_PROP_END_OF_LIST()
 };
 
 static void armsse_cpuid_init(Object *obj)
@@ -106,7 +107,7 @@ static void armsse_cpuid_init(Object *obj)
     sysbus_init_mmio(sbd, &s->iomem);
 }
 
-static void armsse_cpuid_class_init(ObjectClass *klass, const void *data)
+static void armsse_cpuid_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
 

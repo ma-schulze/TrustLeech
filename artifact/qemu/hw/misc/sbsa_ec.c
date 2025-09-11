@@ -13,7 +13,7 @@
 #include "qemu/osdep.h"
 #include "qemu/log.h"
 #include "hw/sysbus.h"
-#include "system/runstate.h"
+#include "sysemu/runstate.h"
 
 typedef struct SECUREECState {
     SysBusDevice parent_obj;
@@ -73,7 +73,7 @@ static void sbsa_ec_init(Object *obj)
     sysbus_init_mmio(dev, &s->iomem);
 }
 
-static void sbsa_ec_class_init(ObjectClass *klass, const void *data)
+static void sbsa_ec_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
 

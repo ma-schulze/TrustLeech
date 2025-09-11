@@ -13,7 +13,6 @@
 
 #include "qemu/osdep.h"
 #include "qemu/main-loop.h"
-#include "exec/target_page.h"
 #include "hyperv.h"
 #include "hw/hyperv/hyperv.h"
 #include "hyperv-proto.h"

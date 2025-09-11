@@ -177,7 +177,7 @@ static const USBDesc desc = {
     .str   = desc_strings,
 };
 
-static void usb_msd_packet_complete(MSDState *s, int status)
+static void usb_msd_packet_complete(MSDState *s)
 {
     USBPacket *p = s->packet;
 
@@ -187,7 +187,6 @@ static void usb_msd_packet_complete(MSDState *s, int status)
      * usb_packet_complete returns.
      */
     trace_usb_msd_packet_complete();
-    p->status = status;
     s->packet = NULL;
     usb_packet_complete(&s->dev, p);
 }
@@ -197,7 +196,8 @@ static void usb_msd_fatal_error(MSDState *s)
     trace_usb_msd_fatal_error();
 
     if (s->packet) {
-        usb_msd_packet_complete(s, USB_RET_STALL);
+        s->packet->status = USB_RET_STALL;
+        usb_msd_packet_complete(s);
     }
 
     /*
@@ -255,8 +255,8 @@ void usb_msd_transfer_data(SCSIRequest *req, uint32_t len)
         usb_msd_copy_data(s, p);
         p = s->packet;
         if (p && p->actual_length == p->iov.size) {
-            /* USB_RET_SUCCESS status clears previous ASYNC status */
-            usb_msd_packet_complete(s, USB_RET_SUCCESS);
+            p->status = USB_RET_SUCCESS; /* Clear previous ASYNC status */
+            usb_msd_packet_complete(s);
         }
     }
 }
@@ -295,8 +295,8 @@ void usb_msd_command_complete(SCSIRequest *req, size_t resid)
                 s->mode = USB_MSDM_CSW;
             }
         }
-        /* USB_RET_SUCCESS status clears previous ASYNC status */
-        usb_msd_packet_complete(s, USB_RET_SUCCESS);
+        p->status = USB_RET_SUCCESS; /* Clear previous ASYNC status */
+        usb_msd_packet_complete(s);
     } else if (s->data_len == 0) {
         s->mode = USB_MSDM_CSW;
     }
@@ -332,7 +332,8 @@ void usb_msd_handle_reset(USBDevice *dev)
     assert(s->req == NULL);
 
     if (s->packet) {
-        usb_msd_packet_complete(s, USB_RET_STALL);
+        s->packet->status = USB_RET_STALL;
+        usb_msd_packet_complete(s);
     }
 
     memset(&s->csw, 0, sizeof(s->csw));
@@ -585,7 +586,7 @@ static const VMStateDescription vmstate_usb_msd = {
     }
 };
 
-static void usb_msd_class_initfn_common(ObjectClass *klass, const void *data)
+static void usb_msd_class_initfn_common(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
     USBDeviceClass *uc = USB_DEVICE_CLASS(klass);

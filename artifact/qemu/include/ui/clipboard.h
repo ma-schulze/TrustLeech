@@ -2,7 +2,6 @@
 #define QEMU_CLIPBOARD_H
 
 #include "qemu/notify.h"
-#include "migration/vmstate.h"
 
 /**
  * DOC: Introduction
@@ -26,9 +25,6 @@ typedef enum QemuClipboardSelection QemuClipboardSelection;
 typedef struct QemuClipboardPeer QemuClipboardPeer;
 typedef struct QemuClipboardNotify QemuClipboardNotify;
 typedef struct QemuClipboardInfo QemuClipboardInfo;
-typedef struct QemuClipboardContent QemuClipboardContent;
-
-extern const VMStateDescription vmstate_cbinfo;
 
 /**
  * enum QemuClipboardType
@@ -101,24 +97,6 @@ struct QemuClipboardNotify {
     };
 };
 
-
-/**
- * struct QemuClipboardContent
- *
- * @available: whether the data is available
- * @requested: whether the data was requested
- * @size: the size of the @data
- * @data: the clipboard data
- *
- * Clipboard content.
- */
-struct QemuClipboardContent {
-    bool available;
-    bool requested;
-    uint32_t size;
-    void *data;
-};
-
 /**
  * struct QemuClipboardInfo
  *
@@ -134,10 +112,15 @@ struct QemuClipboardContent {
 struct QemuClipboardInfo {
     uint32_t refcount;
     QemuClipboardPeer *owner;
-    int selection; /* QemuClipboardSelection */
+    QemuClipboardSelection selection;
     bool has_serial;
     uint32_t serial;
-    QemuClipboardContent types[QEMU_CLIPBOARD_TYPE__COUNT];
+    struct {
+        bool available;
+        bool requested;
+        size_t size;
+        void *data;
+    } types[QEMU_CLIPBOARD_TYPE__COUNT];
 };
 
 /**

@@ -13,16 +13,16 @@
 #include "qemu/osdep.h"
 #include "qemu/main-loop.h"
 #include "qapi/qapi-commands-migration.h"
-#include "qobject/qdict.h"
+#include "qapi/qmp/qdict.h"
 #include "qapi/error.h"
-#include "system/dirtyrate.h"
-#include "system/dirtylimit.h"
+#include "sysemu/dirtyrate.h"
+#include "sysemu/dirtylimit.h"
 #include "monitor/hmp.h"
 #include "monitor/monitor.h"
-#include "system/memory.h"
+#include "exec/memory.h"
 #include "exec/target_page.h"
 #include "hw/boards.h"
-#include "system/kvm.h"
+#include "sysemu/kvm.h"
 #include "trace.h"
 #include "migration/misc.h"
 
@@ -80,7 +80,8 @@ static void vcpu_dirty_rate_stat_collect(void)
     int i = 0;
     int64_t period = DIRTYLIMIT_CALC_TIME_MS;
 
-    if (migrate_dirty_limit() && migration_is_running()) {
+    if (migrate_dirty_limit() &&
+        migration_is_active()) {
         period = migrate_vcpu_dirty_limit_period();
     }
 
@@ -337,6 +338,8 @@ static void dirtylimit_adjust_throttle(CPUState *cpu)
     if (!dirtylimit_done(quota, current)) {
         dirtylimit_set_throttle(cpu, quota, current);
     }
+
+    return;
 }
 
 void dirtylimit_process(void)

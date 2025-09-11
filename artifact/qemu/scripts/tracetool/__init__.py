@@ -12,14 +12,12 @@ __maintainer__ = "Stefan Hajnoczi"
 __email__      = "stefanha@redhat.com"
 
 
-import os
 import re
 import sys
 import weakref
-from pathlib import PurePath
 
-import tracetool.backend
 import tracetool.format
+import tracetool.backend
 
 
 def error_write(*lines):
@@ -38,7 +36,7 @@ out_fobj = sys.stdout
 
 def out_open(filename):
     global out_filename, out_fobj
-    out_filename = posix_relpath(filename)
+    out_filename = filename
     out_fobj = open(filename, 'wt')
 
 def out(*lines, **kwargs):
@@ -219,7 +217,7 @@ class Event(object):
                       r"(?:(?:(?P<fmt_trans>\".+),)?\s*(?P<fmt>\".+))?"
                       r"\s*")
 
-    _VALID_PROPS = set(["disable"])
+    _VALID_PROPS = set(["disable", "vcpu"])
 
     def __init__(self, name, props, fmt, args, lineno, filename, orig=None,
                  event_trans=None, event_exec=None):
@@ -310,7 +308,7 @@ class Event(object):
             fmt = [fmt_trans, fmt]
         args = Arguments.build(groups["args"])
 
-        return Event(name, props, fmt, args, lineno, posix_relpath(filename))
+        return Event(name, props, fmt, args, lineno, filename)
 
     def __repr__(self):
         """Evaluable string representation for this object."""
@@ -449,10 +447,3 @@ def generate(events, group, format, backends,
     tracetool.backend.dtrace.PROBEPREFIX = probe_prefix
 
     tracetool.format.generate(events, format, backend, group)
-
-def posix_relpath(path, start=None):
-    try:
-        path = os.path.relpath(path, start)
-    except ValueError:
-        pass
-    return PurePath(path).as_posix()

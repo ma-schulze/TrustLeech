@@ -13,7 +13,6 @@
 #ifndef QEMU_ATOMIC128_H
 #define QEMU_ATOMIC128_H
 
-#include "qemu/atomic.h"
 #include "qemu/int128.h"
 
 /*
@@ -59,7 +58,7 @@
  * Therefore, special case each platform.
  */
 
-#include "host/atomic128-cas.h.inc"
-#include "host/atomic128-ldst.h.inc"
+#include "host/atomic128-cas.h"
+#include "host/atomic128-ldst.h"
 
 #endif /* QEMU_ATOMIC128_H */

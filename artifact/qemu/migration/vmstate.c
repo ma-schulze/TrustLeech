@@ -15,7 +15,7 @@
 #include "migration/vmstate.h"
 #include "savevm.h"
 #include "qapi/error.h"
-#include "qobject/json-writer.h"
+#include "qapi/qmp/json-writer.h"
 #include "qemu-file.h"
 #include "qemu/bitops.h"
 #include "qemu/error-report.h"
@@ -459,8 +459,6 @@ int vmstate_save_state_v(QEMUFile *f, const VMStateDescription *vmsd,
                 }
 
                 /*
-                 * This logic only matters when dumping VM Desc.
-                 *
                  * Due to the fake nullptr handling above, if there's mixed
                  * null/non-null data, it doesn't make sense to emit a
                  * compressed array representation spanning the entire array
@@ -468,7 +466,7 @@ int vmstate_save_state_v(QEMUFile *f, const VMStateDescription *vmsd,
                  * vs. nullptr). Search ahead for the next null/non-null element
                  * and start a new compressed array if found.
                  */
-                if (vmdesc && (field->flags & VMS_ARRAY_OF_POINTER) &&
+                if (field->flags & VMS_ARRAY_OF_POINTER &&
                     is_null != is_prev_null) {
 
                     is_prev_null = is_null;
@@ -506,7 +504,7 @@ int vmstate_save_state_v(QEMUFile *f, const VMStateDescription *vmsd,
                                     written_bytes);
 
                 /* If we used a fake temp field.. free it now */
-                if (is_null) {
+                if (inner_field != field) {
                     g_clear_pointer((gpointer *)&inner_field, g_free);
                 }
 

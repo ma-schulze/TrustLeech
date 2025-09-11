@@ -20,14 +20,13 @@
 #include "qemu/osdep.h"
 
 #include "cpu.h"
-#include "exec/cputlb.h"
+#include "exec/exec-all.h"
 #include "exec/page-protection.h"
-#include "exec/target_page.h"
 #include "exec/log.h"
 
 #if !defined(CONFIG_USER_ONLY)
 #include "hw/sh4/sh_intc.h"
-#include "system/runstate.h"
+#include "sysemu/runstate.h"
 #endif
 
 #define MMU_OK                   0

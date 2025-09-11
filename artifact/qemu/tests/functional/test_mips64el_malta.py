@@ -14,9 +14,20 @@ import logging
 
 from qemu_test import LinuxKernelTest, Asset
 from qemu_test import exec_command_and_wait_for_pattern
-from qemu_test import skipIfMissingImports, skipFlakyTest, skipUntrustedTest
+from qemu_test.utils import gzip_uncompress
+from unittest import skipUnless
 
-from test_mips_malta import mips_check_wheezy
+NUMPY_AVAILABLE = True
+try:
+    import numpy as np
+except ImportError:
+    NUMPY_AVAILABLE = False
+
+CV2_AVAILABLE = True
+try:
+    import cv2
+except ImportError:
+    CV2_AVAILABLE = False
 
 
 class MaltaMachineConsole(LinuxKernelTest):
@@ -40,9 +51,9 @@ class MaltaMachineConsole(LinuxKernelTest):
         [2] https://kernel-team.pages.debian.net/kernel-handbook/
             ch-common-tasks.html#s-common-official
         """
-        kernel_path = self.archive_extract(
-            self.ASSET_KERNEL_2_63_2,
-            member='boot/vmlinux-2.6.32-5-5kc-malta')
+        deb_path = self.ASSET_KERNEL_2_63_2.fetch()
+        kernel_path = self.extract_from_deb(deb_path,
+                                            '/boot/vmlinux-2.6.32-5-5kc-malta')
 
         self.set_machine('malta')
         self.vm.set_console()
@@ -65,10 +76,12 @@ class MaltaMachineConsole(LinuxKernelTest):
          'rootfs.mipsel64r1.cpio.gz'),
         '75ba10cd35fb44e32948eeb26974f061b703c81c4ba2fab1ebcacf1d1bec3b61')
 
-    @skipUntrustedTest()
+    @skipUnless(os.getenv('QEMU_TEST_ALLOW_UNTRUSTED_CODE'), 'untrusted code')
     def test_mips64el_malta_5KEc_cpio(self):
         kernel_path = self.ASSET_KERNEL_3_19_3.fetch()
-        initrd_path = self.uncompress(self.ASSET_CPIO_R1)
+        initrd_path_gz = self.ASSET_CPIO_R1.fetch()
+        initrd_path = os.path.join(self.workdir, 'rootfs.cpio')
+        gzip_uncompress(initrd_path_gz, initrd_path)
 
         self.set_machine('malta')
         self.vm.set_console()
@@ -92,28 +105,9 @@ class MaltaMachineConsole(LinuxKernelTest):
         # Wait for VM to shut down gracefully
         self.vm.wait()
 
-    ASSET_WHEEZY_KERNEL = Asset(
-        ('https://people.debian.org/~aurel32/qemu/mipsel/'
-         'vmlinux-3.2.0-4-5kc-malta'),
-        '5e8b725244c59745bb8b64f5d8f49f25fecfa549f3395fb6d19a3b9e5065b85b')
 
-    ASSET_WHEEZY_DISK = Asset(
-        ('https://people.debian.org/~aurel32/qemu/mipsel/'
-         'debian_wheezy_mipsel_standard.qcow2'),
-        '454f09ae39f7e6461c84727b927100d2c7813841f2a0a5dce328114887ecf914')
-
-    def test_wheezy(self):
-        kernel_path = self.ASSET_WHEEZY_KERNEL.fetch()
-        image_path = self.ASSET_WHEEZY_DISK.fetch()
-        kernel_command_line = (self.KERNEL_COMMON_COMMAND_LINE
-                               + 'console=ttyS0 root=/dev/sda1')
-        mips_check_wheezy(self,
-            kernel_path, image_path, kernel_command_line, cpuinfo='MIPS 20Kc',
-            dl_file='/boot/initrd.img-3.2.0-4-5kc-malta',
-            hsum='7579f8b56c1187c7c04d0dc3c0c56c7a6314c5ddd3a9bf8803ecc7cf8a3be9f8')
-
-
-@skipIfMissingImports('numpy', 'cv2')
+@skipUnless(NUMPY_AVAILABLE, 'Python NumPy not installed')
+@skipUnless(CV2_AVAILABLE, 'Python OpenCV not installed')
 class MaltaMachineFramebuffer(LinuxKernelTest):
 
     timeout = 30
@@ -132,13 +126,11 @@ class MaltaMachineFramebuffer(LinuxKernelTest):
         """
         Boot Linux kernel and check Tux logo is displayed on the framebuffer.
         """
+        screendump_path = os.path.join(self.workdir, 'screendump.pbm')
 
-        import numpy as np
-        import cv2
-
-        screendump_path = self.scratch_file('screendump.pbm')
-
-        kernel_path = self.uncompress(self.ASSET_KERNEL_4_7_0)
+        kernel_path_gz = self.ASSET_KERNEL_4_7_0.fetch()
+        kernel_path = self.workdir + "/vmlinux"
+        gzip_uncompress(kernel_path_gz, kernel_path)
 
         tuxlogo_path = self.ASSET_TUXLOGO.fetch()
 
@@ -155,10 +147,8 @@ class MaltaMachineFramebuffer(LinuxKernelTest):
         framebuffer_ready = 'Console: switching to colour frame buffer device'
         self.wait_for_console_pattern(framebuffer_ready)
         self.vm.cmd('human-monitor-command', command_line='stop')
-        res = self.vm.cmd('human-monitor-command',
-                          command_line='screendump %s' % screendump_path)
-        if 'unknown command' in res:
-            self.skipTest('screendump not available')
+        self.vm.cmd('human-monitor-command',
+                    command_line='screendump %s' % screendump_path)
         logger = logging.getLogger('framebuffer')
 
         match_threshold = 0.95
@@ -181,12 +171,11 @@ class MaltaMachineFramebuffer(LinuxKernelTest):
     def test_mips_malta_i6400_framebuffer_logo_1core(self):
         self.do_test_i6400_framebuffer_logo(1)
 
-    # XXX file tracking bug
-    @skipFlakyTest(bug_url=None)
+    @skipUnless(os.getenv('QEMU_TEST_FLAKY_TESTS'), 'Test is unstable on GitLab')
     def test_mips_malta_i6400_framebuffer_logo_7cores(self):
         self.do_test_i6400_framebuffer_logo(7)
 
-    @skipFlakyTest(bug_url=None)
+    @skipUnless(os.getenv('QEMU_TEST_FLAKY_TESTS'), 'Test is unstable on GitLab')
     def test_mips_malta_i6400_framebuffer_logo_8cores(self):
         self.do_test_i6400_framebuffer_logo(8)
 

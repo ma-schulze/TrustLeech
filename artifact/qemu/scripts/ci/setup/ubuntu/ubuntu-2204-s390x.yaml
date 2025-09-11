@@ -112,7 +112,7 @@ packages:
   - python3-venv
   - python3-yaml
   - rpm2cpio
-  - rustc-1.77
+  - rustc
   - sed
   - socat
   - sparse
@@ -121,7 +121,6 @@ packages:
   - tar
   - tesseract-ocr
   - tesseract-ocr-eng
-  - vulkan-tools
   - xorriso
   - zlib1g-dev
   - zstd

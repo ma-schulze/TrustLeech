@@ -14,7 +14,7 @@
 #include "qemu/osdep.h"
 #include "qemu/log.h"
 #include "qemu/module.h"
-#include "system/blockdev.h"
+#include "sysemu/blockdev.h"
 #include "hw/irq.h"
 #include "hw/sd/bcm2835_sdhost.h"
 #include "migration/vmstate.h"
@@ -113,12 +113,15 @@ static void bcm2835_sdhost_send_command(BCM2835SDHostState *s)
 {
     SDRequest request;
     uint8_t rsp[16];
-    size_t rlen;
+    int rlen;
 
     request.cmd = s->cmd & SDCMD_CMD_MASK;
     request.arg = s->cmdarg;
 
-    rlen = sdbus_do_command(&s->sdbus, &request, rsp, sizeof(rsp));
+    rlen = sdbus_do_command(&s->sdbus, &request, rsp);
+    if (rlen < 0) {
+        goto error;
+    }
     if (!(s->cmd & SDCMD_NO_RESPONSE)) {
         if (rlen == 0 || (rlen == 4 && (s->cmd & SDCMD_LONG_RESPONSE))) {
             goto error;
@@ -425,7 +428,7 @@ static void bcm2835_sdhost_reset(DeviceState *dev)
     s->fifo_len = 0;
 }
 
-static void bcm2835_sdhost_class_init(ObjectClass *klass, const void *data)
+static void bcm2835_sdhost_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
 

@@ -30,7 +30,17 @@
 #include "qemu/log.h"
 #include "qemu/module.h"
 
-#include "trace.h"
+#ifndef STM_USART_ERR_DEBUG
+#define STM_USART_ERR_DEBUG 0
+#endif
+
+#define DB_PRINT_L(lvl, fmt, args...) do { \
+    if (STM_USART_ERR_DEBUG >= lvl) { \
+        qemu_log("%s: " fmt, __func__, ## args); \
+    } \
+} while (0)
+
+#define DB_PRINT(fmt, args...) DB_PRINT_L(1, fmt, ## args)
 
 static int stm32f2xx_usart_can_receive(void *opaque)
 {
@@ -57,11 +67,10 @@ static void stm32f2xx_update_irq(STM32F2XXUsartState *s)
 static void stm32f2xx_usart_receive(void *opaque, const uint8_t *buf, int size)
 {
     STM32F2XXUsartState *s = opaque;
-    DeviceState *d = DEVICE(s);
 
     if (!(s->usart_cr1 & USART_CR1_UE && s->usart_cr1 & USART_CR1_RE)) {
         /* USART not enabled - drop the chars */
-        trace_stm32f2xx_usart_drop(d->id);
+        DB_PRINT("Dropping the chars\n");
         return;
     }
 
@@ -70,7 +79,7 @@ static void stm32f2xx_usart_receive(void *opaque, const uint8_t *buf, int size)
 
     stm32f2xx_update_irq(s);
 
-    trace_stm32f2xx_usart_receive(d->id, *buf);
+    DB_PRINT("Receiving: %c\n", s->usart_dr);
 }
 
 static void stm32f2xx_usart_reset(DeviceState *dev)
@@ -92,55 +101,49 @@ static uint64_t stm32f2xx_usart_read(void *opaque, hwaddr addr,
                                        unsigned int size)
 {
     STM32F2XXUsartState *s = opaque;
-    DeviceState *d = DEVICE(s);
-    uint64_t retvalue = 0;
+    uint64_t retvalue;
+
+    DB_PRINT("Read 0x%"HWADDR_PRIx"\n", addr);
 
     switch (addr) {
     case USART_SR:
         retvalue = s->usart_sr;
         qemu_chr_fe_accept_input(&s->chr);
-        break;
+        return retvalue;
     case USART_DR:
+        DB_PRINT("Value: 0x%" PRIx32 ", %c\n", s->usart_dr, (char) s->usart_dr);
         retvalue = s->usart_dr & 0x3FF;
         s->usart_sr &= ~USART_SR_RXNE;
         qemu_chr_fe_accept_input(&s->chr);
         stm32f2xx_update_irq(s);
-        break;
+        return retvalue;
     case USART_BRR:
-        retvalue = s->usart_brr;
-        break;
+        return s->usart_brr;
     case USART_CR1:
-        retvalue = s->usart_cr1;
-        break;
+        return s->usart_cr1;
     case USART_CR2:
-        retvalue = s->usart_cr2;
-        break;
+        return s->usart_cr2;
     case USART_CR3:
-        retvalue = s->usart_cr3;
-        break;
+        return s->usart_cr3;
     case USART_GTPR:
-        retvalue = s->usart_gtpr;
-        break;
+        return s->usart_gtpr;
     default:
         qemu_log_mask(LOG_GUEST_ERROR,
                       "%s: Bad offset 0x%"HWADDR_PRIx"\n", __func__, addr);
         return 0;
     }
 
-    trace_stm32f2xx_usart_read(d->id, size, addr, retvalue);
-
-    return retvalue;
+    return 0;
 }
 
 static void stm32f2xx_usart_write(void *opaque, hwaddr addr,
                                   uint64_t val64, unsigned int size)
 {
     STM32F2XXUsartState *s = opaque;
-    DeviceState *d = DEVICE(s);
     uint32_t value = val64;
     unsigned char ch;
 
-    trace_stm32f2xx_usart_write(d->id, size, addr, val64);
+    DB_PRINT("Write 0x%" PRIx32 ", 0x%"HWADDR_PRIx"\n", value, addr);
 
     switch (addr) {
     case USART_SR:
@@ -196,8 +199,9 @@ static const MemoryRegionOps stm32f2xx_usart_ops = {
     .endianness = DEVICE_NATIVE_ENDIAN,
 };
 
-static const Property stm32f2xx_usart_properties[] = {
+static Property stm32f2xx_usart_properties[] = {
     DEFINE_PROP_CHR("chardev", STM32F2XXUsartState, chr),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
 static void stm32f2xx_usart_init(Object *obj)
@@ -220,7 +224,7 @@ static void stm32f2xx_usart_realize(DeviceState *dev, Error **errp)
                              s, NULL, true);
 }
 
-static void stm32f2xx_usart_class_init(ObjectClass *klass, const void *data)
+static void stm32f2xx_usart_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
 

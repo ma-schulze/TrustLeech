@@ -21,7 +21,7 @@
  */
 #include "qemu/osdep.h"
 #include "hw/usb.h"
-#include "system/dma.h"
+#include "sysemu/dma.h"
 
 int usb_packet_map(USBPacket *p, QEMUSGList *sgl)
 {

@@ -19,11 +19,11 @@
 
 #include "qemu/osdep.h"
 #include "cpu.h"
-#include "exec/cputlb.h"
+#include "exec/exec-all.h"
 #include "exec/tb-flush.h"
 #include "exec/helper-proto.h"
-#include "system/runstate.h"
-#include "system/system.h"
+#include "sysemu/runstate.h"
+#include "sysemu/sysemu.h"
 #include "qemu/timer.h"
 
 

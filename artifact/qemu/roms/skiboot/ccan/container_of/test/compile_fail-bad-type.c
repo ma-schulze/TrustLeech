@@ -6,7 +6,7 @@ struct foo {
 	char b;
 };
 
-int main(void)
+int main(int argc, char *argv[])
 {
 	struct foo foo = { .a = 1, .b = 2 };
 	int *intp = &foo.a;

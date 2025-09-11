@@ -7,10 +7,9 @@ mips_ss.add(files(
   'gdbstub.c',
   'msa.c',
 ))
-mips_ss.add(zlib)
 
 if have_system
-  subdir('system')
+  subdir('sysemu')
 endif
 
 if 'CONFIG_TCG' in config_all_accel

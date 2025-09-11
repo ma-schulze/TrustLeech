@@ -170,4 +170,5 @@ void socket_check_afunix_support(bool *has_afunix)
     if (*has_afunix) {
         close(fd);
     }
+    return;
 }

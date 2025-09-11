@@ -31,7 +31,7 @@
 #include "qemu/error-report.h"
 #include "qemu/module.h"
 #include "qemu/option.h"
-#include "system/runstate.h"
+#include "sysemu/runstate.h"
 #include "trace.h"
 
 struct acpi_table_header {
@@ -77,11 +77,6 @@ static void acpi_register_config(void)
 }
 
 opts_init(acpi_register_config);
-
-bool acpi_builtin(void)
-{
-    return true;
-}
 
 static int acpi_checksum(const uint8_t *data, int len)
 {

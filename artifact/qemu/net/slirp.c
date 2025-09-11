@@ -40,10 +40,10 @@
 #include "qemu/sockets.h"
 #include <libslirp.h>
 #include "chardev/char-fe.h"
-#include "system/system.h"
+#include "sysemu/sysemu.h"
 #include "qemu/cutils.h"
 #include "qapi/error.h"
-#include "qobject/qdict.h"
+#include "qapi/qmp/qdict.h"
 #include "util.h"
 #include "migration/register.h"
 #include "migration/vmstate.h"

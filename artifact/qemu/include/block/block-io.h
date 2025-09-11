@@ -161,8 +161,6 @@ bdrv_is_allocated_above(BlockDriverState *bs, BlockDriverState *base,
 
 int coroutine_fn GRAPH_RDLOCK
 bdrv_co_is_zero_fast(BlockDriverState *bs, int64_t offset, int64_t bytes);
-int coroutine_fn GRAPH_RDLOCK
-bdrv_co_is_all_zeroes(BlockDriverState *bs);
 
 int GRAPH_RDLOCK
 bdrv_apply_auto_read_only(BlockDriverState *bs, const char *errmsg,
@@ -431,7 +429,7 @@ bdrv_drain_poll(BlockDriverState *bs, BdrvChild *ignore_parent,
  *
  * This function can be recursive.
  */
-void GRAPH_UNLOCKED bdrv_drained_begin(BlockDriverState *bs);
+void bdrv_drained_begin(BlockDriverState *bs);
 
 /**
  * bdrv_do_drained_begin_quiesce:

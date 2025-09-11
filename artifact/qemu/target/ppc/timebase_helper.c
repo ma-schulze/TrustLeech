@@ -20,6 +20,7 @@
 #include "cpu.h"
 #include "hw/ppc/ppc.h"
 #include "exec/helper-proto.h"
+#include "exec/exec-all.h"
 #include "qemu/log.h"
 #include "qemu/main-loop.h"
 

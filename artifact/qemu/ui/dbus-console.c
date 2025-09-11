@@ -305,16 +305,10 @@ dbus_console_register_listener(DBusDisplayConsole *ddc,
 #endif
     );
 
-    GDBusConnectionFlags flags =
-        G_DBUS_CONNECTION_FLAGS_AUTHENTICATION_SERVER;
-#ifdef WIN32
-    flags |= G_DBUS_CONNECTION_FLAGS_AUTHENTICATION_ALLOW_ANONYMOUS;
-#endif
-
     listener_conn = g_dbus_connection_new_sync(
         G_IO_STREAM(socket_conn),
         guid,
-        flags,
+        G_DBUS_CONNECTION_FLAGS_AUTHENTICATION_SERVER,
         NULL, NULL, &err);
     if (err) {
         error_report("Failed to setup peer connection: %s", err->message);

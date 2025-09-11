@@ -16,7 +16,7 @@
  */
 
 #include "qemu/osdep.h"
-#include "system/address-spaces.h"
+#include "exec/address-spaces.h"
 #include "migration/vmstate.h"
 #include "hw/sysbus.h"
 #include "hw/irq.h"
@@ -24,13 +24,13 @@
 #include "hw/misc/mac_via.h"
 #include "hw/misc/mos6522.h"
 #include "hw/input/adb.h"
-#include "system/runstate.h"
+#include "sysemu/runstate.h"
 #include "qapi/error.h"
 #include "qemu/cutils.h"
 #include "hw/qdev-properties.h"
 #include "hw/qdev-properties-system.h"
-#include "system/block-backend.h"
-#include "system/rtc.h"
+#include "sysemu/block-backend.h"
+#include "sysemu/rtc.h"
 #include "trace.h"
 #include "qemu/log.h"
 
@@ -1322,11 +1322,12 @@ static const VMStateDescription vmstate_q800_via1 = {
     }
 };
 
-static const Property mos6522_q800_via1_properties[] = {
+static Property mos6522_q800_via1_properties[] = {
     DEFINE_PROP_DRIVE("drive", MOS6522Q800VIA1State, blk),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
-static void mos6522_q800_via1_class_init(ObjectClass *oc, const void *data)
+static void mos6522_q800_via1_class_init(ObjectClass *oc, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(oc);
     ResettableClass *rc = RESETTABLE_CLASS(oc);
@@ -1415,7 +1416,7 @@ static const VMStateDescription vmstate_q800_via2 = {
     }
 };
 
-static void mos6522_q800_via2_class_init(ObjectClass *oc, const void *data)
+static void mos6522_q800_via2_class_init(ObjectClass *oc, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(oc);
     ResettableClass *rc = RESETTABLE_CLASS(oc);

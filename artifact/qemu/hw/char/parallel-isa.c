@@ -10,7 +10,7 @@
  */
 
 #include "qemu/osdep.h"
-#include "system/system.h"
+#include "sysemu/sysemu.h"
 #include "hw/isa/isa.h"
 #include "hw/qdev-properties.h"
 #include "hw/char/parallel-isa.h"

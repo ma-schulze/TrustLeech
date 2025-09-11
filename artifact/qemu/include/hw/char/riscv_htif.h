@@ -22,7 +22,7 @@
 
 #include "chardev/char.h"
 #include "chardev/char-fe.h"
-#include "system/memory.h"
+#include "exec/memory.h"
 
 #define TYPE_HTIF_UART "riscv.htif.uart"
 

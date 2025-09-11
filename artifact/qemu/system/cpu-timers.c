@@ -27,16 +27,15 @@
 #include "migration/vmstate.h"
 #include "qapi/error.h"
 #include "qemu/error-report.h"
-#include "system/cpus.h"
+#include "sysemu/cpus.h"
 #include "qemu/main-loop.h"
 #include "qemu/option.h"
 #include "qemu/seqlock.h"
-#include "system/replay.h"
-#include "system/runstate.h"
+#include "sysemu/replay.h"
+#include "sysemu/runstate.h"
 #include "hw/core/cpu.h"
-#include "system/cpu-timers.h"
-#include "system/cpu-timers-internal.h"
-#include "exec/icount.h"
+#include "sysemu/cpu-timers.h"
+#include "sysemu/cpu-timers-internal.h"
 
 /* clock and ticks */
 

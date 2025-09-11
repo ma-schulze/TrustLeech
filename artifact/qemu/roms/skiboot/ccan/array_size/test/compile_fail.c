@@ -2,8 +2,6 @@
 
 int main(int argc, char *argv[8])
 {
-	(void)argc;
-	(void)argv;
 	char array[100];
 #ifdef FAIL
 	return ARRAY_SIZE(argv) + ARRAY_SIZE(array);

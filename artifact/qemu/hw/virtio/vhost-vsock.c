@@ -67,38 +67,37 @@ static int vhost_vsock_set_running(VirtIODevice *vdev, int start)
 }
 
 
-static int vhost_vsock_set_status(VirtIODevice *vdev, uint8_t status)
+static void vhost_vsock_set_status(VirtIODevice *vdev, uint8_t status)
 {
     VHostVSockCommon *vvc = VHOST_VSOCK_COMMON(vdev);
     bool should_start = virtio_device_should_start(vdev, status);
     int ret;
 
     if (vhost_dev_is_started(&vvc->vhost_dev) == should_start) {
-        return 0;
+        return;
     }
 
     if (should_start) {
         ret = vhost_vsock_common_start(vdev);
         if (ret < 0) {
-            return 0;
+            return;
         }
 
         ret = vhost_vsock_set_running(vdev, 1);
         if (ret < 0) {
             vhost_vsock_common_stop(vdev);
             error_report("Error starting vhost vsock: %d", -ret);
-            return 0;
+            return;
         }
     } else {
         ret = vhost_vsock_set_running(vdev, 0);
         if (ret < 0) {
             error_report("vhost vsock set running failed: %d", ret);
-            return 0;
+            return;
         }
 
         vhost_vsock_common_stop(vdev);
     }
-    return 0;
 }
 
 static uint64_t vhost_vsock_get_features(VirtIODevice *vdev,
@@ -206,12 +205,13 @@ static void vhost_vsock_device_unrealize(DeviceState *dev)
     vhost_vsock_common_unrealize(vdev);
 }
 
-static const Property vhost_vsock_properties[] = {
+static Property vhost_vsock_properties[] = {
     DEFINE_PROP_UINT64("guest-cid", VHostVSock, conf.guest_cid, 0),
     DEFINE_PROP_STRING("vhostfd", VHostVSock, conf.vhostfd),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
-static void vhost_vsock_class_init(ObjectClass *klass, const void *data)
+static void vhost_vsock_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
     VirtioDeviceClass *vdc = VIRTIO_DEVICE_CLASS(klass);

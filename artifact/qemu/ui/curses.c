@@ -36,7 +36,7 @@
 #include "qemu/module.h"
 #include "ui/console.h"
 #include "ui/input.h"
-#include "system/system.h"
+#include "sysemu/sysemu.h"
 
 #ifdef __APPLE__
 #define _XOPEN_SOURCE_EXTENDED 1
@@ -265,8 +265,7 @@ static int curses2foo(const int _curses2foo[], const int _curseskey2foo[],
 
 static void curses_refresh(DisplayChangeListener *dcl)
 {
-    wint_t chr = 0;
-    int keysym, keycode, keycode_alt;
+    int chr, keysym, keycode, keycode_alt;
     enum maybe_keycode maybe_keycode = CURSES_KEYCODE;
 
     curses_winch_check();
@@ -285,9 +284,8 @@ static void curses_refresh(DisplayChangeListener *dcl)
         /* while there are any pending key strokes to process */
         chr = console_getch(&maybe_keycode);
 
-        if (chr == WEOF) {
+        if (chr == -1)
             break;
-        }
 
 #ifdef KEY_RESIZE
         /* this shouldn't occur when we use a custom SIGWINCH handler */
@@ -306,9 +304,9 @@ static void curses_refresh(DisplayChangeListener *dcl)
         /* alt or esc key */
         if (keycode == 1) {
             enum maybe_keycode next_maybe_keycode = CURSES_KEYCODE;
-            wint_t nextchr = console_getch(&next_maybe_keycode);
+            int nextchr = console_getch(&next_maybe_keycode);
 
-            if (nextchr != WEOF) {
+            if (nextchr != -1) {
                 chr = nextchr;
                 maybe_keycode = next_maybe_keycode;
                 keycode_alt = ALT;

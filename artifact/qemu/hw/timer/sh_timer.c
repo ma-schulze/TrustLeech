@@ -9,7 +9,7 @@
  */
 
 #include "qemu/osdep.h"
-#include "system/memory.h"
+#include "exec/memory.h"
 #include "qemu/log.h"
 #include "hw/irq.h"
 #include "hw/sh4/sh.h"

@@ -4993,7 +4993,7 @@ static void phb3_probe_pbcq(struct dt_node *pbcq)
 }
 
 
-static void probe_phb3(void)
+void probe_phb3(void)
 {
 	struct dt_node *np;
 
@@ -5006,4 +5006,4 @@ static void probe_phb3(void)
 		phb3_create(np);
 }
 
-DEFINE_HWPROBE(phb3, probe_phb3);
+

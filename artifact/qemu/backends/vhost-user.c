@@ -15,8 +15,8 @@
 #include "qapi/error.h"
 #include "qemu/error-report.h"
 #include "qom/object_interfaces.h"
-#include "system/vhost-user-backend.h"
-#include "system/kvm.h"
+#include "sysemu/vhost-user-backend.h"
+#include "sysemu/kvm.h"
 #include "io/channel-command.h"
 #include "hw/virtio/virtio-bus.h"
 
@@ -97,28 +97,30 @@ err_host_notifiers:
     vhost_dev_disable_notifiers(&b->dev, b->vdev);
 }
 
-int
+void
 vhost_user_backend_stop(VhostUserBackend *b)
 {
     BusState *qbus = BUS(qdev_get_parent_bus(DEVICE(b->vdev)));
     VirtioBusClass *k = VIRTIO_BUS_GET_CLASS(qbus);
-    int ret;
+    int ret = 0;
 
     if (!b->started) {
-        return 0;
+        return;
     }
 
-    ret = vhost_dev_stop(&b->dev, b->vdev, true);
+    vhost_dev_stop(&b->dev, b->vdev, true);
 
-    if (k->set_guest_notifiers &&
-        k->set_guest_notifiers(qbus->parent, b->dev.nvqs, false) < 0) {
-        error_report("vhost guest notifier cleanup failed: %d", ret);
-        return -1;
+    if (k->set_guest_notifiers) {
+        ret = k->set_guest_notifiers(qbus->parent,
+                                     b->dev.nvqs, false);
+        if (ret < 0) {
+            error_report("vhost guest notifier cleanup failed: %d", ret);
+        }
     }
+    assert(ret >= 0);
 
     vhost_dev_disable_notifiers(&b->dev, b->vdev);
     b->started = false;
-    return ret;
 }
 
 static void set_chardev(Object *obj, const char *value, Error **errp)
@@ -161,7 +163,7 @@ static char *get_chardev(Object *obj, Error **errp)
     return NULL;
 }
 
-static void vhost_user_backend_class_init(ObjectClass *oc, const void *data)
+static void vhost_user_backend_class_init(ObjectClass *oc, void *data)
 {
     object_class_property_add_str(oc, "chardev", get_chardev, set_chardev);
 }

@@ -9,12 +9,6 @@
 
 #include "qemu/osdep.h"
 #include "qemu/accel.h"
-#include "accel-internal.h"
-
-void accel_init_ops_interfaces(AccelClass *ac)
-{
-    /* nothing */
-}
 
 AccelState *current_accel(void)
 {

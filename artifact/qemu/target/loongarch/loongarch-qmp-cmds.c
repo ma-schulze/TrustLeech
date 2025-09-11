@@ -7,11 +7,10 @@
  */
 
 #include "qemu/osdep.h"
-#include "qemu/target-info.h"
 #include "qapi/error.h"
-#include "qapi/qapi-commands-machine.h"
+#include "qapi/qapi-commands-machine-target.h"
 #include "cpu.h"
-#include "qobject/qdict.h"
+#include "qapi/qmp/qdict.h"
 #include "qapi/qobject-input-visitor.h"
 #include "qom/qom-qobject.h"
 
@@ -33,7 +32,7 @@ CpuDefinitionInfoList *qmp_query_cpu_definitions(Error **errp)
     CpuDefinitionInfoList *cpu_list = NULL;
     GSList *list;
 
-    list = object_class_get_list(target_cpu_type(), false);
+    list = object_class_get_list(TYPE_LOONGARCH_CPU, false);
     g_slist_foreach(list, loongarch_cpu_add_definition, &cpu_list);
     g_slist_free(list);
 
@@ -41,7 +40,7 @@ CpuDefinitionInfoList *qmp_query_cpu_definitions(Error **errp)
 }
 
 static const char *cpu_model_advertised_features[] = {
-    "lsx", "lasx", "lbt", "pmu", "kvm-pv-ipi", "kvm-steal-time", NULL
+    "lsx", "lasx", "lbt", "pmu", NULL
 };
 
 CpuModelExpansionInfo *qmp_query_cpu_model_expansion(CpuModelExpansionType type,

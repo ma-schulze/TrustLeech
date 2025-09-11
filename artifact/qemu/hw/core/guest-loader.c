@@ -26,13 +26,13 @@
 
 #include "qemu/osdep.h"
 #include "hw/core/cpu.h"
-#include "system/dma.h"
+#include "sysemu/dma.h"
 #include "hw/loader.h"
 #include "hw/qdev-properties.h"
 #include "qapi/error.h"
 #include "qemu/module.h"
 #include "guest-loader.h"
-#include "system/device_tree.h"
+#include "sysemu/device_tree.h"
 #include "hw/boards.h"
 
 /*
@@ -111,14 +111,15 @@ static void guest_loader_realize(DeviceState *dev, Error **errp)
     loader_insert_platform_data(s, size, errp);
 }
 
-static const Property guest_loader_props[] = {
+static Property guest_loader_props[] = {
     DEFINE_PROP_UINT64("addr", GuestLoaderState, addr, 0),
     DEFINE_PROP_STRING("kernel", GuestLoaderState, kernel),
     DEFINE_PROP_STRING("bootargs", GuestLoaderState, args),
     DEFINE_PROP_STRING("initrd", GuestLoaderState, initrd),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
-static void guest_loader_class_init(ObjectClass *klass, const void *data)
+static void guest_loader_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
 

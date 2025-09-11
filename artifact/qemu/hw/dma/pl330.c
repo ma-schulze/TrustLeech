@@ -22,7 +22,7 @@
 #include "migration/vmstate.h"
 #include "qapi/error.h"
 #include "qemu/timer.h"
-#include "system/dma.h"
+#include "sysemu/dma.h"
 #include "qemu/log.h"
 #include "qemu/module.h"
 #include "trace.h"
@@ -1646,7 +1646,7 @@ static void pl330_realize(DeviceState *dev, Error **errp)
     pl330_fifo_init(&s->fifo, s->data_width / 4 * s->data_buffer_dep);
 }
 
-static const Property pl330_properties[] = {
+static Property pl330_properties[] = {
     /* CR0 */
     DEFINE_PROP_UINT32("num_chnls", PL330State, num_chnls, 8),
     DEFINE_PROP_UINT8("num_periph_req", PL330State, num_periph_req, 4),
@@ -1669,9 +1669,11 @@ static const Property pl330_properties[] = {
 
     DEFINE_PROP_LINK("memory", PL330State, mem_mr,
                      TYPE_MEMORY_REGION, MemoryRegion *),
+
+    DEFINE_PROP_END_OF_LIST(),
 };
 
-static void pl330_class_init(ObjectClass *klass, const void *data)
+static void pl330_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
 

@@ -13,7 +13,6 @@
 #include "hw/pci-host/pnv_phb.h"
 #include "hw/pci/pci_bus.h"
 #include "hw/ppc/pnv.h"
-#include "hw/ppc/pnv_nest_pervasive.h"
 #include "hw/ppc/xive.h"
 #include "qom/object.h"
 
@@ -175,9 +174,6 @@ struct PnvPhb4PecState {
     uint32_t index;
     uint32_t chip_id;
 
-    /* Pervasive chiplet control */
-    PnvNestChipletPervasive nest_pervasive;
-
     /* Nest registers, excuding per-stack */
 #define PHB4_PEC_NEST_REGS_COUNT    0xf
     uint64_t nest_regs[PHB4_PEC_NEST_REGS_COUNT];
@@ -200,7 +196,6 @@ struct PnvPhb4PecState {
 struct PnvPhb4PecClass {
     DeviceClass parent_class;
 
-    uint32_t (*xscom_cplt_base)(PnvPhb4PecState *pec);
     uint32_t (*xscom_nest_base)(PnvPhb4PecState *pec);
     uint32_t xscom_nest_size;
     uint32_t (*xscom_pci_base)(PnvPhb4PecState *pec);

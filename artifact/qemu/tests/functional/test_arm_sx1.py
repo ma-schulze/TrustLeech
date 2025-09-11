@@ -14,7 +14,7 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 from qemu_test import LinuxKernelTest, Asset
-
+from qemu_test.utils import archive_extract
 
 class SX1Test(LinuxKernelTest):
 
@@ -43,9 +43,8 @@ class SX1Test(LinuxKernelTest):
         self.vm.add_args('-append', f'kunit.enable=0 rdinit=/sbin/init {self.CONSOLE_ARGS}')
         self.vm.add_args('-no-reboot')
         self.launch_kernel(zimage_path,
-                           initrd=initrd_path,
-                           wait_for='Boot successful')
-        self.vm.wait(timeout=120)
+                           initrd=initrd_path)
+        self.vm.wait(timeout=60)
 
     def test_arm_sx1_sd(self):
         self.set_machine('sx1')
@@ -55,8 +54,8 @@ class SX1Test(LinuxKernelTest):
         self.vm.add_args('-no-reboot')
         self.vm.add_args('-snapshot')
         self.vm.add_args('-drive', f'format=raw,if=sd,file={sd_fs_path}')
-        self.launch_kernel(zimage_path, wait_for='Boot successful')
-        self.vm.wait(timeout=120)
+        self.launch_kernel(zimage_path)
+        self.vm.wait(timeout=60)
 
     def test_arm_sx1_flash(self):
         self.set_machine('sx1')
@@ -66,8 +65,8 @@ class SX1Test(LinuxKernelTest):
         self.vm.add_args('-no-reboot')
         self.vm.add_args('-snapshot')
         self.vm.add_args('-drive', f'format=raw,if=pflash,file={flash_path}')
-        self.launch_kernel(zimage_path, wait_for='Boot successful')
-        self.vm.wait(timeout=120)
+        self.launch_kernel(zimage_path)
+        self.vm.wait(timeout=60)
 
 if __name__ == '__main__':
     LinuxKernelTest.main()

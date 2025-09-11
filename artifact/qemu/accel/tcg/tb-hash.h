@@ -20,9 +20,8 @@
 #ifndef EXEC_TB_HASH_H
 #define EXEC_TB_HASH_H
 
-#include "exec/vaddr.h"
-#include "exec/target_page.h"
-#include "exec/translation-block.h"
+#include "exec/cpu-defs.h"
+#include "exec/exec-all.h"
 #include "qemu/xxhash.h"
 #include "tb-jmp-cache.h"
 

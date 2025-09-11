@@ -16,7 +16,7 @@
 #include "qemu/module.h"
 #include "cpu.h"
 #include "tcg/tcg_s390x.h"
-#include "system/rtc.h"
+#include "sysemu/rtc.h"
 
 static void qemu_s390_tod_get(const S390TODState *td, S390TOD *tod,
                               Error **errp)
@@ -52,7 +52,7 @@ static void qemu_s390_tod_set(S390TODState *td, const S390TOD *tod,
     }
 }
 
-static void qemu_s390_tod_class_init(ObjectClass *oc, const void *data)
+static void qemu_s390_tod_class_init(ObjectClass *oc, void *data)
 {
     S390TODClass *tdc = S390_TOD_CLASS(oc);
 

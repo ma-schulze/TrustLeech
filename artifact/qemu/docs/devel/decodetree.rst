@@ -1,5 +1,3 @@
-.. _decodetree:
-
 ========================
 Decodetree Specification
 ========================

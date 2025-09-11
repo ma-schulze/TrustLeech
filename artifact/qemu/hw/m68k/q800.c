@@ -24,8 +24,7 @@
 #include "qemu/units.h"
 #include "qemu/datadir.h"
 #include "qemu/guest-random.h"
-#include "exec/target_page.h"
-#include "system/system.h"
+#include "sysemu/sysemu.h"
 #include "cpu.h"
 #include "hw/boards.h"
 #include "hw/or-irq.h"
@@ -52,9 +51,9 @@
 #include "net/util.h"
 #include "qapi/error.h"
 #include "qemu/error-report.h"
-#include "system/qtest.h"
-#include "system/runstate.h"
-#include "system/reset.h"
+#include "sysemu/qtest.h"
+#include "sysemu/runstate.h"
+#include "sysemu/reset.h"
 #include "migration/vmstate.h"
 
 #define MACROM_ADDR     0x40800000
@@ -211,6 +210,7 @@ static uint64_t machine_id_read(void *opaque, hwaddr addr, unsigned size)
 static void machine_id_write(void *opaque, hwaddr addr, uint64_t val,
                              unsigned size)
 {
+    return;
 }
 
 static const MemoryRegionOps machine_id_ops = {
@@ -231,6 +231,7 @@ static uint64_t ramio_read(void *opaque, hwaddr addr, unsigned size)
 static void ramio_write(void *opaque, hwaddr addr, uint64_t val,
                         unsigned size)
 {
+    return;
 }
 
 static const MemoryRegionOps ramio_ops = {
@@ -584,7 +585,7 @@ static void q800_machine_init(MachineState *machine)
         }
 
         kernel_size = load_elf(kernel_filename, NULL, NULL, NULL,
-                               &elf_entry, NULL, &high, NULL, ELFDATA2MSB,
+                               &elf_entry, NULL, &high, NULL, 1,
                                EM_68K, 0, 0);
         if (kernel_size < 0) {
             error_report("could not load kernel '%s'", kernel_filename);
@@ -727,7 +728,7 @@ static GlobalProperty hw_compat_q800[] = {
 };
 static const size_t hw_compat_q800_len = G_N_ELEMENTS(hw_compat_q800);
 
-static void q800_machine_class_init(ObjectClass *oc, const void *data)
+static void q800_machine_class_init(ObjectClass *oc, void *data)
 {
     static const char * const valid_cpu_types[] = {
         M68K_CPU_TYPE_NAME("m68040"),

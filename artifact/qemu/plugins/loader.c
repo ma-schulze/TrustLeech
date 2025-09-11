@@ -29,8 +29,11 @@
 #include "qemu/xxhash.h"
 #include "qemu/plugin.h"
 #include "qemu/memalign.h"
-#include "qemu/target-info.h"
+#include "hw/core/cpu.h"
 #include "exec/tb-flush.h"
+#ifndef CONFIG_USER_ONLY
+#include "hw/boards.h"
+#endif
 
 #include "plugin.h"
 
@@ -125,7 +128,7 @@ static int plugin_add(void *opaque, const char *name, const char *value,
                 /* Will treat arg="argname" as "argname=on" */
                 fullarg = g_strdup_printf("%s=%s", value, "on");
             } else {
-                fullarg = g_strdup(value);
+                fullarg = g_strdup_printf("%s", value);
             }
             warn_report("using 'arg=%s' is deprecated", value);
             error_printf("Please use '%s' directly\n", fullarg);
@@ -294,11 +297,17 @@ int qemu_plugin_load_list(QemuPluginList *head, Error **errp)
     struct qemu_plugin_desc *desc, *next;
     g_autofree qemu_info_t *info = g_new0(qemu_info_t, 1);
 
-    info->target_name = target_name();
+    info->target_name = TARGET_NAME;
     info->version.min = QEMU_PLUGIN_MIN_VERSION;
     info->version.cur = QEMU_PLUGIN_VERSION;
-
-    qemu_plugin_fillin_mode_info(info);
+#ifndef CONFIG_USER_ONLY
+    MachineState *ms = MACHINE(qdev_get_machine());
+    info->system_emulation = true;
+    info->system.smp_vcpus = ms->smp.cpus;
+    info->system.max_vcpus = ms->smp.max_cpus;
+#else
+    info->system_emulation = false;
+#endif
 
     QTAILQ_FOREACH_SAFE(desc, head, entry, next) {
         int err;

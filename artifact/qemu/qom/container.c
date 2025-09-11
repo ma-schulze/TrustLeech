@@ -15,7 +15,7 @@
 #include "qemu/module.h"
 
 static const TypeInfo container_info = {
-    .name          = TYPE_CONTAINER,
+    .name          = "container",
     .parent        = TYPE_OBJECT,
 };
 
@@ -24,14 +24,29 @@ static void container_register_types(void)
     type_register_static(&container_info);
 }
 
-Object *object_property_add_new_container(Object *obj, const char *name)
+Object *container_get(Object *root, const char *path)
 {
-    Object *child = object_new(TYPE_CONTAINER);
+    Object *obj, *child;
+    char **parts;
+    int i;
 
-    object_property_add_child(obj, name, child);
-    object_unref(child);
+    parts = g_strsplit(path, "/", 0);
+    assert(parts != NULL && parts[0] != NULL && !parts[0][0]);
+    obj = root;
 
-    return child;
+    for (i = 1; parts[i] != NULL; i++, obj = child) {
+        child = object_resolve_path_component(obj, parts[i]);
+        if (!child) {
+            child = object_new("container");
+            object_property_add_child(obj, parts[i], child);
+            object_unref(child);
+        }
+    }
+
+    g_strfreev(parts);
+
+    return obj;
 }
+
 
 type_init(container_register_types)

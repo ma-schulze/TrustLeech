@@ -472,6 +472,8 @@ static void usb_serial_token_in(USBSerialState *s, USBPacket *p)
         s->recv_ptr = (s->recv_ptr + len) % RECV_BUF;
         packet_len -= len + 2;
     }
+
+    return;
 }
 
 static void usb_serial_handle_data(USBDevice *dev, USBPacket *p)
@@ -622,7 +624,7 @@ static USBDevice *usb_braille_init(void)
         return NULL;
     }
 
-    dev = USB_DEVICE(qdev_new("usb-braille"));
+    dev = usb_new("usb-braille");
     qdev_prop_set_chr(&dev->qdev, "chardev", cdrv);
     return dev;
 }
@@ -632,12 +634,13 @@ static const VMStateDescription vmstate_usb_serial = {
     .unmigratable = 1,
 };
 
-static const Property serial_properties[] = {
+static Property serial_properties[] = {
     DEFINE_PROP_CHR("chardev", USBSerialState, cs),
     DEFINE_PROP_BOOL("always-plugged", USBSerialState, always_plugged, false),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
-static void usb_serial_dev_class_init(ObjectClass *klass, const void *data)
+static void usb_serial_dev_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
     USBDeviceClass *uc = USB_DEVICE_CLASS(klass);
@@ -658,7 +661,7 @@ static const TypeInfo usb_serial_dev_type_info = {
     .class_init = usb_serial_dev_class_init,
 };
 
-static void usb_serial_class_initfn(ObjectClass *klass, const void *data)
+static void usb_serial_class_initfn(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
     USBDeviceClass *uc = USB_DEVICE_CLASS(klass);
@@ -674,11 +677,12 @@ static const TypeInfo serial_info = {
     .class_init    = usb_serial_class_initfn,
 };
 
-static const Property braille_properties[] = {
+static Property braille_properties[] = {
     DEFINE_PROP_CHR("chardev", USBSerialState, cs),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
-static void usb_braille_class_initfn(ObjectClass *klass, const void *data)
+static void usb_braille_class_initfn(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
     USBDeviceClass *uc = USB_DEVICE_CLASS(klass);

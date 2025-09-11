@@ -28,10 +28,10 @@
 #include "qapi/opts-visitor.h"
 #include "qapi/qapi-emit-events.h"
 #include "qapi/qapi-visit-control.h"
-#include "qobject/qdict.h"
+#include "qapi/qmp/qdict.h"
 #include "qemu/error-report.h"
 #include "qemu/option.h"
-#include "system/qtest.h"
+#include "sysemu/qtest.h"
 #include "trace.h"
 
 /*

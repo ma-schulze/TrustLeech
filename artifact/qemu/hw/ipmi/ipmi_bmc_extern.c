@@ -142,6 +142,7 @@ static void continue_send(IPMIBmcExtern *ibe)
                          qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL) + 4000000000ULL);
         }
     }
+    return;
 }
 
 static void extern_timeout(void *opaque)
@@ -213,7 +214,7 @@ static void ipmi_bmc_extern_handle_command(IPMIBmc *b,
         rsp[2] = err;
         ibe->waiting_rsp = false;
         k->handle_rsp(s, msg_id, rsp, 3);
-        return;
+        goto out;
     }
 
     addchar(ibe, msg_id);
@@ -228,6 +229,9 @@ static void ipmi_bmc_extern_handle_command(IPMIBmc *b,
 
     /* Start the transmit */
     continue_send(ibe);
+
+ out:
+    return;
 }
 
 static void handle_hw_op(IPMIBmcExtern *ibe, unsigned char hw_op)
@@ -493,6 +497,8 @@ static void ipmi_bmc_extern_realize(DeviceState *dev, Error **errp)
 
     qemu_chr_fe_set_handlers(&ibe->chr, can_receive, receive,
                              chr_event, NULL, ibe, NULL, true);
+
+    vmstate_register(NULL, 0, &vmstate_ipmi_bmc_extern, ibe);
 }
 
 static void ipmi_bmc_extern_init(Object *obj)
@@ -509,11 +515,12 @@ static void ipmi_bmc_extern_finalize(Object *obj)
     timer_free(ibe->extern_timer);
 }
 
-static const Property ipmi_bmc_extern_properties[] = {
+static Property ipmi_bmc_extern_properties[] = {
     DEFINE_PROP_CHR("chardev", IPMIBmcExtern, chr),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
-static void ipmi_bmc_extern_class_init(ObjectClass *oc, const void *data)
+static void ipmi_bmc_extern_class_init(ObjectClass *oc, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(oc);
     IPMIBmcClass *bk = IPMI_BMC_CLASS(oc);
@@ -522,7 +529,6 @@ static void ipmi_bmc_extern_class_init(ObjectClass *oc, const void *data)
     bk->handle_reset = ipmi_bmc_extern_handle_reset;
     dc->hotpluggable = false;
     dc->realize = ipmi_bmc_extern_realize;
-    dc->vmsd = &vmstate_ipmi_bmc_extern;
     device_class_set_props(dc, ipmi_bmc_extern_properties);
 }
 

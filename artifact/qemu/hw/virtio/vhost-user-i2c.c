@@ -14,8 +14,9 @@
 #include "qemu/error-report.h"
 #include "standard-headers/linux/virtio_ids.h"
 
-static const Property vi2c_properties[] = {
+static Property vi2c_properties[] = {
     DEFINE_PROP_CHR("chardev", VHostUserBase, chardev),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
 static void vi2c_realize(DeviceState *dev, Error **errp)
@@ -36,7 +37,7 @@ static const VMStateDescription vu_i2c_vmstate = {
     .unmigratable = 1,
 };
 
-static void vu_i2c_class_init(ObjectClass *klass, const void *data)
+static void vu_i2c_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
     VHostUserBaseClass *vubc = VHOST_USER_BASE_CLASS(klass);

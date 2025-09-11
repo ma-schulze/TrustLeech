@@ -10,7 +10,7 @@
 #include "qemu/bitmap.h"
 #include "qemu/error-report.h"
 #include "qapi/error.h"
-#include "system/qtest.h"
+#include "sysemu/qtest.h"
 #include "hw/boards.h"
 
 #include "qapi/qapi-visit-machine.h"
@@ -22,16 +22,14 @@
 #include "hw/pci/pcie_port.h"
 #include "hw/pci-bridge/pci_expander_bridge.h"
 
-static void cxl_fixed_memory_window_config(CXLFixedMemoryWindowOptions *object,
-                                           int index, Error **errp)
+static void cxl_fixed_memory_window_config(CXLState *cxl_state,
+                                           CXLFixedMemoryWindowOptions *object,
+                                           Error **errp)
 {
     ERRP_GUARD();
-    DeviceState *dev = qdev_new(TYPE_CXL_FMW);
-    CXLFixedWindow *fw = CXL_FMW(dev);
+    g_autofree CXLFixedWindow *fw = g_malloc0(sizeof(*fw));
     strList *target;
     int i;
-
-    fw->index = index;
 
     for (target = object->targets; target; target = target->next) {
         fw->num_targets++;
@@ -67,39 +65,37 @@ static void cxl_fixed_memory_window_config(CXLFixedMemoryWindowOptions *object,
         fw->targets[i] = g_strdup(target->value);
     }
 
-    sysbus_realize_and_unref(SYS_BUS_DEVICE(dev), errp);
+    cxl_state->fixed_windows = g_list_append(cxl_state->fixed_windows,
+                                             g_steal_pointer(&fw));
+
+    return;
 }
 
-static int cxl_fmws_link(Object *obj, void *opaque)
+void cxl_fmws_link_targets(CXLState *cxl_state, Error **errp)
 {
-    struct CXLFixedWindow *fw;
-    int i;
+    if (cxl_state && cxl_state->fixed_windows) {
+        GList *it;
 
-    if (!object_dynamic_cast(obj, TYPE_CXL_FMW)) {
-        return 0;
-    }
-    fw = CXL_FMW(obj);
+        for (it = cxl_state->fixed_windows; it; it = it->next) {
+            CXLFixedWindow *fw = it->data;
+            int i;
 
-    for (i = 0; i < fw->num_targets; i++) {
-        Object *o;
-        bool ambig;
+            for (i = 0; i < fw->num_targets; i++) {
+                Object *o;
+                bool ambig;
 
-        o = object_resolve_path_type(fw->targets[i], TYPE_PXB_CXL_DEV,
-                                     &ambig);
-        if (!o) {
-            error_setg(&error_fatal, "Could not resolve CXLFM target %s",
-                       fw->targets[i]);
-            return 1;
+                o = object_resolve_path_type(fw->targets[i],
+                                             TYPE_PXB_CXL_DEV,
+                                             &ambig);
+                if (!o) {
+                    error_setg(errp, "Could not resolve CXLFM target %s",
+                               fw->targets[i]);
+                    return;
+                }
+                fw->target_hbs[i] = PXB_CXL_DEV(o);
+            }
         }
-        fw->target_hbs[i] = PXB_CXL_DEV(o);
     }
-    return 0;
-}
-
-void cxl_fmws_link_targets(Error **errp)
-{
-    /* Order doesn't matter for this, so no need to build list */
-    object_child_foreach_recursive(object_get_root(), cxl_fmws_link, NULL);
 }
 
 static bool cxl_hdm_find_target(uint32_t *cache_mem, hwaddr addr,
@@ -331,15 +327,14 @@ static void machine_set_cfmw(Object *obj, Visitor *v, const char *name,
     CXLState *state = opaque;
     CXLFixedMemoryWindowOptionsList *cfmw_list = NULL;
     CXLFixedMemoryWindowOptionsList *it;
-    int index;
 
     visit_type_CXLFixedMemoryWindowOptionsList(v, name, &cfmw_list, errp);
     if (!cfmw_list) {
         return;
     }
 
-    for (it = cfmw_list, index = 0; it; it = it->next, index++) {
-        cxl_fixed_memory_window_config(it->value, index, errp);
+    for (it = cfmw_list; it; it = it->next) {
+        cxl_fixed_memory_window_config(state, it->value, errp);
     }
     state->cfmw_list = cfmw_list;
 }
@@ -377,110 +372,3 @@ void cxl_hook_up_pxb_registers(PCIBus *bus, CXLState *state, Error **errp)
         }
     }
 }
-
-static int cxl_fmws_find(Object *obj, void *opaque)
-{
-    GSList **list = opaque;
-
-    if (!object_dynamic_cast(obj, TYPE_CXL_FMW)) {
-        return 0;
-    }
-    *list = g_slist_prepend(*list, obj);
-
-    return 0;
-}
-
-static GSList *cxl_fmws_get_all(void)
-{
-    GSList *list = NULL;
-
-    object_child_foreach_recursive(object_get_root(), cxl_fmws_find, &list);
-
-    return list;
-}
-
-static gint cfmws_cmp(gconstpointer a, gconstpointer b, gpointer d)
-{
-    const struct CXLFixedWindow *ap = a;
-    const struct CXLFixedWindow *bp = b;
-
-    return ap->index > bp->index;
-}
-
-GSList *cxl_fmws_get_all_sorted(void)
-{
-    return g_slist_sort_with_data(cxl_fmws_get_all(), cfmws_cmp, NULL);
-}
-
-static int cxl_fmws_mmio_map(Object *obj, void *opaque)
-{
-    struct CXLFixedWindow *fw;
-
-    if (!object_dynamic_cast(obj, TYPE_CXL_FMW)) {
-        return 0;
-    }
-    fw = CXL_FMW(obj);
-    sysbus_mmio_map(SYS_BUS_DEVICE(fw), 0, fw->base);
-
-    return 0;
-}
-
-void cxl_fmws_update_mmio(void)
-{
-    /* Ordering is not required for this */
-    object_child_foreach_recursive(object_get_root(), cxl_fmws_mmio_map, NULL);
-}
-
-hwaddr cxl_fmws_set_memmap(hwaddr base, hwaddr max_addr)
-{
-    GSList *cfmws_list, *iter;
-    CXLFixedWindow *fw;
-
-    cfmws_list = cxl_fmws_get_all_sorted();
-    for (iter = cfmws_list; iter; iter = iter->next) {
-        fw = CXL_FMW(iter->data);
-        if (base + fw->size <= max_addr) {
-            fw->base = base;
-            base += fw->size;
-        }
-    }
-    g_slist_free(cfmws_list);
-
-    return base;
-}
-
-static void cxl_fmw_realize(DeviceState *dev, Error **errp)
-{
-    CXLFixedWindow *fw = CXL_FMW(dev);
-
-    memory_region_init_io(&fw->mr, OBJECT(dev), &cfmws_ops, fw,
-                          "cxl-fixed-memory-region", fw->size);
-    sysbus_init_mmio(SYS_BUS_DEVICE(dev), &fw->mr);
-}
-
-/*
- * Note: Fixed memory windows represent fixed address decoders on the host and
- * as such have no dynamic state to reset or migrate
- */
-static void cxl_fmw_class_init(ObjectClass *klass, const void *data)
-{
-    DeviceClass *dc = DEVICE_CLASS(klass);
-
-    dc->desc = "CXL Fixed Memory Window";
-    dc->realize = cxl_fmw_realize;
-    /* Reason - created by machines as tightly coupled to machine memory map */
-    dc->user_creatable = false;
-}
-
-static const TypeInfo cxl_fmw_info = {
-    .name = TYPE_CXL_FMW,
-    .parent = TYPE_SYS_BUS_DEVICE,
-    .instance_size = sizeof(CXLFixedWindow),
-    .class_init = cxl_fmw_class_init,
-};
-
-static void cxl_host_register_types(void)
-{
-    type_register_static(&cxl_fmw_info);
-}
-type_init(cxl_host_register_types)

@@ -19,13 +19,11 @@
 
 #include "qemu/osdep.h"
 #include "cpu.h"
-#include "exec/target_page.h"
+#include "exec/exec-all.h"
 #include "qemu/host-utils.h"
 #include "exec/helper-proto.h"
 #include "helper_regs.h"
-#include "accel/tcg/cpu-ldst.h"
-#include "accel/tcg/helper-retaddr.h"
-#include "accel/tcg/probe.h"
+#include "exec/cpu_ldst.h"
 #include "internal.h"
 #include "qemu/atomic128.h"
 

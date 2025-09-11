@@ -10,10 +10,12 @@
 # This work is licensed under the terms of the GNU GPL, version 2 or
 # later.  See the COPYING file in the top-level directory.
 
+import os
 import logging
 import tempfile
 
-from qemu_test import QemuSystemTest, Asset, skipFlakyTest
+from qemu_test import QemuSystemTest, Asset
+from unittest import skipUnless
 
 
 class LinuxInitrd(QemuSystemTest):
@@ -58,8 +60,7 @@ class LinuxInitrd(QemuSystemTest):
                 max_size + 1)
             self.assertRegex(self.vm.get_log(), expected_msg)
 
-    # XXX file tracking bug
-    @skipFlakyTest(bug_url=None)
+    @skipUnless(os.getenv('QEMU_TEST_FLAKY_TESTS'), 'Test is unstable on GitLab')
     def test_with_2gib_file_should_work_with_linux_v4_16(self):
         """
         QEMU has supported up to 4 GiB initrd for recent kernel

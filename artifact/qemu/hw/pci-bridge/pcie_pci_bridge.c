@@ -52,10 +52,11 @@ static void pcie_pci_bridge_realize(PCIDevice *d, Error **errp)
         goto cap_error;
     }
 
-    pos = pci_pm_init(d, 0, errp);
+    pos = pci_add_capability(d, PCI_CAP_ID_PM, 0, PCI_PM_SIZEOF, errp);
     if (pos < 0) {
         goto pm_error;
     }
+    d->exp.pm_cap = pos;
     pci_set_word(d->config + pos + PCI_PM_PMC, 0x3);
 
     pcie_cap_arifwd_init(d);
@@ -123,8 +124,9 @@ static void pcie_pci_bridge_write_config(PCIDevice *d,
     shpc_cap_write_config(d, address, val, len);
 }
 
-static const Property pcie_pci_bridge_dev_properties[] = {
+static Property pcie_pci_bridge_dev_properties[] = {
         DEFINE_PROP_ON_OFF_AUTO("msi", PCIEPCIBridge, msi, ON_OFF_AUTO_AUTO),
+        DEFINE_PROP_END_OF_LIST(),
 };
 
 static const VMStateDescription pcie_pci_bridge_dev_vmstate = {
@@ -137,7 +139,7 @@ static const VMStateDescription pcie_pci_bridge_dev_vmstate = {
         }
 };
 
-static void pcie_pci_bridge_class_init(ObjectClass *klass, const void *data)
+static void pcie_pci_bridge_class_init(ObjectClass *klass, void *data)
 {
     PCIDeviceClass *k = PCI_DEVICE_CLASS(klass);
     DeviceClass *dc = DEVICE_CLASS(klass);
@@ -162,7 +164,7 @@ static const TypeInfo pcie_pci_bridge_info = {
         .parent = TYPE_PCI_BRIDGE,
         .instance_size = sizeof(PCIEPCIBridge),
         .class_init = pcie_pci_bridge_class_init,
-        .interfaces = (const InterfaceInfo[]) {
+        .interfaces = (InterfaceInfo[]) {
             { TYPE_HOTPLUG_HANDLER },
             { INTERFACE_PCIE_DEVICE },
             { },

@@ -16,7 +16,11 @@ This work is licensed under the terms of the GNU GPL, version 2.
 from typing import List, Optional
 
 from .common import c_enum_const, c_name, mcgen
-from .gen import QAPISchemaModularCVisitor, gen_features, ifcontext
+from .gen import (
+    QAPISchemaModularCVisitor,
+    gen_special_features,
+    ifcontext,
+)
 from .schema import (
     QAPISchema,
     QAPISchemaAlternatives,
@@ -57,17 +61,17 @@ const QEnumLookup %(c_name)s_lookup = {
                      index=index, name=memb.name)
         ret += memb.ifcond.gen_endif()
 
-        features = gen_features(memb.features)
-        if features != '0':
+        special_features = gen_special_features(memb.features)
+        if special_features != '0':
             feats += mcgen('''
-        [%(index)s] = %(features)s,
+        [%(index)s] = %(special_features)s,
 ''',
-                           index=index, features=features)
+                           index=index, special_features=special_features)
 
     if feats:
         ret += mcgen('''
     },
-    .features = (const uint64_t[%(max_index)s]) {
+    .special_features = (const unsigned char[%(max_index)s]) {
 ''',
                      max_index=max_index)
         ret += feats
@@ -304,14 +308,11 @@ class QAPISchemaGenTypeVisitor(QAPISchemaModularCVisitor):
 #include "qapi/dealloc-visitor.h"
 #include "%(types)s.h"
 #include "%(visit)s.h"
-#include "%(prefix)sqapi-features.h"
 ''',
-                                      types=types, visit=visit,
-                                      prefix=self._prefix))
+                                      types=types, visit=visit))
         self._genh.preamble_add(mcgen('''
 #include "qapi/qapi-builtin-types.h"
-''',
-                                      prefix=self._prefix))
+'''))
 
     def visit_begin(self, schema: QAPISchema) -> None:
         # gen_object() is recursive, ensure it doesn't visit the empty type

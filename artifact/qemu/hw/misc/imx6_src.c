@@ -17,7 +17,18 @@
 #include "qemu/module.h"
 #include "target/arm/arm-powerctl.h"
 #include "hw/core/cpu.h"
-#include "trace.h"
+
+#ifndef DEBUG_IMX6_SRC
+#define DEBUG_IMX6_SRC 0
+#endif
+
+#define DPRINTF(fmt, args...) \
+    do { \
+        if (DEBUG_IMX6_SRC) { \
+            fprintf(stderr, "[%s]%s: " fmt , TYPE_IMX6_SRC, \
+                                             __func__, ##args); \
+        } \
+    } while (0)
 
 static const char *imx6_src_reg_name(uint32_t reg)
 {
@@ -76,7 +87,7 @@ static void imx6_src_reset(DeviceState *dev)
 {
     IMX6SRCState *s = IMX6_SRC(dev);
 
-    trace_imx6_src_reset();
+    DPRINTF("\n");
 
     memset(s->regs, 0, sizeof(s->regs));
 
@@ -100,7 +111,7 @@ static uint64_t imx6_src_read(void *opaque, hwaddr offset, unsigned size)
 
     }
 
-    trace_imx6_src_read(imx6_src_reg_name(index), value);
+    DPRINTF("reg[%s] => 0x%" PRIx32 "\n", imx6_src_reg_name(index), value);
 
     return value;
 }
@@ -123,7 +134,8 @@ static void imx6_clear_reset_bit(CPUState *cpu, run_on_cpu_data data)
     assert(bql_locked());
 
     s->regs[SRC_SCR] = deposit32(s->regs[SRC_SCR], ri->reset_bit, 1, 0);
-    trace_imx6_clear_reset_bit(imx6_src_reg_name(SRC_SCR), s->regs[SRC_SCR]);
+    DPRINTF("reg[%s] <= 0x%" PRIx32 "\n",
+            imx6_src_reg_name(SRC_SCR), s->regs[SRC_SCR]);
 
     g_free(ri);
 }
@@ -161,7 +173,8 @@ static void imx6_src_write(void *opaque, hwaddr offset, uint64_t value,
         return;
     }
 
-    trace_imx6_src_write(imx6_src_reg_name(index), value);
+    DPRINTF("reg[%s] <= 0x%" PRIx32 "\n", imx6_src_reg_name(index),
+            (uint32_t)current_value);
 
     change_mask = s->regs[index] ^ (uint32_t)current_value;
 
@@ -273,7 +286,7 @@ static void imx6_src_realize(DeviceState *dev, Error **errp)
     sysbus_init_mmio(SYS_BUS_DEVICE(dev), &s->iomem);
 }
 
-static void imx6_src_class_init(ObjectClass *klass, const void *data)
+static void imx6_src_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
 

@@ -11,6 +11,7 @@
 #include <skiboot.h>
 #include <fsp-elog.h>
 #include <fsp-attn.h>
+#include <hdata/spira.h>
 #include <stack.h>
 #include <processor.h>
 #include <opal-dump.h>

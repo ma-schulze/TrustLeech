@@ -17,7 +17,7 @@
 #include "net/eth.h"
 #include "net/checksum.h"
 #include "hw/net/mii.h"
-#include "system/system.h"
+#include "sysemu/sysemu.h"
 #include "trace.h"
 #include "qom/object.h"
 
@@ -1420,13 +1420,14 @@ static void sungem_instance_init(Object *obj)
                                   DEVICE(obj));
 }
 
-static const Property sungem_properties[] = {
+static Property sungem_properties[] = {
     DEFINE_NIC_PROPERTIES(SunGEMState, conf),
     /* Phy address should be 0 for most Apple machines except
      * for K2 in which case it's 1. Will be set by a machine
      * override.
      */
     DEFINE_PROP_UINT32("phy_addr", SunGEMState, phy_addr, 0),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
 static const VMStateDescription vmstate_sungem = {
@@ -1454,7 +1455,7 @@ static const VMStateDescription vmstate_sungem = {
     }
 };
 
-static void sungem_class_init(ObjectClass *klass, const void *data)
+static void sungem_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
     PCIDeviceClass *k = PCI_DEVICE_CLASS(klass);
@@ -1477,7 +1478,7 @@ static const TypeInfo sungem_info = {
     .instance_size = sizeof(SunGEMState),
     .class_init    = sungem_class_init,
     .instance_init = sungem_instance_init,
-    .interfaces = (const InterfaceInfo[]) {
+    .interfaces = (InterfaceInfo[]) {
         { INTERFACE_CONVENTIONAL_PCI_DEVICE },
         { }
     }

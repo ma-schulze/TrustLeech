@@ -15,7 +15,7 @@
 #define TARGET_I386_HYPERV_H
 
 #include "cpu.h"
-#include "system/kvm.h"
+#include "sysemu/kvm.h"
 #include "hw/hyperv/hyperv.h"
 
 #ifdef CONFIG_KVM

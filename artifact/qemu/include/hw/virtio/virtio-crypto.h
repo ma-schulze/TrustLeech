@@ -16,8 +16,8 @@
 
 #include "standard-headers/linux/virtio_crypto.h"
 #include "hw/virtio/virtio.h"
-#include "system/iothread.h"
-#include "system/cryptodev.h"
+#include "sysemu/iothread.h"
+#include "sysemu/cryptodev.h"
 #include "qom/object.h"
 
 

@@ -231,12 +231,13 @@ static void ppc4xx_mal_finalize(Object *obj)
     g_free(mal->txctpr);
 }
 
-static const Property ppc4xx_mal_properties[] = {
+static Property ppc4xx_mal_properties[] = {
     DEFINE_PROP_UINT8("txc-num", Ppc4xxMalState, txcnum, 0),
     DEFINE_PROP_UINT8("rxc-num", Ppc4xxMalState, rxcnum, 0),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
-static void ppc4xx_mal_class_init(ObjectClass *oc, const void *data)
+static void ppc4xx_mal_class_init(ObjectClass *oc, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(oc);
 
@@ -326,7 +327,7 @@ static void ppc405_plb_realize(DeviceState *dev, Error **errp)
     ppc4xx_dcr_register(dcr, PLB4A1_ACR, plb, &dcr_read_plb, &dcr_write_plb);
 }
 
-static void ppc405_plb_class_init(ObjectClass *oc, const void *data)
+static void ppc405_plb_class_init(ObjectClass *oc, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(oc);
 
@@ -512,7 +513,7 @@ static void ppc405_ebc_realize(DeviceState *dev, Error **errp)
     ppc4xx_dcr_register(dcr, EBC0_CFGDATA, ebc, &dcr_read_ebc, &dcr_write_ebc);
 }
 
-static void ppc405_ebc_class_init(ObjectClass *oc, const void *data)
+static void ppc405_ebc_class_init(ObjectClass *oc, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(oc);
 
@@ -538,12 +539,13 @@ bool ppc4xx_dcr_realize(Ppc4xxDcrDeviceState *dev, PowerPCCPU *cpu,
     return sysbus_realize(SYS_BUS_DEVICE(dev), errp);
 }
 
-static const Property ppc4xx_dcr_properties[] = {
+static Property ppc4xx_dcr_properties[] = {
     DEFINE_PROP_LINK("cpu", Ppc4xxDcrDeviceState, cpu, TYPE_POWERPC_CPU,
                      PowerPCCPU *),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
-static void ppc4xx_dcr_class_init(ObjectClass *oc, const void *data)
+static void ppc4xx_dcr_class_init(ObjectClass *oc, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(oc);
 

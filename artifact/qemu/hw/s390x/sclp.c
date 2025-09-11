@@ -161,11 +161,7 @@ static void read_SCP_info(SCLPDevice *sclp, SCCB *sccb)
         read_info->rnsize2 = cpu_to_be32(rnsize);
     }
 
-    /*
-     * We don't support standby memory. maxram_size is used for sizing the
-     * memory device region, which is not exposed through SCLP but through
-     * diag500.
-     */
+    /* we don't support standby memory, maxram_size is never exposed */
     rnmax = machine->ram_size >> sclp->increment_size;
     if (rnmax < 0x10000) {
         read_info->rnmax = cpu_to_be16(rnmax);
@@ -380,7 +376,10 @@ void sclp_service_interrupt(uint32_t sccb)
 /* qemu object creation and initialization functions */
 static void sclp_realize(DeviceState *dev, Error **errp)
 {
+    MachineState *machine = MACHINE(qdev_get_machine());
     SCLPDevice *sclp = SCLP(dev);
+    uint64_t hw_limit;
+    int ret;
 
     /*
      * qdev_device_add searches the sysbus for TYPE_SCLP_EVENTS_BUS. As long
@@ -389,6 +388,14 @@ static void sclp_realize(DeviceState *dev, Error **errp)
      */
     if (!sysbus_realize(SYS_BUS_DEVICE(sclp->event_facility), errp)) {
         return;
+    }
+
+    ret = s390_set_memory_limit(machine->maxram_size, &hw_limit);
+    if (ret == -E2BIG) {
+        error_setg(errp, "host supports a maximum of %" PRIu64 " GB",
+                   hw_limit / GiB);
+    } else if (ret) {
+        error_setg(errp, "setting the guest size failed");
     }
 }
 
@@ -424,7 +431,7 @@ static void sclp_init(Object *obj)
     sclp_memory_init(sclp);
 }
 
-static void sclp_class_init(ObjectClass *oc, const void *data)
+static void sclp_class_init(ObjectClass *oc, void *data)
 {
     SCLPDeviceClass *sc = SCLP_CLASS(oc);
     DeviceClass *dc = DEVICE_CLASS(oc);

@@ -21,14 +21,13 @@
 
 #include "qemu/osdep.h"
 #include "qemu/error-report.h"
-#include "qemu/cutils.h"
 #include "qapi/error.h"
 #include "qapi/visitor.h"
 #include "tpm_int.h"
-#include "system/memory.h"
+#include "exec/memory.h"
 #include "hw/qdev-properties.h"
-#include "system/tpm_backend.h"
-#include "system/tpm_util.h"
+#include "sysemu/tpm_backend.h"
+#include "sysemu/tpm_util.h"
 #include "trace.h"
 
 /* tpm backend property */
@@ -47,7 +46,7 @@ static void get_tpm(Object *obj, Visitor *v, const char *name, void *opaque,
 static void set_tpm(Object *obj, Visitor *v, const char *name, void *opaque,
                     Error **errp)
 {
-    const Property *prop = opaque;
+    Property *prop = opaque;
     TPMBackend *s, **be = object_field_prop_ptr(obj, prop);
     char *str;
 
@@ -67,7 +66,7 @@ static void set_tpm(Object *obj, Visitor *v, const char *name, void *opaque,
 
 static void release_tpm(Object *obj, const char *name, void *opaque)
 {
-    const Property *prop = opaque;
+    Property *prop = opaque;
     TPMBackend **be = object_field_prop_ptr(obj, prop);
 
     if (*be) {
@@ -76,7 +75,7 @@ static void release_tpm(Object *obj, const char *name, void *opaque)
 }
 
 const PropertyInfo qdev_prop_tpm = {
-    .type  = "str",
+    .name  = "str",
     .description = "ID of a tpm to use as a backend",
     .get   = get_tpm,
     .set   = set_tpm,
@@ -337,8 +336,8 @@ void tpm_sized_buffer_reset(TPMSizedBuffer *tsb)
 void tpm_util_show_buffer(const unsigned char *buffer,
                           size_t buffer_size, const char *string)
 {
-    g_autoptr(GString) str = NULL;
-    size_t len, i, l;
+    size_t len, i;
+    char *line_buffer, *p;
 
     if (!trace_event_get_state_backends(TRACE_TPM_UTIL_SHOW_BUFFER_CONTENT)) {
         return;
@@ -346,14 +345,19 @@ void tpm_util_show_buffer(const unsigned char *buffer,
     len = MIN(tpm_cmd_get_size(buffer), buffer_size);
     trace_tpm_util_show_buffer_header(string, len);
 
-    for (i = 0; i < len; i += l) {
-        if (str) {
-            g_string_append_c(str, '\n');
-        }
-        l = MIN(len, 16);
-        str = qemu_hexdump_line(str, buffer, l, 1, 0);
-    }
+    /*
+     * allocate enough room for 3 chars per buffer entry plus a
+     * newline after every 16 chars and a final null terminator.
+     */
+    line_buffer = g_malloc(len * 3 + (len / 16) + 1);
 
-    g_string_ascii_up(str);
-    trace_tpm_util_show_buffer_content(str->str);
+    for (i = 0, p = line_buffer; i < len; i++) {
+        if (i && !(i % 16)) {
+            p += sprintf(p, "\n");
+        }
+        p += sprintf(p, "%.2X ", buffer[i]);
+    }
+    trace_tpm_util_show_buffer_content(line_buffer);
+
+    g_free(line_buffer);
 }

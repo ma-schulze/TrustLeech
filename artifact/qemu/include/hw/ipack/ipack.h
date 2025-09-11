@@ -12,7 +12,6 @@
 #define QEMU_IPACK_H
 
 #include "hw/qdev-core.h"
-#include "hw/irq.h"
 #include "qom/object.h"
 
 
@@ -20,8 +19,10 @@
 OBJECT_DECLARE_SIMPLE_TYPE(IPackBus, IPACK_BUS)
 
 struct IPackBus {
+    /*< private >*/
     BusState parent_obj;
 
+    /* All fields are private */
     uint8_t n_slots;
     uint8_t free_slot;
     qemu_irq_handler set_irq;
@@ -57,11 +58,13 @@ struct IPackDeviceClass {
 };
 
 struct IPackDevice {
+    /*< private >*/
     DeviceState parent_obj;
+    /*< public >*/
 
     int32_t slot;
     /* IRQ objects for the IndustryPack INT0# and INT1# */
-    IRQState irq[2];
+    qemu_irq *irq;
 };
 
 extern const VMStateDescription vmstate_ipack_device;

@@ -28,9 +28,6 @@
 /* Stop userspace polling on a handler if it isn't active for some time */
 #define POLL_IDLE_INTERVAL_NS (7 * NANOSECONDS_PER_SECOND)
 
-static void adjust_polling_time(AioContext *ctx, AioPolledEvent *poll,
-                                int64_t block_ns);
-
 bool aio_poll_disabled(AioContext *ctx)
 {
     return qatomic_read(&ctx->poll_disable_cnt);
@@ -395,8 +392,7 @@ static bool aio_dispatch_handler(AioContext *ctx, AioHandler *node)
  * scanning all handlers with aio_dispatch_handlers().
  */
 static bool aio_dispatch_ready_handlers(AioContext *ctx,
-                                        AioHandlerList *ready_list,
-                                        int64_t block_ns)
+                                        AioHandlerList *ready_list)
 {
     bool progress = false;
     AioHandler *node;
@@ -404,14 +400,6 @@ static bool aio_dispatch_ready_handlers(AioContext *ctx,
     while ((node = QLIST_FIRST(ready_list))) {
         QLIST_REMOVE(node, node_ready);
         progress = aio_dispatch_handler(ctx, node) || progress;
-
-        /*
-         * Adjust polling time only after aio_dispatch_handler(), which can
-         * add the handler to ctx->poll_aio_handlers.
-         */
-        if (ctx->poll_max_ns && QLIST_IS_INSERTED(node, node_poll)) {
-            adjust_polling_time(ctx, &node->poll, block_ns);
-        }
     }
 
     return progress;
@@ -591,19 +579,13 @@ static bool run_poll_handlers(AioContext *ctx, AioHandlerList *ready_list,
 static bool try_poll_mode(AioContext *ctx, AioHandlerList *ready_list,
                           int64_t *timeout)
 {
-    AioHandler *node;
     int64_t max_ns;
 
     if (QLIST_EMPTY_RCU(&ctx->poll_aio_handlers)) {
         return false;
     }
 
-    max_ns = 0;
-    QLIST_FOREACH(node, &ctx->poll_aio_handlers, node_poll) {
-        max_ns = MAX(max_ns, node->poll.ns);
-    }
-    max_ns = qemu_soonest_timeout(*timeout, max_ns);
-
+    max_ns = qemu_soonest_timeout(*timeout, ctx->poll_ns);
     if (max_ns && !ctx->fdmon_ops->need_wait(ctx)) {
         /*
          * Enable poll mode. It pairs with the poll_set_started() in
@@ -618,46 +600,6 @@ static bool try_poll_mode(AioContext *ctx, AioHandlerList *ready_list,
     return false;
 }
 
-static void adjust_polling_time(AioContext *ctx, AioPolledEvent *poll,
-                                int64_t block_ns)
-{
-    if (block_ns <= poll->ns) {
-        /* This is the sweet spot, no adjustment needed */
-    } else if (block_ns > ctx->poll_max_ns) {
-        /* We'd have to poll for too long, poll less */
-        int64_t old = poll->ns;
-
-        if (ctx->poll_shrink) {
-            poll->ns /= ctx->poll_shrink;
-        } else {
-            poll->ns = 0;
-        }
-
-        trace_poll_shrink(ctx, old, poll->ns);
-    } else if (poll->ns < ctx->poll_max_ns &&
-               block_ns < ctx->poll_max_ns) {
-        /* There is room to grow, poll longer */
-        int64_t old = poll->ns;
-        int64_t grow = ctx->poll_grow;
-
-        if (grow == 0) {
-            grow = 2;
-        }
-
-        if (poll->ns) {
-            poll->ns *= grow;
-        } else {
-            poll->ns = 4000; /* start polling at 4 microseconds */
-        }
-
-        if (poll->ns > ctx->poll_max_ns) {
-            poll->ns = ctx->poll_max_ns;
-        }
-
-        trace_poll_grow(ctx, old, poll->ns);
-    }
-}
-
 bool aio_poll(AioContext *ctx, bool blocking)
 {
     AioHandlerList ready_list = QLIST_HEAD_INITIALIZER(ready_list);
@@ -665,7 +607,6 @@ bool aio_poll(AioContext *ctx, bool blocking)
     bool use_notify_me;
     int64_t timeout;
     int64_t start = 0;
-    int64_t block_ns = 0;
 
     /*
      * There cannot be two concurrent aio_poll calls for the same AioContext (or
@@ -738,13 +679,49 @@ bool aio_poll(AioContext *ctx, bool blocking)
 
     aio_notify_accept(ctx);
 
-    /* Calculate blocked time for adaptive polling */
+    /* Adjust polling time */
     if (ctx->poll_max_ns) {
-        block_ns = qemu_clock_get_ns(QEMU_CLOCK_REALTIME) - start;
+        int64_t block_ns = qemu_clock_get_ns(QEMU_CLOCK_REALTIME) - start;
+
+        if (block_ns <= ctx->poll_ns) {
+            /* This is the sweet spot, no adjustment needed */
+        } else if (block_ns > ctx->poll_max_ns) {
+            /* We'd have to poll for too long, poll less */
+            int64_t old = ctx->poll_ns;
+
+            if (ctx->poll_shrink) {
+                ctx->poll_ns /= ctx->poll_shrink;
+            } else {
+                ctx->poll_ns = 0;
+            }
+
+            trace_poll_shrink(ctx, old, ctx->poll_ns);
+        } else if (ctx->poll_ns < ctx->poll_max_ns &&
+                   block_ns < ctx->poll_max_ns) {
+            /* There is room to grow, poll longer */
+            int64_t old = ctx->poll_ns;
+            int64_t grow = ctx->poll_grow;
+
+            if (grow == 0) {
+                grow = 2;
+            }
+
+            if (ctx->poll_ns) {
+                ctx->poll_ns *= grow;
+            } else {
+                ctx->poll_ns = 4000; /* start polling at 4 microseconds */
+            }
+
+            if (ctx->poll_ns > ctx->poll_max_ns) {
+                ctx->poll_ns = ctx->poll_max_ns;
+            }
+
+            trace_poll_grow(ctx, old, ctx->poll_ns);
+        }
     }
 
     progress |= aio_bh_poll(ctx);
-    progress |= aio_dispatch_ready_handlers(ctx, &ready_list, block_ns);
+    progress |= aio_dispatch_ready_handlers(ctx, &ready_list);
 
     aio_free_deleted_handlers(ctx);
 
@@ -790,18 +767,11 @@ void aio_context_use_g_source(AioContext *ctx)
 void aio_context_set_poll_params(AioContext *ctx, int64_t max_ns,
                                  int64_t grow, int64_t shrink, Error **errp)
 {
-    AioHandler *node;
-
-    qemu_lockcnt_inc(&ctx->list_lock);
-    QLIST_FOREACH(node, &ctx->aio_handlers, node) {
-        node->poll.ns = 0;
-    }
-    qemu_lockcnt_dec(&ctx->list_lock);
-
     /* No thread synchronization here, it doesn't matter if an incorrect value
      * is used once.
      */
     ctx->poll_max_ns = max_ns;
+    ctx->poll_ns = 0;
     ctx->poll_grow = grow;
     ctx->poll_shrink = shrink;
 

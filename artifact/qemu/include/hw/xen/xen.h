@@ -24,6 +24,8 @@
 #define __XEN_INTERFACE_VERSION__ 0x00040e00
 #endif
 
+#include "exec/cpu-common.h"
+
 /* xen-machine.c */
 enum xen_mode {
     XEN_DISABLED = 0, /* xen support disabled (default) */

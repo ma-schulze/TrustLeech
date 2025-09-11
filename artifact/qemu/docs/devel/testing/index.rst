@@ -10,6 +10,7 @@ testing infrastructure.
    main
    qtest
    functional
+   avocado
    acpi-bits
    ci
    fuzzing

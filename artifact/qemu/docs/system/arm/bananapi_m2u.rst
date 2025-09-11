@@ -125,15 +125,16 @@ And then boot it.
 
   $ qemu-system-arm -M bpim2u -nographic -sd sd.img
 
-Banana Pi M2U functional tests
-""""""""""""""""""""""""""""""
+Banana Pi M2U integration tests
+"""""""""""""""""""""""""""""""
 
-The Banana Pi M2U machine has several functional tests included.
+The Banana Pi M2U machine has several integration tests included.
 To run the whole set of tests, build QEMU from source and simply
 provide the following command:
 
 .. code-block:: bash
 
   $ cd qemu-build-dir
-  $ QEMU_TEST_ALLOW_LARGE_STORAGE=1 \
-    pyvenv/bin/meson test --suite thorough func-arm-arm_bpim2u
+  $ AVOCADO_ALLOW_LARGE_STORAGE=yes tests/venv/bin/avocado \
+    --verbose --show=app,console run -t machine:bpim2u \
+    ../tests/avocado/boot_linux_console.py

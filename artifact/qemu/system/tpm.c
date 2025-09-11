@@ -17,11 +17,10 @@
 #include "qapi/error.h"
 #include "qapi/qapi-commands-tpm.h"
 #include "qapi/qmp/qerror.h"
-#include "system/tpm_backend.h"
-#include "system/tpm.h"
+#include "sysemu/tpm_backend.h"
+#include "sysemu/tpm.h"
 #include "qemu/config-file.h"
 #include "qemu/error-report.h"
-#include "qemu/help_option.h"
 
 static QLIST_HEAD(, TPMBackend) tpm_backends =
     QLIST_HEAD_INITIALIZER(tpm_backends);
@@ -180,9 +179,9 @@ int tpm_config_parse(QemuOptsList *opts_list, const char *optstr)
 {
     QemuOpts *opts;
 
-    if (is_help_option(optstr)) {
+    if (!strcmp(optstr, "help")) {
         tpm_display_backend_drivers();
-        exit(EXIT_SUCCESS);
+        return -1;
     }
     opts = qemu_opts_parse_noisily(opts_list, optstr, true);
     if (!opts) {

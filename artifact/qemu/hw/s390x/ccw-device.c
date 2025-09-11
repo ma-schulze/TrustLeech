@@ -57,7 +57,7 @@ static void ccw_device_set_loadparm(Object *obj, Visitor *v,
                                  Error **errp)
 {
     CcwDevice *dev = CCW_DEVICE(obj);
-    g_autofree char *val = NULL;
+    char *val;
     int index;
 
     index = object_property_get_int(obj, "bootindex", NULL);
@@ -74,17 +74,18 @@ static void ccw_device_set_loadparm(Object *obj, Visitor *v,
 }
 
 const PropertyInfo ccw_loadparm = {
-    .type  = "str",
-    .description = "Up to 8 chars in set of [A-Za-z0-9. ] to select"
-            " a guest kernel",
+    .name  = "ccw_loadparm",
+    .description = "Up to 8 chars in set of [A-Za-z0-9. ] to pass"
+            " to the guest loader/kernel",
     .get = ccw_device_get_loadparm,
     .set = ccw_device_set_loadparm,
 };
 
-static const Property ccw_device_properties[] = {
+static Property ccw_device_properties[] = {
     DEFINE_PROP_CSS_DEV_ID("devno", CcwDevice, devno),
     DEFINE_PROP_CSS_DEV_ID_RO("dev_id", CcwDevice, dev_id),
     DEFINE_PROP_CSS_DEV_ID_RO("subch_id", CcwDevice, subch_id),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
 static void ccw_device_reset_hold(Object *obj, ResetType type)
@@ -94,7 +95,7 @@ static void ccw_device_reset_hold(Object *obj, ResetType type)
     css_reset_sch(ccw_dev->sch);
 }
 
-static void ccw_device_class_init(ObjectClass *klass, const void *data)
+static void ccw_device_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
     CCWDeviceClass *k = CCW_DEVICE_CLASS(klass);

@@ -85,12 +85,13 @@ static const VMStateDescription vmstate_m68k_irqc = {
     }
 };
 
-static const Property m68k_irqc_properties[] = {
+static Property m68k_irqc_properties[] = {
     DEFINE_PROP_LINK("m68k-cpu", M68KIRQCState, cpu,
                      TYPE_M68K_CPU, ArchCPU *),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
-static void m68k_irqc_class_init(ObjectClass *oc, const void *data)
+static void m68k_irqc_class_init(ObjectClass *oc, void *data)
  {
     DeviceClass *dc = DEVICE_CLASS(oc);
     NMIClass *nc = NMI_CLASS(oc);
@@ -110,7 +111,7 @@ static const TypeInfo m68k_irqc_type_info = {
     .instance_size = sizeof(M68KIRQCState),
     .instance_init = m68k_irqc_instance_init,
     .class_init = m68k_irqc_class_init,
-    .interfaces = (const InterfaceInfo[]) {
+    .interfaces = (InterfaceInfo[]) {
          { TYPE_NMI },
          { TYPE_INTERRUPT_STATS_PROVIDER },
          { }

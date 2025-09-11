@@ -12,7 +12,7 @@ if get_option('plugins')
       t += shared_module(i, files(i + '.c') + 'win32_linker.c',
                         include_directories: '../../include/qemu',
                         link_depends: [win32_qemu_plugin_api_lib],
-                        link_args: win32_qemu_plugin_api_link_flags,
+                        link_args: ['-Lplugins', '-lqemu_plugin_api'],
                         dependencies: glib)
     else
       t += shared_module(i, files(i + '.c'),
@@ -24,7 +24,5 @@ endif
 if t.length() > 0
   alias_target('contrib-plugins', t)
 else
-  run_target('contrib-plugins', command: [python, '-c', ''])
+  run_target('contrib-plugins', command: find_program('true'))
 endif
-
-plugin_modules += t

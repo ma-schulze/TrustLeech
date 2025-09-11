@@ -15,7 +15,7 @@
 #include "qom/object_interfaces.h"
 #include "qapi/error.h"
 #include "block/thread-pool.h"
-#include "system/event-loop-base.h"
+#include "sysemu/event-loop-base.h"
 
 typedef struct {
     const char *name;
@@ -73,6 +73,8 @@ static void event_loop_base_set_param(Object *obj, Visitor *v,
     if (bc->update_params) {
         bc->update_params(base, errp);
     }
+
+    return;
 }
 
 static void event_loop_base_complete(UserCreatable *uc, Error **errp)
@@ -97,8 +99,7 @@ static bool event_loop_base_can_be_deleted(UserCreatable *uc)
     return true;
 }
 
-static void event_loop_base_class_init(ObjectClass *klass,
-                                       const void *class_data)
+static void event_loop_base_class_init(ObjectClass *klass, void *class_data)
 {
     UserCreatableClass *ucc = USER_CREATABLE_CLASS(klass);
     ucc->complete = event_loop_base_complete;
@@ -126,7 +127,7 @@ static const TypeInfo event_loop_base_info = {
     .class_size = sizeof(EventLoopBaseClass),
     .class_init = event_loop_base_class_init,
     .abstract = true,
-    .interfaces = (const InterfaceInfo[]) {
+    .interfaces = (InterfaceInfo[]) {
         { TYPE_USER_CREATABLE },
         { }
     }

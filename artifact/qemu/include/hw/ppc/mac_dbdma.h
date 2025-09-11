@@ -23,9 +23,9 @@
 #ifndef HW_MAC_DBDMA_H
 #define HW_MAC_DBDMA_H
 
-#include "system/memory.h"
+#include "exec/memory.h"
 #include "qemu/iov.h"
-#include "system/dma.h"
+#include "sysemu/dma.h"
 #include "hw/sysbus.h"
 #include "qom/object.h"
 

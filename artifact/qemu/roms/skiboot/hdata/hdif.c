@@ -4,36 +4,26 @@
 #include "hdif.h"
 #include <stack.h>
 
-static const struct HDIF_idata_ptr *
-HDIF_idata(const struct HDIF_common_hdr *hdif, unsigned int idx)
+const void *HDIF_get_idata(const struct HDIF_common_hdr *hdif, unsigned int di,
+			   unsigned int *size)
 {
+	const struct HDIF_common_hdr *hdr = hdif;
 	const struct HDIF_idata_ptr *iptr;
 
-	if (!HDIF_check(hdif, NULL)) {
+	if (be16_to_cpu(hdr->d1f0) != 0xd1f0) {
 		prerror("HDIF: Bad header format !\n");
 		backtrace();
 		return NULL;
 	}
 
-	if (idx >= be16_to_cpu(hdif->idptr_count)) {
+	if (di >= be16_to_cpu(hdr->idptr_count)) {
 		prlog(PR_DEBUG, "HDIF: idata %d out of range for %.6s!\n",
-			idx, hdif->id);
+			di, hdr->id);
 		return NULL;
 	}
 
-	iptr = (void *)hdif + be32_to_cpu(hdif->idptr_off);
-
-	return &iptr[idx];
-}
-
-const void *HDIF_get_idata(const struct HDIF_common_hdr *hdif, unsigned int di,
-			   unsigned int *size)
-{
-	const struct HDIF_idata_ptr *iptr;
-
-	iptr = HDIF_idata(hdif, di);
-	if (!iptr)
-		return NULL;
+	iptr = (void *)hdif + be32_to_cpu(hdr->idptr_off)
+		+ di * sizeof(struct HDIF_idata_ptr);
 
 	if (size)
 		*size = be32_to_cpu(iptr->size);
@@ -167,12 +157,6 @@ HDIF_child_arr(const struct HDIF_common_hdr *hdif, unsigned int idx)
 {
 	struct HDIF_child_ptr *children;
 
-	if (!HDIF_check(hdif, NULL)) {
-		prerror("HDIF: Bad header format !\n");
-		backtrace();
-		return NULL;
-	}
-
 	children = (void *)hdif + be32_to_cpu(hdif->child_off);
 
 	if (idx >= be16_to_cpu(hdif->child_count)) {
@@ -192,12 +176,6 @@ struct HDIF_common_hdr *HDIF_child(const struct HDIF_common_hdr *hdif,
 	void *base = (void *)hdif;
 	struct HDIF_common_hdr *ret;
 	long child_off;
-
-	if (!HDIF_check(hdif, NULL)) {
-		prerror("HDIF: Bad header format !\n");
-		backtrace();
-		return NULL;
-	}
 
 	/* child must be in hdif's child array */
 	child_off = (void *)child - (base + be32_to_cpu(hdif->child_off));

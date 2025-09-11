@@ -4,7 +4,6 @@ QEMU QMP Reference Manual
 =========================
 
 .. contents::
-   :local:
+   :depth: 3
 
 .. qapi-doc:: qapi/qapi-schema.json
-   :namespace: QMP

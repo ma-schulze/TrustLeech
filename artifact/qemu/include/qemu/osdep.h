@@ -8,7 +8,7 @@
  * To avoid getting into possible circular include dependencies, this
  * file should not include any other QEMU headers, with the exceptions
  * of config-host.h, config-target.h, qemu/compiler.h,
- * system/os-posix.h, system/os-win32.h, system/os-wasm.h, glib-compat.h and
+ * sysemu/os-posix.h, sysemu/os-win32.h, glib-compat.h and
  * qemu/typedefs.h, all of which are doing a similar job to this file
  * and are under similar constraints.
  *
@@ -128,7 +128,7 @@ QEMU_EXTERN_C int daemon(int, int);
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <assert.h>
-/* setjmp must be declared before system/os-win32.h
+/* setjmp must be declared before sysemu/os-win32.h
  * because it is redefined there. */
 #include <setjmp.h>
 #include <signal.h>
@@ -161,15 +161,11 @@ QEMU_EXTERN_C int daemon(int, int);
 #include "glib-compat.h"
 
 #ifdef _WIN32
-#include "system/os-win32.h"
+#include "sysemu/os-win32.h"
 #endif
 
-#if defined(CONFIG_POSIX) && !defined(EMSCRIPTEN)
-#include "system/os-posix.h"
-#endif
-
-#if defined(EMSCRIPTEN)
-#include "system/os-wasm.h"
+#ifdef CONFIG_POSIX
+#include "sysemu/os-posix.h"
 #endif
 
 #ifdef __cplusplus
@@ -513,7 +509,6 @@ int qemu_daemon(int nochdir, int noclose);
 void *qemu_anon_ram_alloc(size_t size, uint64_t *align, bool shared,
                           bool noreserve);
 void qemu_anon_ram_free(void *ptr, size_t size);
-int qemu_shm_alloc(size_t size, Error **errp);
 
 #ifdef _WIN32
 #define HAVE_CHARDEV_SERIAL 1
@@ -634,15 +629,6 @@ bool qemu_has_direct_io(void);
 bool qemu_write_pidfile(const char *pidfile, Error **errp);
 
 int qemu_get_thread_id(void);
-
-/**
- * qemu_kill_thread:
- * @tid: thread id.
- * @sig: host signal.
- *
- * Send @sig to one of QEMU's own threads with identifier @tid.
- */
-int qemu_kill_thread(int tid, int sig);
 
 #ifndef CONFIG_IOVEC
 struct iovec {

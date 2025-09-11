@@ -29,8 +29,8 @@
 #include "hw/virtio/virtio.h"
 #include "hw/virtio/virtio-bus.h"
 #include "hw/virtio/virtio-access.h"
-#include "system/system.h"
-#include "system/runstate.h"
+#include "sysemu/sysemu.h"
+#include "sysemu/runstate.h"
 
 static const int user_feature_bits[] = {
     VIRTIO_BLK_F_SIZE_MAX,
@@ -204,39 +204,34 @@ err_host_notifiers:
     return ret;
 }
 
-static int vhost_user_blk_stop(VirtIODevice *vdev)
+static void vhost_user_blk_stop(VirtIODevice *vdev)
 {
     VHostUserBlk *s = VHOST_USER_BLK(vdev);
     BusState *qbus = BUS(qdev_get_parent_bus(DEVICE(vdev)));
     VirtioBusClass *k = VIRTIO_BUS_GET_CLASS(qbus);
     int ret;
-    bool force_stop = false;
 
     if (!s->started_vu) {
-        return 0;
+        return;
     }
     s->started_vu = false;
 
     if (!k->set_guest_notifiers) {
-        return 0;
+        return;
     }
 
-    force_stop = s->skip_get_vring_base_on_force_shutdown &&
-                 qemu_force_shutdown_requested();
+    vhost_dev_stop(&s->dev, vdev, true);
 
-    ret = force_stop ? vhost_dev_force_stop(&s->dev, vdev, true) :
-                       vhost_dev_stop(&s->dev, vdev, true);
-
-    if (k->set_guest_notifiers(qbus->parent, s->dev.nvqs, false) < 0) {
+    ret = k->set_guest_notifiers(qbus->parent, s->dev.nvqs, false);
+    if (ret < 0) {
         error_report("vhost guest notifier cleanup failed: %d", ret);
-        return -1;
+        return;
     }
 
     vhost_dev_disable_notifiers(&s->dev, vdev);
-    return ret;
 }
 
-static int vhost_user_blk_set_status(VirtIODevice *vdev, uint8_t status)
+static void vhost_user_blk_set_status(VirtIODevice *vdev, uint8_t status)
 {
     VHostUserBlk *s = VHOST_USER_BLK(vdev);
     bool should_start = virtio_device_should_start(vdev, status);
@@ -244,11 +239,11 @@ static int vhost_user_blk_set_status(VirtIODevice *vdev, uint8_t status)
     int ret;
 
     if (!s->connected) {
-        return -1;
+        return;
     }
 
     if (vhost_dev_is_started(&s->dev) == should_start) {
-        return 0;
+        return;
     }
 
     if (should_start) {
@@ -258,12 +253,9 @@ static int vhost_user_blk_set_status(VirtIODevice *vdev, uint8_t status)
             qemu_chr_fe_disconnect(&s->chardev);
         }
     } else {
-        ret = vhost_user_blk_stop(vdev);
-        if (ret < 0) {
-            return ret;
-        }
+        vhost_user_blk_stop(vdev);
     }
-    return 0;
+
 }
 
 static uint64_t vhost_user_blk_get_features(VirtIODevice *vdev,
@@ -578,7 +570,7 @@ static const VMStateDescription vmstate_vhost_user_blk = {
     },
 };
 
-static const Property vhost_user_blk_properties[] = {
+static Property vhost_user_blk_properties[] = {
     DEFINE_PROP_CHR("chardev", VHostUserBlk, chardev),
     DEFINE_PROP_UINT16("num-queues", VHostUserBlk, num_queues,
                        VHOST_USER_BLK_AUTO_NUM_QUEUES),
@@ -589,11 +581,10 @@ static const Property vhost_user_blk_properties[] = {
                       VIRTIO_BLK_F_DISCARD, true),
     DEFINE_PROP_BIT64("write-zeroes", VHostUserBlk, parent_obj.host_features,
                       VIRTIO_BLK_F_WRITE_ZEROES, true),
-    DEFINE_PROP_BOOL("skip-get-vring-base-on-force-shutdown", VHostUserBlk,
-                     skip_get_vring_base_on_force_shutdown, false),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
-static void vhost_user_blk_class_init(ObjectClass *klass, const void *data)
+static void vhost_user_blk_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
     VirtioDeviceClass *vdc = VIRTIO_DEVICE_CLASS(klass);

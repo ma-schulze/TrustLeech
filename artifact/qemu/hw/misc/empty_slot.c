@@ -79,12 +79,13 @@ static void empty_slot_realize(DeviceState *dev, Error **errp)
     sysbus_init_mmio(SYS_BUS_DEVICE(dev), &s->iomem);
 }
 
-static const Property empty_slot_properties[] = {
+static Property empty_slot_properties[] = {
     DEFINE_PROP_UINT64("size", EmptySlot, size, 0),
     DEFINE_PROP_STRING("name", EmptySlot, name),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
-static void empty_slot_class_init(ObjectClass *klass, const void *data)
+static void empty_slot_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
 

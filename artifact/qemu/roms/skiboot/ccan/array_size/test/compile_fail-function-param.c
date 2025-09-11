@@ -5,8 +5,8 @@ struct foo {
 	unsigned int a, b;
 };
 
-int check_parameter(const struct foo *array);
-int check_parameter(const struct foo *array)
+int check_parameter(const struct foo array[4]);
+int check_parameter(const struct foo array[4])
 {
 #ifdef FAIL
 	return (ARRAY_SIZE(array) == 4);
@@ -18,7 +18,7 @@ int check_parameter(const struct foo *array)
 #endif
 }
 
-int main(void)
+int main(int argc, char *argv[])
 {
 	return check_parameter(NULL);
 }

@@ -28,7 +28,7 @@
 #include "qemu/osdep.h"
 #include "qapi/error.h"
 #include "qapi/qapi-events-qdev.h"
-#include "qobject/qdict.h"
+#include "qapi/qmp/qdict.h"
 #include "qapi/visitor.h"
 #include "qemu/error-report.h"
 #include "qemu/option.h"
@@ -476,7 +476,8 @@ static void device_set_realized(Object *obj, bool value, Error **errp)
         if (!obj->parent) {
             gchar *name = g_strdup_printf("device[%d]", unattached_count++);
 
-            object_property_add_child(machine_get_container("unattached"),
+            object_property_add_child(container_get(qdev_get_machine(),
+                                                    "/unattached"),
                                       name, obj);
             unattached_parent = true;
             g_free(name);
@@ -690,10 +691,11 @@ static void device_finalize(Object *obj)
         dev->canonical_path = NULL;
     }
 
+    qobject_unref(dev->opts);
     g_free(dev->id);
 }
 
-static void device_class_base_init(ObjectClass *class, const void *data)
+static void device_class_base_init(ObjectClass *class, void *data)
 {
     DeviceClass *klass = DEVICE_CLASS(class);
 
@@ -701,7 +703,6 @@ static void device_class_base_init(ObjectClass *class, const void *data)
      * so do not propagate them to the subclasses.
      */
     klass->props_ = NULL;
-    klass->props_count_ = 0;
 }
 
 static void device_unparent(Object *obj)
@@ -731,7 +732,7 @@ device_vmstate_if_get_id(VMStateIf *obj)
     return qdev_get_dev_path(dev);
 }
 
-static void device_class_init(ObjectClass *class, const void *data)
+static void device_class_init(ObjectClass *class, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(class);
     VMStateIfClass *vc = VMSTATE_IF_CLASS(class);
@@ -816,26 +817,10 @@ Object *qdev_get_machine(void)
     static Object *dev;
 
     if (dev == NULL) {
-        dev = object_resolve_path_component(object_get_root(), "machine");
-        /*
-         * Any call to this function before machine is created is treated
-         * as a programming error as of now.
-         */
-        assert(dev);
+        dev = container_get(object_get_root(), "/machine");
     }
 
     return dev;
-}
-
-Object *machine_get_container(const char *name)
-{
-    Object *container, *machine;
-
-    machine = qdev_get_machine();
-    container = object_resolve_path_component(machine, name);
-    assert(object_dynamic_cast(container, TYPE_CONTAINER));
-
-    return container;
 }
 
 char *qdev_get_human_name(DeviceState *dev)
@@ -870,7 +855,7 @@ static const TypeInfo device_type_info = {
     .class_init = device_class_init,
     .abstract = true,
     .class_size = sizeof(DeviceClass),
-    .interfaces = (const InterfaceInfo[]) {
+    .interfaces = (InterfaceInfo[]) {
         { TYPE_VMSTATE_IF },
         { TYPE_RESETTABLE_INTERFACE },
         { }

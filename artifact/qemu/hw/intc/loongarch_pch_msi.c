@@ -13,7 +13,6 @@
 #include "hw/pci/msi.h"
 #include "hw/misc/unimp.h"
 #include "migration/vmstate.h"
-#include "system/kvm.h"
 #include "trace.h"
 
 static uint64_t loongarch_msi_mem_read(void *opaque, hwaddr addr, unsigned size)
@@ -26,15 +25,6 @@ static void loongarch_msi_mem_write(void *opaque, hwaddr addr,
 {
     LoongArchPCHMSI *s = (LoongArchPCHMSI *)opaque;
     int irq_num;
-
-    if (kvm_irqchip_in_kernel()) {
-        MSIMessage msg;
-
-        msg.address = addr;
-        msg.data = val;
-        kvm_irqchip_send_msi(kvm_state, msg);
-        return;
-    }
 
     /*
      * vector number is irq number from upper extioi intc
@@ -52,6 +42,13 @@ static const MemoryRegionOps loongarch_pch_msi_ops = {
     .endianness = DEVICE_LITTLE_ENDIAN,
 };
 
+static void pch_msi_irq_handler(void *opaque, int irq, int level)
+{
+    LoongArchPCHMSI *s = LOONGARCH_PCH_MSI(opaque);
+
+    qemu_set_irq(s->pch_msi_irq[irq], level);
+}
+
 static void loongarch_pch_msi_realize(DeviceState *dev, Error **errp)
 {
     LoongArchPCHMSI *s = LOONGARCH_PCH_MSI(dev);
@@ -62,7 +59,9 @@ static void loongarch_pch_msi_realize(DeviceState *dev, Error **errp)
     }
 
     s->pch_msi_irq = g_new(qemu_irq, s->irq_num);
+
     qdev_init_gpio_out(dev, s->pch_msi_irq, s->irq_num);
+    qdev_init_gpio_in(dev, pch_msi_irq_handler, s->irq_num);
 }
 
 static void loongarch_pch_msi_unrealize(DeviceState *dev)
@@ -84,12 +83,13 @@ static void loongarch_pch_msi_init(Object *obj)
 
 }
 
-static const Property loongarch_msi_properties[] = {
+static Property loongarch_msi_properties[] = {
     DEFINE_PROP_UINT32("msi_irq_base", LoongArchPCHMSI, irq_base, 0),
     DEFINE_PROP_UINT32("msi_irq_num",  LoongArchPCHMSI, irq_num, 0),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
-static void loongarch_pch_msi_class_init(ObjectClass *klass, const void *data)
+static void loongarch_pch_msi_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
 

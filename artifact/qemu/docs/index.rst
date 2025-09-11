@@ -3,8 +3,6 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-.. _documentation-root:
-
 ================================
 Welcome to QEMU's documentation!
 ================================
@@ -20,4 +18,3 @@ Welcome to QEMU's documentation!
    interop/index
    specs/index
    devel/index
-   glossary

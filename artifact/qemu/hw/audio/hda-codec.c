@@ -857,11 +857,12 @@ static const VMStateDescription vmstate_hda_audio = {
     }
 };
 
-static const Property hda_audio_properties[] = {
+static Property hda_audio_properties[] = {
     DEFINE_AUDIO_PROPERTIES(HDAAudioState, card),
     DEFINE_PROP_UINT32("debug", HDAAudioState, debug,   0),
     DEFINE_PROP_BOOL("mixer", HDAAudioState, mixer,  true),
     DEFINE_PROP_BOOL("use-timer", HDAAudioState, use_timer,  true),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
 static void hda_audio_init_output(HDACodecDevice *hda, Error **errp)
@@ -900,7 +901,7 @@ static void hda_audio_init_micro(HDACodecDevice *hda, Error **errp)
     hda_audio_init(hda, desc, errp);
 }
 
-static void hda_audio_base_class_init(ObjectClass *klass, const void *data)
+static void hda_audio_base_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
     HDACodecDeviceClass *k = HDA_CODEC_DEVICE_CLASS(klass);
@@ -922,7 +923,7 @@ static const TypeInfo hda_audio_info = {
     .abstract      = true,
 };
 
-static void hda_audio_output_class_init(ObjectClass *klass, const void *data)
+static void hda_audio_output_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
     HDACodecDeviceClass *k = HDA_CODEC_DEVICE_CLASS(klass);
@@ -937,7 +938,7 @@ static const TypeInfo hda_audio_output_info = {
     .class_init    = hda_audio_output_class_init,
 };
 
-static void hda_audio_duplex_class_init(ObjectClass *klass, const void *data)
+static void hda_audio_duplex_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
     HDACodecDeviceClass *k = HDA_CODEC_DEVICE_CLASS(klass);
@@ -952,7 +953,7 @@ static const TypeInfo hda_audio_duplex_info = {
     .class_init    = hda_audio_duplex_class_init,
 };
 
-static void hda_audio_micro_class_init(ObjectClass *klass, const void *data)
+static void hda_audio_micro_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
     HDACodecDeviceClass *k = HDA_CODEC_DEVICE_CLASS(klass);

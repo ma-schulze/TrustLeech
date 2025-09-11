@@ -36,7 +36,6 @@
 #include "hw/net/imx_fec.h"
 #include "hw/pci-host/designware.h"
 #include "hw/usb/chipidea.h"
-#include "hw/or-irq.h"
 #include "cpu.h"
 #include "qom/object.h"
 #include "qemu/units.h"
@@ -86,7 +85,6 @@ struct FslIMX7State {
     IMX7GPRState       gpr;
     ChipideaState      usb[FSL_IMX7_NUM_USBS];
     DesignwarePCIEHost pcie;
-    OrIRQState         pcie4_msi_irq;
     MemoryRegion       rom;
     MemoryRegion       caam;
     MemoryRegion       ocram;
@@ -430,7 +428,7 @@ enum FslIMX7IRQs {
     FSL_IMX7_PCI_INTA_IRQ = 125,
     FSL_IMX7_PCI_INTB_IRQ = 124,
     FSL_IMX7_PCI_INTC_IRQ = 123,
-    FSL_IMX7_PCI_INTD_MSI_IRQ = 122,
+    FSL_IMX7_PCI_INTD_IRQ = 122,
 
     FSL_IMX7_UART7_IRQ    = 126,
 

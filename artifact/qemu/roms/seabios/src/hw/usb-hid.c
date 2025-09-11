@@ -1,49 +1,20 @@
 // Code for handling USB Human Interface Devices (HID).
 //
 // Copyright (C) 2009  Kevin O'Connor <kevin@koconnor.net>
-// Copyright (C) 2024  Daniel Khodabakhsh <d.khodabakhsh@gmail.com>
 //
 // This file may be distributed under the terms of the GNU LGPLv3 license.
 
 #include "biosvar.h" // GET_GLOBAL
 #include "config.h" // CONFIG_*
-#include "output.h" // dprintf, warn_noalloc
-#include "malloc.h" // malloc_fseg
+#include "output.h" // dprintf
 #include "ps2port.h" // ATKBD_CMD_GETID
 #include "usb.h" // usb_ctrlrequest
 #include "usb-hid.h" // usb_keyboard_setup
 #include "util.h" // process_key
 
-struct pipe_node {
-    struct usb_pipe *pipe;
-    struct pipe_node *next;
-};
+struct usb_pipe *keyboard_pipe VARFSEG;
+struct usb_pipe *mouse_pipe VARFSEG;
 
-struct pipe_node *keyboards VARFSEG = NULL;
-struct pipe_node *mice VARFSEG = NULL;
-
-static int
-add_pipe_node(struct pipe_node **list
-              , struct usbdevice_s *usbdev
-              , struct usb_endpoint_descriptor *epdesc)
-{
-    struct usb_pipe *pipe = usb_alloc_pipe(usbdev, epdesc);
-    if (!pipe)
-        return -1;
-
-    struct pipe_node *new_node = malloc_fseg(sizeof(struct pipe_node));
-    if (!new_node) {
-        warn_noalloc();
-        return -1;
-    }
-
-    new_node->pipe = pipe;
-
-    new_node->next = *list;
-    *list = new_node;
-
-    return 0;
-}
 
 /****************************************************************
  * Setup
@@ -93,6 +64,9 @@ usb_kbd_setup(struct usbdevice_s *usbdev
 {
     if (! CONFIG_USB_KEYBOARD)
         return -1;
+    if (keyboard_pipe)
+        // XXX - this enables the first found keyboard (could be random)
+        return -1;
 
     if (epdesc->wMaxPacketSize < sizeof(struct keyevent)
         || epdesc->wMaxPacketSize > MAX_KBD_EVENT) {
@@ -102,16 +76,19 @@ usb_kbd_setup(struct usbdevice_s *usbdev
     }
 
     // Enable "boot" protocol.
-    if (set_protocol(usbdev->defpipe, 0, usbdev->iface->bInterfaceNumber)) {
+    int ret = set_protocol(usbdev->defpipe, 0, usbdev->iface->bInterfaceNumber);
+    if (ret) {
         dprintf(3, "Failed to set boot protocol\n");
         return -1;
     }
 
     // Periodically send reports to enable key repeat.
-    if (set_idle(usbdev->defpipe, KEYREPEATMS))
+    ret = set_idle(usbdev->defpipe, KEYREPEATMS);
+    if (ret)
         dprintf(3, "Warning: Failed to set key repeat rate\n");
 
-    if (add_pipe_node(&keyboards, usbdev, epdesc))
+    keyboard_pipe = usb_alloc_pipe(usbdev, epdesc);
+    if (!keyboard_pipe)
         return -1;
 
     dprintf(1, "USB keyboard initialized\n");
@@ -132,6 +109,9 @@ usb_mouse_setup(struct usbdevice_s *usbdev
 {
     if (! CONFIG_USB_MOUSE)
         return -1;
+    if (mouse_pipe)
+        // XXX - this enables the first found mouse (could be random)
+        return -1;
 
     if (epdesc->wMaxPacketSize < sizeof(struct mouseevent)
         || epdesc->wMaxPacketSize > MAX_MOUSE_EVENT) {
@@ -141,10 +121,12 @@ usb_mouse_setup(struct usbdevice_s *usbdev
     }
 
     // Enable "boot" protocol.
-    if (set_protocol(usbdev->defpipe, 0, usbdev->iface->bInterfaceNumber))
+    int ret = set_protocol(usbdev->defpipe, 0, usbdev->iface->bInterfaceNumber);
+    if (ret)
         return -1;
 
-    if (add_pipe_node(&mice, usbdev, epdesc))
+    mouse_pipe = usb_alloc_pipe(usbdev, epdesc);
+    if (!mouse_pipe)
         return -1;
 
     dprintf(1, "USB mouse initialized\n");
@@ -343,19 +325,16 @@ usb_check_key(void)
 {
     if (! CONFIG_USB_KEYBOARD)
         return;
+    struct usb_pipe *pipe = GET_GLOBAL(keyboard_pipe);
+    if (!pipe)
+        return;
 
-    for (struct pipe_node *node = GET_GLOBAL(keyboards);
-         node;
-         node = GET_GLOBALFLAT(node->next)) {
-        struct usb_pipe *pipe = GET_GLOBALFLAT(node->pipe);
-
-        for (;;) {
-            u8 data[MAX_KBD_EVENT];
-            int ret = usb_poll_intr(pipe, data);
-            if (ret)
-                break;
-            handle_key((void*)data);
-        }
+    for (;;) {
+        u8 data[MAX_KBD_EVENT];
+        int ret = usb_poll_intr(pipe, data);
+        if (ret)
+            break;
+        handle_key((void*)data);
     }
 }
 
@@ -365,8 +344,7 @@ usb_kbd_active(void)
 {
     if (! CONFIG_USB_KEYBOARD)
         return 0;
-
-    return GET_GLOBAL(keyboards) != NULL;
+    return GET_GLOBAL(keyboard_pipe) != NULL;
 }
 
 // Handle a ps2 style keyboard command.
@@ -412,19 +390,16 @@ usb_check_mouse(void)
 {
     if (! CONFIG_USB_MOUSE)
         return;
+    struct usb_pipe *pipe = GET_GLOBAL(mouse_pipe);
+    if (!pipe)
+        return;
 
-    for (struct pipe_node *node = GET_GLOBAL(mice);
-         node;
-         node = GET_GLOBALFLAT(node->next)) {
-        struct usb_pipe *pipe = GET_GLOBALFLAT(node->pipe);
-
-        for (;;) {
-            u8 data[MAX_MOUSE_EVENT];
-            int ret = usb_poll_intr(pipe, data);
-            if (ret)
-                break;
-            handle_mouse((void*)data);
-        }
+    for (;;) {
+        u8 data[MAX_MOUSE_EVENT];
+        int ret = usb_poll_intr(pipe, data);
+        if (ret)
+            break;
+        handle_mouse((void*)data);
     }
 }
 
@@ -434,8 +409,7 @@ usb_mouse_active(void)
 {
     if (! CONFIG_USB_MOUSE)
         return 0;
-
-    return GET_GLOBAL(mice) != NULL;
+    return GET_GLOBAL(mouse_pipe) != NULL;
 }
 
 // Handle a ps2 style mouse command.

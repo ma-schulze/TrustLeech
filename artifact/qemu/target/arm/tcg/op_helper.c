@@ -20,11 +20,10 @@
 #include "qemu/main-loop.h"
 #include "cpu.h"
 #include "exec/helper-proto.h"
-#include "exec/target_page.h"
 #include "internals.h"
 #include "cpu-features.h"
-#include "accel/tcg/cpu-ldst.h"
-#include "accel/tcg/probe.h"
+#include "exec/exec-all.h"
+#include "exec/cpu_ldst.h"
 #include "cpregs.h"
 
 #define SIGNBIT (uint32_t)0x80000000
@@ -770,7 +769,7 @@ const void *HELPER(access_check_cp_reg)(CPUARMState *env, uint32_t key,
 
     if (arm_feature(env, ARM_FEATURE_XSCALE) && ri->cp < 14
         && extract32(env->cp15.c15_cpar, ri->cp, 1) == 0) {
-        res = CP_ACCESS_UNDEFINED;
+        res = CP_ACCESS_TRAP;
         goto fail;
     }
 
@@ -787,7 +786,7 @@ const void *HELPER(access_check_cp_reg)(CPUARMState *env, uint32_t key,
      * the other trap takes priority. So we take the "check HSTR_EL2" path
      * for all of those cases.)
      */
-    if (res != CP_ACCESS_OK && ((res & CP_ACCESS_EL_MASK) < 2) &&
+    if (res != CP_ACCESS_OK && ((res & CP_ACCESS_EL_MASK) == 0) &&
         arm_current_el(env) == 0) {
         goto fail;
     }
@@ -824,7 +823,6 @@ const void *HELPER(access_check_cp_reg)(CPUARMState *env, uint32_t key,
         unsigned int idx = FIELD_EX32(ri->fgt, FGT, IDX);
         unsigned int bitpos = FIELD_EX32(ri->fgt, FGT, BITPOS);
         bool rev = FIELD_EX32(ri->fgt, FGT, REV);
-        bool nxs = FIELD_EX32(ri->fgt, FGT, NXS);
         bool trapbit;
 
         if (ri->fgt & FGT_EXEC) {
@@ -838,15 +836,7 @@ const void *HELPER(access_check_cp_reg)(CPUARMState *env, uint32_t key,
             trapword = env->cp15.fgt_write[idx];
         }
 
-        if (nxs && (arm_hcrx_el2_eff(env) & HCRX_FGTNXS)) {
-            /*
-             * If HCRX_EL2.FGTnXS is 1 then the fine-grained trap for
-             * TLBI maintenance insns does *not* apply to the nXS variant.
-             */
-            trapbit = 0;
-        } else {
-            trapbit = extract64(trapword, bitpos, 1);
-        }
+        trapbit = extract64(trapword, bitpos, 1);
         if (trapbit != rev) {
             res = CP_ACCESS_TRAP_EL2;
             goto fail;
@@ -859,24 +849,21 @@ const void *HELPER(access_check_cp_reg)(CPUARMState *env, uint32_t key,
 
  fail:
     excp = EXCP_UDEF;
-    switch (res) {
-        /* CP_ACCESS_TRAP* traps are always direct to a specified EL */
-    case CP_ACCESS_TRAP_EL3:
+    switch (res & ~CP_ACCESS_EL_MASK) {
+    case CP_ACCESS_TRAP:
         /*
          * If EL3 is AArch32 then there's no syndrome register; the cases
          * where we would raise a SystemAccessTrap to AArch64 EL3 all become
          * raising a Monitor trap exception. (Because there's no visible
          * syndrome it doesn't matter what we pass to raise_exception().)
          */
-        if (!arm_el_is_aa64(env, 3)) {
+        if ((res & CP_ACCESS_EL_MASK) == 3 && !arm_el_is_aa64(env, 3)) {
             excp = EXCP_MON_TRAP;
         }
         break;
-    case CP_ACCESS_TRAP_EL2:
-    case CP_ACCESS_TRAP_EL1:
-        break;
-    case CP_ACCESS_UNDEFINED:
-        /* CP_ACCESS_UNDEFINED is never direct to a specified EL */
+    case CP_ACCESS_TRAP_UNCATEGORIZED:
+        /* Only CP_ACCESS_TRAP traps are direct to a specified EL */
+        assert((res & CP_ACCESS_EL_MASK) == 0);
         if (cpu_isar_feature(aa64_ids, cpu) && isread &&
             arm_cpreg_in_idspace(ri)) {
             /*
@@ -896,9 +883,6 @@ const void *HELPER(access_check_cp_reg)(CPUARMState *env, uint32_t key,
     case 0:
         target_el = exception_target_el(env);
         break;
-    case 1:
-        assert(arm_current_el(env) < 2);
-        break;
     case 2:
         assert(arm_current_el(env) != 3);
         assert(arm_is_el2_enabled(env));
@@ -907,6 +891,7 @@ const void *HELPER(access_check_cp_reg)(CPUARMState *env, uint32_t key,
         assert(arm_feature(env, ARM_FEATURE_EL3));
         break;
     default:
+        /* No "direct" traps to EL1 */
         g_assert_not_reached();
     }
 
@@ -1222,7 +1207,7 @@ uint32_t HELPER(ror_cc)(CPUARMState *env, uint32_t x, uint32_t i)
     }
 }
 
-void HELPER(probe_access)(CPUARMState *env, vaddr ptr,
+void HELPER(probe_access)(CPUARMState *env, target_ulong ptr,
                           uint32_t access_type, uint32_t mmu_idx,
                           uint32_t size)
 {

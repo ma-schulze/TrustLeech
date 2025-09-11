@@ -325,11 +325,12 @@ static void ecc_realize(DeviceState *dev, Error **errp)
     }
 }
 
-static const Property ecc_properties[] = {
+static Property ecc_properties[] = {
     DEFINE_PROP_UINT32("version", ECCState, version, -1),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
-static void ecc_class_init(ObjectClass *klass, const void *data)
+static void ecc_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
 

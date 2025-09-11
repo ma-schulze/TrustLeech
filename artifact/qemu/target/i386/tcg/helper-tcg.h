@@ -20,6 +20,7 @@
 #ifndef I386_HELPER_TCG_H
 #define I386_HELPER_TCG_H
 
+#include "exec/exec-all.h"
 #include "qemu/host-utils.h"
 
 /* Maximum instruction code size */
@@ -58,8 +59,6 @@ static inline target_long lshift(target_long x, int n)
 
 /* translate.c */
 void tcg_x86_init(void);
-void x86_translate_code(CPUState *cs, TranslationBlock *tb,
-                        int *max_insns, vaddr pc, void *host_pc);
 
 /* excp_helper.c */
 G_NORETURN void raise_exception(CPUX86State *env, int exception_index);
@@ -97,7 +96,7 @@ static inline unsigned int compute_pf(uint8_t x)
 /* misc_helper.c */
 void cpu_load_eflags(CPUX86State *env, int eflags, int update_mask);
 
-/* system/svm_helper.c */
+/* sysemu/svm_helper.c */
 #ifndef CONFIG_USER_ONLY
 G_NORETURN void cpu_vmexit(CPUX86State *nenv, uint32_t exit_code,
                            uint64_t exit_info_1, uintptr_t retaddr);
@@ -115,7 +114,7 @@ int exception_has_error_code(int intno);
 /* smm_helper.c */
 void do_smm_enter(X86CPU *cpu);
 
-/* system/bpt_helper.c */
+/* sysemu/bpt_helper.c */
 bool check_hw_breakpoints(CPUX86State *env, bool force_dr6_update);
 
 /*

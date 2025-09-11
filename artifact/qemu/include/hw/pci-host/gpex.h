@@ -32,6 +32,8 @@ OBJECT_DECLARE_SIMPLE_TYPE(GPEXHost, GPEX_HOST)
 #define TYPE_GPEX_ROOT_DEVICE "gpex-root"
 OBJECT_DECLARE_SIMPLE_TYPE(GPEXRootState, GPEX_ROOT_DEVICE)
 
+#define GPEX_NUM_IRQS 4
+
 struct GPEXRootState {
     /*< private >*/
     PCIDevice parent_obj;
@@ -45,10 +47,8 @@ struct GPEXConfig {
     MemMapEntry pio;
     int         irq;
     PCIBus      *bus;
-    bool        pci_native_hotplug;
 };
 
-typedef struct GPEXIrq GPEXIrq;
 struct GPEXHost {
     /*< private >*/
     PCIExpressHost parent_obj;
@@ -60,8 +60,8 @@ struct GPEXHost {
     MemoryRegion io_mmio;
     MemoryRegion io_ioport_window;
     MemoryRegion io_mmio_window;
-    GPEXIrq *irq;
-    uint8_t num_irqs;
+    qemu_irq irq[GPEX_NUM_IRQS];
+    int irq_num[GPEX_NUM_IRQS];
 
     bool allow_unmapped_accesses;
 

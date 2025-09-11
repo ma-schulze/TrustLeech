@@ -10,7 +10,7 @@
  */
 
 #include "qemu/osdep.h"
-#include "system/replay.h"
+#include "sysemu/replay.h"
 #include "replay-internal.h"
 #include "qemu/error-report.h"
 

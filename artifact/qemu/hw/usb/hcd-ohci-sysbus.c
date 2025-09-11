@@ -57,14 +57,15 @@ static void ohci_sysbus_reset(DeviceState *dev)
     ohci_hard_reset(ohci);
 }
 
-static const Property ohci_sysbus_properties[] = {
+static Property ohci_sysbus_properties[] = {
     DEFINE_PROP_STRING("masterbus", OHCISysBusState, masterbus),
     DEFINE_PROP_UINT32("num-ports", OHCISysBusState, num_ports, 3),
     DEFINE_PROP_UINT32("firstport", OHCISysBusState, firstport, 0),
     DEFINE_PROP_DMAADDR("dma-offset", OHCISysBusState, dma_offset, 0),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
-static void ohci_sysbus_class_init(ObjectClass *klass, const void *data)
+static void ohci_sysbus_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
 

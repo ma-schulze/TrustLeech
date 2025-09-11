@@ -161,6 +161,7 @@ mappings:
     rpm: bash-completion-devel
     AlmaLinux9: bash-completion
     CentOSStream9: bash-completion
+    Fedora39: bash-completion
     Fedora40: bash-completion
 
   bc:
@@ -229,18 +230,8 @@ mappings:
     pkg: rust
     MacOS: rust
 
-  cargo-c:
-    default: cargo-c
-    Debian11:
-    Ubuntu2204:
-
-  cargo-rpm-macros:
-    rpm: cargo-rpm-macros
-    OpenSUSE: cargo-packaging
-
   ccache:
     default: ccache
-    pkg: ccache4
 
   check:
     default: check
@@ -355,6 +346,7 @@ mappings:
     OpenSUSE: systemtap-dtrace
     AlmaLinux9: systemtap-sdt-devel
     CentOSStream9: systemtap-sdt-devel
+    Fedora39: systemtap-sdt-devel
     Fedora40: systemtap-sdt-devel
     OpenSUSELeap15: systemtap-sdt-devel
     cross-policy-default: foreign
@@ -468,7 +460,7 @@ mappings:
 
   gdk-pixbuf:
     apk: gdk-pixbuf-dev
-    deb: libgdk-pixbuf-2.0-dev
+    deb: libgdk-pixbuf2.0-dev
     pkg: gdk-pixbuf2
     rpm: gdk-pixbuf2-devel
     MacOS: gdk-pixbuf
@@ -663,13 +655,11 @@ mappings:
     OpenSUSE: mkisofs
 
   java:
-    apk: openjdk21-jdk
-    deb: openjdk-21-jdk-headless
-    pkg: openjdk21
-    rpm: java-21-openjdk-headless
+    apk: openjdk11-jdk
+    deb: openjdk-17-jdk-headless
+    pkg: openjdk11
+    rpm: java-11-openjdk-headless
     MacOS: openjdk
-    Debian11: openjdk-17-jdk-headless
-    Debian12: openjdk-17-jdk-headless
 
   jna:
     default: jna
@@ -768,6 +758,7 @@ mappings:
   libc-malloc-debug:
     default:
     Fedora: glibc-utils
+    Fedora39: glibc
     cross-policy-default: foreign
 
   libc-static:
@@ -1021,7 +1012,7 @@ mappings:
     cross-policy-default: foreign
 
   librest:
-    apk: rest1-dev
+    apk: rest-dev
     deb: librest-dev
     pkg: rest
     Fedora: rest-devel
@@ -1062,8 +1053,9 @@ mappings:
   libssh:
     default: libssh
     apk: libssh-dev
-    deb: libssh-dev
     rpm: libssh-devel
+    Debian: libssh-gcrypt-dev
+    Ubuntu: libssh-dev
     cross-policy-default: foreign
 
   libssh2:
@@ -1225,8 +1217,8 @@ mappings:
     cross-policy-default: foreign
 
   lua:
-    apk: lua5.4-dev
-    deb: liblua5.4-dev
+    apk: lua5.4
+    deb: lua5.4
     pkg: lua54
     rpm: lua-devel
     MacOS: lua
@@ -1432,8 +1424,6 @@ mappings:
     deb: libarchive-tar-perl
     pkg: perl5
     rpm: perl-Archive-Tar
-    OpenSUSE: perl
-    OpenSUSELeap15: perl-Archive-Tar
 
   perl-CPAN-Changes:
     deb: libcpan-changes-perl
@@ -1452,13 +1442,13 @@ mappings:
     rpm: perl-Digest-MD5
 
   perl-ExtUtils-CBuilder:
-    default: perl
-    pkg: perl5
+    deb: libextutils-cbuilder-perl
+    pkg: p5-ExtUtils-CBuilder
     rpm: perl-ExtUtils-CBuilder
-    OpenSUSE: perl
 
   perl-ExtUtils-Embed:
-    default: perl
+    apk: perl
+    deb: perl
     pkg: perl5
     rpm: perl-ExtUtils-Embed
     OpenSUSE: perl
@@ -1519,7 +1509,6 @@ mappings:
     default: perl
     pkg: p5-Pod-Simple
     rpm: perl-Pod-Simple
-    OpenSUSE: perl
 
   perl-Sub-Uplevel:
     apk: perl-sub-uplevel
@@ -1559,8 +1548,6 @@ mappings:
     deb: libtest-harness-perl
     pkg: p5-Test-Harness
     rpm: perl-Test-Harness
-    OpenSUSE: perl
-    OpenSUSELeap15: perl-Test-Harness
 
   perl-Test-LWP-UserAgent:
     deb: libtest-lwp-useragent-perl
@@ -1589,7 +1576,6 @@ mappings:
     deb: libtime-hr-perl
     pkg: p5-Time-HiRes
     rpm: perl-Time-HiRes
-    OpenSUSE: perl
 
   perl-XML-Twig:
     apk: perl-xml-twig
@@ -1737,15 +1723,8 @@ mappings:
     rpm: python3-gobject
 
   python3-imp:
+    Fedora39: python3-zombie-imp
     Fedora40: python3-zombie-imp
-
-  python3-libvirt:
-    apk: py3-libvirt
-    deb: python3-libvirt
-    pkg: py311-libvirt
-    rpm: python3-libvirt
-    MacOS: libvirt-python
-    OpenSUSE: python3-libvirt-python
 
   python3-libxml2:
     default: python3-libxml2
@@ -2152,9 +2131,6 @@ mappings:
     AlmaLinux9:
     CentOSStream9:
     cross-policy-default: foreign
-
-  vulkan-tools:
-    default: vulkan-tools
 
   libguestfs-tools:
     deb: libguestfs-tools

@@ -36,7 +36,15 @@ static inline G_GNUC_PRINTF(1, 2) int DPRINTF(const char *fmt, ...)
 }
 #endif
 
-static inline bool ipv4_addr_is_multicast(uint32_t addr)
+#define __le16 uint16_t
+#define __le32 uint32_t
+#define __le64 uint64_t
+
+#define __be16 uint16_t
+#define __be32 uint32_t
+#define __be64 uint64_t
+
+static inline bool ipv4_addr_is_multicast(__be32 addr)
 {
     return (addr & htonl(0xf0000000)) == htonl(0xe0000000);
 }
@@ -44,8 +52,8 @@ static inline bool ipv4_addr_is_multicast(uint32_t addr)
 typedef struct ipv6_addr {
     union {
         uint8_t addr8[16];
-        uint16_t addr16[8];
-        uint32_t addr32[4];
+        __be16 addr16[8];
+        __be32 addr32[4];
     };
 } Ipv6Addr;
 

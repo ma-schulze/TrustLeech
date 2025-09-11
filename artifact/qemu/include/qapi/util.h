@@ -18,7 +18,7 @@ typedef enum {
 
 typedef struct QEnumLookup {
     const char *const *array;
-    const uint64_t *const features;
+    const unsigned char *const special_features;
     const int size;
 } QEnumLookup;
 

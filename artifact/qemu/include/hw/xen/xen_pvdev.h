@@ -1,7 +1,7 @@
 #ifndef QEMU_HW_XEN_PVDEV_H
 #define QEMU_HW_XEN_PVDEV_H
 
-#include "hw/sysbus.h"
+#include "hw/qdev-core.h"
 #include "hw/xen/xen_backend_ops.h"
 
 /* ------------------------------------------------------------- */
@@ -32,8 +32,7 @@ struct XenDevOps {
 };
 
 struct XenLegacyDevice {
-    SysBusDevice parent_obj;
-
+    DeviceState        qdev;
     const char         *type;
     int                dom;
     int                dev;

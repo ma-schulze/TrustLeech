@@ -2,9 +2,7 @@
 # vim: filetype=python
 
 ##
-# ***********
-# CXL devices
-# ***********
+# = CXL devices
 ##
 
 ##
@@ -119,7 +117,7 @@
 # @nibble-mask: Identifies one or more nibbles that the error affects
 #
 # @bank-group: Bank group of the memory event location, incorporating
-#     a number of banks.
+#     a number of Banks.
 #
 # @bank: Bank of the memory event location.  A single bank is accessed
 #     per read or write of the memory.
@@ -462,7 +460,7 @@
 #
 # @unstable: For now this command is subject to change.
 #
-# Since: 9.1
+# Since : 9.1
 ##
 { 'command': 'cxl-add-dynamic-capacity',
   'data': { 'path': 'str',
@@ -541,7 +539,7 @@
 #
 # @unstable: For now this command is subject to change.
 #
-# Since: 9.1
+# Since : 9.1
 ##
 { 'command': 'cxl-release-dynamic-capacity',
   'data': { 'path': 'str',

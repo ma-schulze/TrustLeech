@@ -21,7 +21,11 @@ from .common import (
     indent,
     mcgen,
 )
-from .gen import QAPISchemaModularCVisitor, gen_features, ifcontext
+from .gen import (
+    QAPISchemaModularCVisitor,
+    gen_special_features,
+    ifcontext,
+)
 from .schema import (
     QAPISchema,
     QAPISchemaAlternatives,
@@ -99,15 +103,15 @@ bool visit_type_%(c_name)s_members(Visitor *v, %(c_name)s *obj, Error **errp)
 ''',
                          name=memb.name, has=has)
             indent.increase()
-        features = gen_features(memb.features)
-        if features != '0':
+        special_features = gen_special_features(memb.features)
+        if special_features != '0':
             ret += mcgen('''
-    if (visit_policy_reject(v, "%(name)s", %(features)s, errp)) {
+    if (visit_policy_reject(v, "%(name)s", %(special_features)s, errp)) {
         return false;
     }
-    if (!visit_policy_skip(v, "%(name)s", %(features)s)) {
+    if (!visit_policy_skip(v, "%(name)s", %(special_features)s)) {
 ''',
-                         name=memb.name, features=features)
+                         name=memb.name, special_features=special_features)
             indent.increase()
         ret += mcgen('''
     if (!visit_type_%(c_type)s(v, "%(name)s", &obj->%(c_name)s, errp)) {
@@ -116,7 +120,7 @@ bool visit_type_%(c_name)s_members(Visitor *v, %(c_name)s *obj, Error **errp)
 ''',
                      c_type=memb.type.c_name(), name=memb.name,
                      c_name=c_name(memb.name))
-        if features != '0':
+        if special_features != '0':
             indent.decrease()
             ret += mcgen('''
     }
@@ -356,9 +360,8 @@ class QAPISchemaGenVisitVisitor(QAPISchemaModularCVisitor):
 #include "qemu/osdep.h"
 #include "qapi/error.h"
 #include "%(visit)s.h"
-#include "%(prefix)sqapi-features.h"
 ''',
-                                      visit=visit, prefix=self._prefix))
+                                      visit=visit))
         self._genh.preamble_add(mcgen('''
 #include "qapi/qapi-builtin-visit.h"
 #include "%(types)s.h"

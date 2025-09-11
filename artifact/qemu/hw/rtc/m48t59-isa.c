@@ -77,10 +77,11 @@ static void m48txx_isa_toggle_lock(Nvram *obj, int lock)
     m48t59_toggle_lock(&d->state, lock);
 }
 
-static const Property m48t59_isa_properties[] = {
+static Property m48t59_isa_properties[] = {
     DEFINE_PROP_INT32("base-year", M48txxISAState, state.base_year, 0),
     DEFINE_PROP_UINT32("iobase", M48txxISAState, io_base, 0x74),
     DEFINE_PROP_UINT8("irq", M48txxISAState, isairq, 8),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
 static void m48t59_reset_isa(DeviceState *d)
@@ -113,7 +114,7 @@ static void m48t59_isa_realize(DeviceState *dev, Error **errp)
     }
 }
 
-static void m48txx_isa_class_init(ObjectClass *klass, const void *data)
+static void m48txx_isa_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
     NvramClass *nc = NVRAM_CLASS(klass);
@@ -126,10 +127,10 @@ static void m48txx_isa_class_init(ObjectClass *klass, const void *data)
     nc->toggle_lock = m48txx_isa_toggle_lock;
 }
 
-static void m48txx_isa_concrete_class_init(ObjectClass *klass, const void *data)
+static void m48txx_isa_concrete_class_init(ObjectClass *klass, void *data)
 {
     M48txxISADeviceClass *u = M48TXX_ISA_CLASS(klass);
-    const M48txxInfo *info = data;
+    M48txxInfo *info = data;
 
     u->info = *info;
 }
@@ -140,7 +141,7 @@ static const TypeInfo m48txx_isa_type_info = {
     .instance_size = sizeof(M48txxISAState),
     .abstract = true,
     .class_init = m48txx_isa_class_init,
-    .interfaces = (const InterfaceInfo[]) {
+    .interfaces = (InterfaceInfo[]) {
         { TYPE_NVRAM },
         { }
     }
@@ -160,7 +161,7 @@ static void m48t59_isa_register_types(void)
     for (i = 0; i < ARRAY_SIZE(m48txx_isa_info); i++) {
         isa_type_info.name = m48txx_isa_info[i].bus_name;
         isa_type_info.class_data = &m48txx_isa_info[i];
-        type_register_static(&isa_type_info);
+        type_register(&isa_type_info);
     }
 }
 

@@ -1278,7 +1278,7 @@ static void tx_fifo_stamp(XlnxVersalCANFDState *s, uint32_t tb0_regid)
     }
 }
 
-static gint g_cmp_ids(gconstpointer data1, gconstpointer data2, gpointer d)
+static gint g_cmp_ids(gconstpointer data1, gconstpointer data2)
 {
     tx_ready_reg_info *tx_reg_1 = (tx_ready_reg_info *) data1;
     tx_ready_reg_info *tx_reg_2 = (tx_ready_reg_info *) data2;
@@ -1298,6 +1298,8 @@ static void free_list(GSList *list)
     }
 
     g_slist_free(list);
+
+    return;
 }
 
 static GSList *prepare_tx_data(XlnxVersalCANFDState *s)
@@ -1316,7 +1318,7 @@ static GSList *prepare_tx_data(XlnxVersalCANFDState *s)
             temp->can_id = s->regs[reg_num];
             temp->reg_num = reg_num;
             list = g_slist_prepend(list, temp);
-            list = g_slist_sort_with_data(list, g_cmp_ids, NULL);
+            list = g_slist_sort(list, g_cmp_ids);
         }
 
         reg_ready >>= 1;
@@ -2040,7 +2042,7 @@ static const VMStateDescription vmstate_canfd = {
     }
 };
 
-static const Property canfd_core_properties[] = {
+static Property canfd_core_properties[] = {
     DEFINE_PROP_UINT8("rx-fifo0", XlnxVersalCANFDState, cfg.rx0_fifo, 0x40),
     DEFINE_PROP_UINT8("rx-fifo1", XlnxVersalCANFDState, cfg.rx1_fifo, 0x40),
     DEFINE_PROP_UINT8("tx-fifo", XlnxVersalCANFDState, cfg.tx_fifo, 0x20),
@@ -2050,9 +2052,10 @@ static const Property canfd_core_properties[] = {
                        CANFD_DEFAULT_CLOCK),
     DEFINE_PROP_LINK("canfdbus", XlnxVersalCANFDState, canfdbus, TYPE_CAN_BUS,
                      CanBusState *),
+    DEFINE_PROP_END_OF_LIST(),
 };
 
-static void canfd_class_init(ObjectClass *klass, const void *data)
+static void canfd_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
 

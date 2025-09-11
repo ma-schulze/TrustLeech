@@ -38,7 +38,7 @@
 
 #include "hw/arm/exynos4210.h"
 #include "qom/object.h"
-#include "system/rtc.h"
+#include "sysemu/rtc.h"
 
 #define DEBUG_RTC 0
 
@@ -592,7 +592,7 @@ static void exynos4210_rtc_finalize(Object *obj)
     ptimer_free(s->ptimer_1Hz);
 }
 
-static void exynos4210_rtc_class_init(ObjectClass *klass, const void *data)
+static void exynos4210_rtc_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
 

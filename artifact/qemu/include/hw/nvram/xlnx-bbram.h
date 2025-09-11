@@ -26,7 +26,7 @@
 #ifndef XLNX_BBRAM_H
 #define XLNX_BBRAM_H
 
-#include "system/block-backend.h"
+#include "sysemu/block-backend.h"
 #include "hw/qdev-core.h"
 #include "hw/irq.h"
 #include "hw/sysbus.h"

@@ -1,16 +1,16 @@
 #include "qemu/osdep.h"
 #include "cpu.h"
-#include "exec/cputlb.h"
+#include "exec/exec-all.h"
 #include "hw/isa/isa.h"
 #include "migration/cpu.h"
 #include "kvm/hyperv.h"
 #include "hw/i386/x86.h"
 #include "kvm/kvm_i386.h"
 #include "hw/xen/xen.h"
-#include "exec/watchpoint.h"
-#include "system/kvm.h"
-#include "system/kvm_xen.h"
-#include "system/tcg.h"
+
+#include "sysemu/kvm.h"
+#include "sysemu/kvm_xen.h"
+#include "sysemu/tcg.h"
 
 #include "qemu/error-report.h"
 
@@ -1060,8 +1060,9 @@ static bool tsc_khz_needed(void *opaque)
 {
     X86CPU *cpu = opaque;
     CPUX86State *env = &cpu->env;
-
-    return env->tsc_khz;
+    MachineClass *mc = MACHINE_GET_CLASS(qdev_get_machine());
+    X86MachineClass *x86mc = X86_MACHINE_CLASS(mc);
+    return env->tsc_khz && x86mc->save_tsc_khz;
 }
 
 static const VMStateDescription vmstate_tsc_khz = {

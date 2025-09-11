@@ -2,9 +2,7 @@
 # vim: filetype=python
 
 ##
-# ********************
-# Rocker switch device
-# ********************
+# = Rocker switch device
 ##
 
 ##
@@ -29,6 +27,8 @@
 # Return rocker switch information.
 #
 # @name: switch name
+#
+# Returns: @Rocker information
 #
 # Since: 2.4
 #
@@ -97,6 +97,8 @@
 # Return rocker switch port information.
 #
 # @name: port name
+#
+# Returns: a list of @RockerPort information
 #
 # Since: 2.4
 #
@@ -252,7 +254,7 @@
 #                       "action": {"goto-tbl": 10},
 #                       "mask": {"in-pport": 4294901760}
 #                      },
-#                      ...
+#                      {...},
 #        ]}
 ##
 { 'command': 'query-rocker-of-dpa-flows',

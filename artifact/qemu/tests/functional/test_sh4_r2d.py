@@ -4,8 +4,11 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-from qemu_test import LinuxKernelTest, Asset, skipFlakyTest
+import os
 
+from qemu_test import LinuxKernelTest, Asset
+from qemu_test.utils import archive_extract
+from unittest import skipUnless
 
 class R2dTest(LinuxKernelTest):
 
@@ -15,14 +18,13 @@ class R2dTest(LinuxKernelTest):
 
     # This test has a 6-10% failure rate on various hosts that look
     # like issues with a buggy kernel.
-    # XXX file tracking bug
-    @skipFlakyTest(bug_url=None)
+    @skipUnless(os.getenv('QEMU_TEST_FLAKY_TESTS'), 'Test is unstable')
     def test_r2d(self):
         self.set_machine('r2d')
-        self.archive_extract(self.ASSET_DAY09)
+        file_path = self.ASSET_DAY09.fetch()
+        archive_extract(file_path, self.workdir)
         self.vm.add_args('-append', 'console=ttySC1')
-        self.launch_kernel(self.scratch_file('day09', 'zImage'),
-                           console_index=1,
+        self.launch_kernel(self.workdir + '/day09/zImage', console_index=1,
                            wait_for='QEMU advent calendar')
 
 if __name__ == '__main__':

@@ -1,5 +1,3 @@
-.. _amd-sev:
-
 AMD Secure Encrypted Virtualization (SEV)
 =========================================
 
