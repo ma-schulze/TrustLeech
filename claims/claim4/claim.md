@@ -28,15 +28,24 @@ Next, we again have to connect a second VM hosting the VMI appliance:
 For this, execute the `run_2.sh` script in another terminal which will open another QEMU instance.
 Here, also login with `root`, then execute: 
 ```
+mkdir -p /mnt/hostshare 
+mount -t 9p -o trans=virtio,version=9p2000.L hostshare /mnt/hostshare
 cd /usr/bin 
 ./vmi_client_3
 ```
 This will connect to the first VM and execute a VMI policy creating a full memory dump.
-The dump will be saved in the `artifacts/overlay` folder.
+The dump will be saved in the `artifacts/memdump/` folder.
 
 ### QEMU Memory Dump 
-Next, use the QEMU Monitor to create another memory dump: 
-
+Next, use the QEMU Monitor to create another memory dump. 
+To connect to the QEMU Monitor use Telnet in another terminal:
+```
+telnet localhost 45454
+```
+Then dump the memory using 
+```
+xp /physical 0x40000000 0x100000000 ~/TrustLeech/artifacts/memdump/qemu_dump.bin
+```
 
 ### Comparision
 To compare the two memory dumps, excute the python script `memdump.py` accompanying this claim and observe its output.

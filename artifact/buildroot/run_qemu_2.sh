@@ -31,10 +31,10 @@ cp Image Image_2
   -device virtio-blk-device,drive=hd0 \
   -device virtio-net-pci,netdev=net0 \
   -netdev user,id=net0,hostfwd=tcp::6666-:6666 \
-  -plugin ../build/host-qemu-custom/build/contrib/plugins/libips.so,ips=1000000000  
+  -virtfs local,path=../../../memdump/,mount_tag=hostshare,security_model=passthrough,id=hostshare \
+  -monitor telnet::45454,server,nowait \
+  -plugin ../build/host-qemu-custom/build/contrib/plugins/libips.so,ips=500000000  
 
-#   -plugin ../build/host-qemu-custom/build/contrib/plugins/libips.so,ips=500000000  \
-#   -monitor telnet::45454,server,nowait \
 #  -chardev stdio,id=char0,logfile=qemu_serial.log,signal=off \
 #  -serial chardev:char0 \
 

@@ -8,17 +8,21 @@ set -e
 DIR="$( cd "$( dirname "$0" )" && pwd )"
 FILE="$( basename "$0" )"
 echo "Running the script '$DIR/$FILE'"
-cd $DIR
+cd $DIR/../..
 
 ################################################################################
 
 NAME="trustleech"
 TAG="latest"
 
-USER_ID=$(id -u)
-GROUP_ID=$(id -g)
-# USER_ID=999
-# GROUP_ID=999
-docker build -t $NAME:$TAG --build-arg USER_ID=$USER_ID --build-arg GROUP_ID=$GROUP_ID .
+REPO_DIR="$( pwd )"
 
-echo "Leaving the script '$DIR/$FILE'"
+docker run -it --rm \
+  --name trustleech \
+  -u $UID  \
+  --ulimit "nofile=1024:1048576" \
+  --volume $REPO_DIR:/home/user/trustleech \
+  --volume $REPO_DIR/src/buildroot-ccache:/home/user/.buildroot-ccache \
+  $NAME:$TAG \
+  "cd /home/user/trustleech/artifact/buildroot && make all && /bin/bash"
+
