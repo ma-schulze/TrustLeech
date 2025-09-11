@@ -1,4 +1,4 @@
 #!/bin/bash 
 
 cd ../../artifact/buildroot/ 
-./run_qemu.sh
+./run_qemu_2.sh

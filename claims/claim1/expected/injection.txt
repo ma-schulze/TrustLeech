@@ -1,0 +1,6 @@
+We evaluate the injection time as 1.2 seconds in the paper, most of this time is spent setting up the virtio drivers.
+
+In the CloudLab environment, we oftentimes observe smaller results. 
+We believe this is caused by the environment running on a faster system than the environment used for the paper's evaluation. 
+Since the TrustLeech-hypervisor's interaction with the emulated virtio devices executes a lot of QEMU code, 
+which is executed at speeds depending on the host hardware, we see different speeds.

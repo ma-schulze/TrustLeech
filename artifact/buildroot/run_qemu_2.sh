@@ -31,7 +31,7 @@ cp Image Image_2
   -device virtio-blk-device,drive=hd0 \
   -device virtio-net-pci,netdev=net0 \
   -netdev user,id=net0,hostfwd=tcp::6666-:6666 \
-  -plugin ../build/host-qemu-custom/build/contrib/plugins/libips.so,ips=500000000  
+  -plugin ../build/host-qemu-custom/build/contrib/plugins/libips.so,ips=1000000000  
 
 #   -plugin ../build/host-qemu-custom/build/contrib/plugins/libips.so,ips=500000000  \
 #   -monitor telnet::45454,server,nowait \

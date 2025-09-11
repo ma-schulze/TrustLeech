@@ -28,7 +28,8 @@ cd output/images || exit 1
   -device qemu-xhci,id=xhci -device usb-kbd \
   -device virtio-net-pci,netdev=net0 \
   -netdev user,id=net0,hostfwd=tcp::5555-:5555 \
-  -plugin ../build/host-qemu-custom/build/contrib/plugins/libips.so,ips=500000000  -s
+  -icount 1 
+  # -plugin ../build/host-qemu-custom/build/contrib/plugins/libips.so,ips=500000000  -s
   # -netdev tap,id=mynet0,ifname=tap0,script=no,downscript=no \
   # -device virtio-net-pci,netdev=mynet0 
 #   -monitor telnet::45454,server,nowait \

@@ -1,0 +1,2 @@
+In the paper we evaluate the removal to take 197ms on average. 
+This value is also (approximately) observed in the CloudLab environment.
