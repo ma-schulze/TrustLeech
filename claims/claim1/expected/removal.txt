@@ -1,2 +1,4 @@
 In the paper we evaluate the removal to take 197ms on average. 
-This value is also (approximately) observed in the CloudLab environment.
+
+We were able to improve the removal speed.
+The process is now evaluated to only take 0.24ms. 
