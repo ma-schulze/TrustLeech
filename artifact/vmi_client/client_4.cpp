@@ -15,6 +15,22 @@
 #include <string>
 
 #include <iostream>
+#include <fstream>
+
+void init_vmi(vmi_instance_t &vmi) {
+  status_t status = VMI_SUCCESS;
+  struct sigaction act;
+  int retcode = 1;
+  vmi_init_data_t *init_data = NULL;
+
+  uint64_t id = 1;
+
+  if (VMI_FAILURE == vmi_init_complete(&vmi, (void *)&id, VMI_INIT_DOMAINID,
+                                       NULL, VMI_CONFIG_FILE_PATH,
+                                       (void *)"./libvmi.conf", NULL)) {
+    printf("Failed to init LibVMI library.\n");
+  }
+}
 
 typedef void (*vmi_func_t)(vmi_instance_t &);
 void time_vmi_func(vmi_instance_t &vmi, vmi_func_t vmi_func,
@@ -49,11 +65,11 @@ int main() {
 
   uint8_t page[4096];
 
-  uint64_t while (start < end) {
+  while (start < end) {
 
     vmi_read_pa(vmi, start, 4096, (void *)page, NULL);
 
-    out.write(reinterpret_cast<const char *>(data), data_size);
+    out.write(reinterpret_cast<const char *>(page), 4096);
     if (!out) {
       std::cerr << "Failed to write data\n";
       return 1;
@@ -63,7 +79,7 @@ int main() {
   }
 
   out.close();
-  std::cout << "Wrote " << data_size << " bytes to output.bin\n";
+  std::cout << "Finished memdump!" << std::endl;
 
   /* cleanup any memory associated with the libvmi instance */
   vmi_destroy(vmi);

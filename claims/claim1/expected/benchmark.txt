@@ -23,6 +23,25 @@ CoreMark-PRO                                         28.43      31.85       0.89
 
 # VM, No TL
 
+                                                 MultiCore SingleCore           
+Workload Name                                     (iter/s)   (iter/s)    Scaling
+----------------------------------------------- ---------- ---------- ----------
+cjpeg-rose7-preset                                    0.64       0.86       0.74
+core                                                  0.00       0.01       0.00
+linear_alg-mid-100x100-sp                             0.36       0.48       0.75
+loops-all-mid-10k-sp                                  0.02       0.03       0.67
+nnet_test                                             0.03       0.03       1.00
+parser-125k                                           0.39       0.51       0.76
+radix2-big-64k                                        3.06       4.15       0.74
+sha-test                                              0.66       0.87       0.76
+zip-test                                              0.35       0.46       0.76
+
+MARK RESULTS TABLE
+
+Mark Name                                        MultiCore SingleCore    Scaling
+----------------------------------------------- ---------- ---------- ----------
+CoreMark-PRO                                          0.00      28.15       0.00
+ 
 
 # Hypervisor, TL 
 
