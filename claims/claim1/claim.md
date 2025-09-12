@@ -39,6 +39,11 @@ sudo ifconfig <INTERFACE>:0 192.168.1.6 up
 Where `<INTERFACE>` must be replaced with the currently active network interface used, e.g., `eth0`.
 This can be found out by using `ifconfig`.
 
+For the CloudLab environment, the interface this should shoud result in 
+```
+sudo ifconfig veth7c820f1:0 192.168.1.6 up
+```
+
 ## Testcase 1. Injection Slowdown
 First, this test case evaluates the performance costs of injecting the TrustLeech-hypervisor. 
 The time is measured by a kernel module used to initialize the injection.
