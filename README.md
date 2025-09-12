@@ -25,6 +25,8 @@ More information is given in the respective `claims`.
 For many testcases, you need multiple terminal sessions.
 Therefore, if the artifact is accessed via CloudLab, we advice you opening a `tmux` session or similar.
 
+Also, you can quit a QEMU instance using `ctr+a,x`. 
+
 
 ## Misc
 The buildroot environment uses `ccache`. The cache is put in the top directory under `src`.

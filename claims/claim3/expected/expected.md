@@ -33,24 +33,3 @@ rounded_timings = [round(x, 2) for x in normalized_kvm_timings]
 print(rounded_timings)
 ```
 
-
-## Detailed output TrustLeech 
-# ./vmi_client_2 
-Starting TL VMI!
-libvirt: QEMU Driver error : Domain not found: no domain with matching id 1
-Init VMI: 34627 ms
-LibVMI init succeeded, waiting for CMD!
-Module List: 26345 ms
-Check Keyboard Notifiers: 17525 ms
-Checking SCT: 4830 ms
-Walking Process List: 242986 ms
-Walking Process List Open Files: 631373 ms
-Walking Process List Priv Esc: 306980 ms
-Virt FS Hook: 17833 ms
-Netstat Ops: 11707 ms
-Netdev Ops: 20591 ms
-TTY Drivers: 514573 ms
-Single Page: 200 ms
-
-
-## Detailed output Legacy KVM

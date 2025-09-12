@@ -6,13 +6,13 @@ pages_tl = []
 
 print("Starting")
 
-with open("./data/qemu_memdump_good.txt", "rb") as f_qemu:
+with open("../buildroot/output/images/memdmp.bin", "rb") as f_qemu:
     while page_qemu := f_qemu.read(4096):
         pages_qemu.append(page_qemu)
 
 print("Processing QEMU dump")
 
-with open("./data/output2_good_sorted.txt", "rb") as f_tl:
+with open("./output.bin", "rb") as f_tl:
     while page_tl := f_tl.read(4096):
         pages_tl.append(page_tl)
     
