@@ -32,7 +32,7 @@ cp Image Image_2
   -device virtio-net-pci,netdev=net0 \
   -netdev user,id=net0,hostfwd=tcp::6666-:6666 \
   -virtfs local,path=../../../memdump/,mount_tag=hostshare,security_model=none,id=hostshare \
-  -plugin ../build/host-qemu-custom/build/contrib/plugins/libips.so,ips=5000000000  \
+  -plugin ../build/host-qemu-custom/build/contrib/plugins/libips.so,ips=10000000000 \
 
 #  -chardev stdio,id=char0,logfile=qemu_serial.log,signal=off \
 #  -serial chardev:char0 \
