@@ -1,21 +1,42 @@
 We expect the TrustLeech based VMI policies to be multitudes faster than the KVM based execution of the VMI policies. 
 
 The exact duration of the execution of the policies may vary, especially for the KVM based execution, but the general results should be similar.
-In our experiments, the following runtimes of the KVM backend, normalzed to the TrustLeech backend, were observed:
+In our experiments, the following runtimes were observed:
 
-Init: 4.77
-P1: 3.28
-P2: 1.98
-P3: 4.28
-P4: 9.76
-P5: 10.24
-P6: 9.83
-P7: 8.49
-P8: 5.63 
-P9: 6.17
-P10: 7.13
-P11: 1.79
 
+## TrustLeech numbers
+Init VMI: 86207 ms
+LibVMI init succeeded, waiting for CMD!
+Module List: 20385 ms
+Check Keyboard Notifiers: 34594 ms
+Checking SCT: 5736 ms
+Walking Process List: 118760 ms
+Walking Process List Open Files: 304460 ms
+Walking Process List Priv Esc: 189055 ms
+Virt FS Hook: 39675 ms
+Netstat Ops: 22920 ms
+Netdev Ops: 21701 ms
+TTY Drivers: 313547 ms
+Single Page: 201 ms
+
+
+## KVM Numbers
+GOT KVM!
+Init VMI: 116824 ms
+LibVMI init succeeded, waiting for CMD!
+Module List: 17780 ms
+Check Keyboard Notifiers: 43601 ms
+Checking SCT: 69043 ms
+Walking Process List: 838061 ms
+Walking Process List Open Files: 577272 ms
+Walking Process List Priv Esc: 559113 ms
+Virt FS Hook: 36256 ms
+Netstat Ops: 29074 ms
+Netdev Ops: 40134 ms
+TTY Drivers: 59683 ms
+Single Page: 3187 ms
+
+## Normalize Them
 To help calculate this, you can use this python sippet:
 ```python3 
 kvm_timings = [

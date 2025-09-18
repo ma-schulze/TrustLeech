@@ -25,11 +25,14 @@ cd output/images || exit 1
   -semihosting-config enable=on,target=native \
   -drive file=rootfs.ext4,if=none,format=raw,id=hd0 \
   -device virtio-blk-device,drive=hd0 \
-  -icount 1 \
+  -icount 0 \
   -plugin ../build/host-qemu-custom/build/contrib/plugins/libips.so,ips=5000000000  \
   -device virtio-net-pci,netdev=net0 \
   -monitor telnet::45454,server,nowait \
-  -netdev user,id=net0,hostfwd=tcp::5555-:5555 -s \
+  -netdev user,id=net0,hostfwd=tcp::5555-:5555 -s 
+
+# for some reason CoreMark sometimes crashes without icount?
+
 
   # -netdev tap,id=mynet0,ifname=tap0,script=no,downscript=no \
   # -device virtio-net-pci,netdev=mynet0 

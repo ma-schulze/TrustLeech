@@ -1,4 +1,4 @@
 In the paper we evaluate the removal to take 197ms on average. 
 
 We were able to improve the removal speed.
-The process is now evaluated to only take 0.24ms. 
+The process is now evaluated to only take 0.122ms. 

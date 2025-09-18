@@ -4,21 +4,21 @@
                                                  MultiCore SingleCore           
 Workload Name                                     (iter/s)   (iter/s)    Scaling
 ----------------------------------------------- ---------- ---------- ----------
-cjpeg-rose7-preset                                    0.87       0.94       0.93
+cjpeg-rose7-preset                                    1.84       1.91       0.96
 core                                                  0.01       0.01       1.00
-linear_alg-mid-100x100-sp                             0.49       0.53       0.92
-loops-all-mid-10k-sp                                  0.03       0.04       0.75
-nnet_test                                             0.03       0.04       0.75
-parser-125k                                           0.52       0.56       0.93
-radix2-big-64k                                        4.17       4.51       0.92
-sha-test                                              0.88       0.95       0.93
-zip-test                                              0.47       0.50       0.94
+linear_alg-mid-100x100-sp                             1.03       1.07       0.96
+loops-all-mid-10k-sp                                  0.07       0.07       1.00
+nnet_test                                             0.07       0.08       0.88
+parser-125k                                           1.10       1.13       0.97
+radix2-big-64k                                        8.80       9.17       0.96
+sha-test                                              1.86       1.93       0.96
+zip-test                                              0.99       1.03       0.96
 
 MARK RESULTS TABLE
 
 Mark Name                                        MultiCore SingleCore    Scaling
 ----------------------------------------------- ---------- ---------- ----------
-CoreMark-PRO                                         28.43      31.85       0.89
+CoreMark-PRO                                         56.48      58.74       0.96
 
 
 # VM, No TL
@@ -26,21 +26,21 @@ CoreMark-PRO                                         28.43      31.85       0.89
                                                  MultiCore SingleCore           
 Workload Name                                     (iter/s)   (iter/s)    Scaling
 ----------------------------------------------- ---------- ---------- ----------
-cjpeg-rose7-preset                                    0.64       0.86       0.74
-core                                                  0.00       0.01       0.00
-linear_alg-mid-100x100-sp                             0.36       0.48       0.75
-loops-all-mid-10k-sp                                  0.02       0.03       0.67
-nnet_test                                             0.03       0.03       1.00
-parser-125k                                           0.39       0.51       0.76
-radix2-big-64k                                        3.06       4.15       0.74
-sha-test                                              0.66       0.87       0.76
-zip-test                                              0.35       0.46       0.76
+cjpeg-rose7-preset                                    1.84       1.84       1.00
+core                                                  0.01       0.01       1.00
+linear_alg-mid-100x100-sp                             1.03       1.03       1.00
+loops-all-mid-10k-sp                                  0.07       0.07       1.00
+nnet_test                                             0.07       0.07       1.00
+parser-125k                                           1.09       1.09       1.00
+radix2-big-64k                                        8.86       8.86       1.00
+sha-test                                              1.86       1.86       1.00
+zip-test                                              0.99       0.99       1.00
 
 MARK RESULTS TABLE
 
 Mark Name                                        MultiCore SingleCore    Scaling
 ----------------------------------------------- ---------- ---------- ----------
-CoreMark-PRO                                          0.00      28.15       0.00
+CoreMark-PRO                                         56.46      56.46       1.00
  
 
 # Hypervisor, TL 
@@ -48,40 +48,42 @@ CoreMark-PRO                                          0.00      28.15       0.00
                                                  MultiCore SingleCore           
 Workload Name                                     (iter/s)   (iter/s)    Scaling
 ----------------------------------------------- ---------- ---------- ----------
-cjpeg-rose7-preset                                    0.84       0.93       0.90
+cjpeg-rose7-preset                                    1.80       1.90       0.95
 core                                                  0.01       0.01       1.00
-linear_alg-mid-100x100-sp                             0.47       0.52       0.90
-loops-all-mid-10k-sp                                  0.03       0.03       1.00
-nnet_test                                             0.03       0.04       0.75
-parser-125k                                           0.50       0.55       0.91
-radix2-big-64k                                        3.99       4.45       0.90
-sha-test                                              0.85       0.94       0.90
-zip-test                                              0.46       0.50       0.92
+linear_alg-mid-100x100-sp                             1.01       1.06       0.95
+loops-all-mid-10k-sp                                  0.07       0.07       1.00
+nnet_test                                             0.07       0.07       1.00
+parser-125k                                           1.08       1.12       0.96
+radix2-big-64k                                        8.61       9.08       0.95
+sha-test                                              1.83       1.92       0.95
+zip-test                                              0.98       1.02       0.96
 
 MARK RESULTS TABLE
 
 Mark Name                                        MultiCore SingleCore    Scaling
 ----------------------------------------------- ---------- ---------- ----------
-CoreMark-PRO                                         27.76      30.61       0.91
+CoreMark-PRO                                         55.80      57.56       0.97
 
 
 
 # VM, TL
 
+
                                                  MultiCore SingleCore           
 Workload Name                                     (iter/s)   (iter/s)    Scaling
 ----------------------------------------------- ---------- ---------- ----------
-cjpeg-rose7-preset                                    0.82       0.82       1.00
+cjpeg-rose7-preset                                    1.79       1.79       1.00
 core                                                  0.01       0.01       1.00
-linear_alg-mid-100x100-sp                             0.46       0.46       1.00
-loops-all-mid-10k-sp                                  0.03       0.03       1.00
-nnet_test                                             0.03       0.03       1.00
-parser-125k                                           0.48       0.48       1.00
-radix2-big-64k                                        3.94       3.94       1.00
-sha-test                                              0.83       0.83       1.00
-zip-test                                              0.44       0.44       1.00
+linear_alg-mid-100x100-sp                             1.00       1.00       1.00
+loops-all-mid-10k-sp                                  0.07       0.07       1.00
+nnet_test                                             0.07       0.07       1.00
+parser-125k                                           1.04       1.04       1.00
+radix2-big-64k                                        8.58       8.58       1.00
+sha-test                                              1.81       1.81       1.00
+zip-test                                              0.95       0.95       1.00
 
 MARK RESULTS TABLE
 
 Mark Name                                        MultiCore SingleCore    Scaling
 ----------------------------------------------- ---------- ---------- ----------
+CoreMark-PRO                                         55.19      55.19       1.00

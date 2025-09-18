@@ -1,4 +1,7 @@
 #!/bin/bash 
 
 cd ../../artifact/buildroot/ 
-./run_qemu_2.sh
+if [ ! -f ../overlay/rootfs.ext4 ]; then
+    cp output/images/rootfs.ext4 ../overlay/
+fi
+./run_qemu_2_2.sh

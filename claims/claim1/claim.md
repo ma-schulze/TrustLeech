@@ -20,7 +20,7 @@ Save the results to some file for later comparision.
 
 Next, start a VM inside the QEMU environment to then execute the benchmark in:
 ```
-lkvm run -k /boot/Image -d /rootfs.ext4 --console virtio --nested -c 2 -m 2GB # this may take a little
+lkvm run -k /boot/Image -d /rootfs.ext4 --console virtio --nested -c 2 -m 2G # this may take a little
 # Login with Root, then
 chmod +x /usr/bin/coremark-pro.sh
 /usr/bin/coremark-pro.sh
@@ -76,7 +76,7 @@ chmod +x /usr/bin/coremark-pro.sh
 We then again spawn a (now nested) VM and repeat the benchmark:
 
 ```
-lkvm run -k /boot/Image -d /rootfs.ext4 --console virtio --nested -c 2 -m 2GB # this may take a little
+lkvm run -k /boot/Image -d /rootfs.ext4 --console virtio --nested -c 2 -m 2G # this may take a little
 # Login with Root, then
 chmod +x /usr/bin/coremark-pro.sh
 /usr/bin/coremark-pro.sh
