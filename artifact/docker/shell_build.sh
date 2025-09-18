@@ -24,5 +24,5 @@ docker run -it --rm \
   --volume $REPO_DIR:/home/user/trustleech \
   --volume $REPO_DIR/src/buildroot-ccache:/home/user/.buildroot-ccache \
   $NAME:$TAG \
-  "cd /home/user/trustleech/artifact/buildroot && make all && /bin/bash"
+  "cd /home/user/trustleech/artifact/buildroot && make all && cp /home/user/trustleech/artifact/buildroot/output/images/rootfs.ext4 /home/user/trustleech/artifact/overlay && make all && /bin/bash"
 
