@@ -45,7 +45,8 @@ Once started, we start a new VM using `virsh`:
 ```
 virsh create /domain.xml
 ```
-Next, wait a few minutes to guarantee that the VM is fully booted. 
+Next, wait a few minutes to guarantee that the VM is fully booted.
+If the VM is not fully booted, this may screw the numbers, since an unequal number of kernel modules etc. would be loaded, leading to different execution times of the policies.
 Then, execute the vmi client script from within the same QEMU environment: 
 ```
 cd /usr/bin 

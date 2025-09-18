@@ -22,19 +22,19 @@ Single Page: 201 ms
 
 ## KVM Numbers
 GOT KVM!
-Init VMI: 116824 ms
+Init VMI: 110241 ms
 LibVMI init succeeded, waiting for CMD!
-Module List: 17780 ms
-Check Keyboard Notifiers: 43601 ms
-Checking SCT: 69043 ms
-Walking Process List: 838061 ms
-Walking Process List Open Files: 577272 ms
-Walking Process List Priv Esc: 559113 ms
-Virt FS Hook: 36256 ms
-Netstat Ops: 29074 ms
-Netdev Ops: 40134 ms
-TTY Drivers: 59683 ms
-Single Page: 3187 ms
+Module List: 26928 ms
+Check Keyboard Notifiers: 20148 ms
+Checking SCT: 54058 ms
+Walking Process List: 712189 ms
+Walking Process List Open Files: 508435 ms
+Walking Process List Priv Esc: 582063 ms
+Virt FS Hook: 51658 ms
+Netstat Ops: 17640 ms
+Netdev Ops: 50536 ms
+TTY Drivers: 62710 ms
+Single Page: 2552 ms
 
 ## Normalize Them
 To help calculate this, you can use this python sippet:
@@ -54,3 +54,22 @@ rounded_timings = [round(x, 2) for x in normalized_kvm_timings]
 print(rounded_timings)
 ```
 
+This results in the following relative numbers:
+```
+Init VMI: 1.28
+Single Page: 12.70
+Module List: 1.32
+Check Keyboard Notifiers: 0.58
+Checking SCT: 9.42
+Walking Process List: 6.00
+Walking Process List Open Files: 1.67
+Walking Process List Priv Esc: 3.08
+Virt FS Hook: 1.30
+Netstat Ops: 0.77
+Netdev Ops: 2.33
+TTY Drivers: 0.20
+```
+
+It must be noted, that due to different configurations of the virsh VM to make the workflow easier for the artifact evaluation, no TTY is attached to the `virsh` VM and it does not have a proper network connection. 
+Therefore, other/less drivers for TTY/Keyboard, and Networking are loaded.
+This results in the numbers for these policies converging from the numbers presented in the paper.
